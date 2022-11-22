@@ -38,7 +38,7 @@ public:
         core::gfx::FrameBufferInfo viewPortInfo{};           // viewport
         viewPortInfo.width = 100, viewPortInfo.height = 100; // temporaries
         viewPortInfo.attachments.push_back({GL_COLOR_ATTACHMENT0, {GL_RGBA16F, GL_FLOAT}});
-        // viewPortInfo.attachments.push_back({GL_DEPTH_ATTACHMENT, {GL_DONT_CARE, GL_DONT_CARE}});
+        viewPortInfo.attachments.push_back({GL_DEPTH_ATTACHMENT, {GL_DONT_CARE, GL_DONT_CARE}});
         viewPort = core::gfx::FrameBuffer{viewPortInfo};
 
         dispatcher.subscribe<core::ViewPortSizeUpdateEvent>([this](const event::Event& e) {  // callback for viewport size update event
