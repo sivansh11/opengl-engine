@@ -10,6 +10,3 @@
 [submodule "deps/imgui/imgui"]
 	path = deps/imgui/imgui
 	url = https://github.com/ocornut/imgui.git
-[submodule "models"]
-	path = models
-	url = https://github.com/KhronosGroup/glTF-Sample-Models.git
