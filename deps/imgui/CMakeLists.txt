@@ -8,5 +8,6 @@ add_library(imgui ${SRC_FILES})
 
 target_include_directories(imgui
     PUBLIC imgui
+    PUBLIC ../glfw/include
 )
 

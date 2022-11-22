@@ -2,3 +2,5 @@ build/
 .vscode/
 model/
 dumps/
+models/
+todo.md
