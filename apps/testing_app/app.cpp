@@ -1,10 +1,10 @@
 #include "app.hpp"
 
-#include "vertex_attribute.hpp"
-#include "buffer.hpp"
-#include "texture.hpp"
-#include "shaders.hpp"
-#include "framebuffer.hpp"
+#include "gfx/vertex_attribute.hpp"
+#include "gfx/buffer.hpp"
+#include "gfx/texture.hpp"
+#include "gfx/shaders.hpp"
+#include "gfx/framebuffer.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
 #include "material.hpp"
@@ -12,7 +12,7 @@
 #include "camera.hpp"
 #include "controller.hpp"
 #include "transform.hpp"
-#include "point_light.hpp"
+#include "light.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
