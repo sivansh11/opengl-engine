@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <iostream>
+#include <cmath>
 
 namespace core {
 
@@ -19,15 +20,17 @@ Texture2D::Texture2D(const char *imagePath) {
     }
     glCreateTextures(GL_TEXTURE_2D, 1, &id);
 
-    glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glTextureStorage2D(id, 1, GL_RGBA8, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
-
     m_width = static_cast<uint32_t>(width);
     m_height = static_cast<uint32_t>(height); 
+
+    // 1 + ceil(log2(max(width, height))
+    GLsizei level = 1 + std::ceil(std::log2(static_cast<double>(std::max(m_width, m_height))));
+    glTextureStorage2D(id, level, GL_RGBA8, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
 
     GLenum format = GL_RGBA;
     if (nChannels == 1) format = GL_RED;
@@ -35,7 +38,7 @@ Texture2D::Texture2D(const char *imagePath) {
     if (nChannels == 3) format = GL_RGB;
     if (nChannels == 4) format = GL_RGBA;
 
-    glTextureSubImage2D(id, 0, 0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_RGBA, GL_UNSIGNED_BYTE, bytes);
+    glTextureSubImage2D(id, 0, 0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), format, GL_UNSIGNED_BYTE, bytes);
     glGenerateTextureMipmap(id);
 
     stbi_image_free(bytes);

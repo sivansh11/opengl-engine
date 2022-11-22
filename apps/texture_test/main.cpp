@@ -4,6 +4,8 @@
 #include"glad/glad.h"
 #include"GLFW/glfw3.h"
 
+#include <glm/glm.hpp>
+
 
 
 const unsigned int SCREEN_WIDTH = 720;
@@ -142,7 +144,7 @@ int main()
 	glTextureParameteri(tex, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTextureParameteri(tex, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTextureStorage2D(tex, 1, GL_RGBA8, widthImg, heightImg);
+	glTextureStorage2D(tex, 1 + 1, GL_RGBA8, widthImg, heightImg);
 	glTextureSubImage2D(tex, 0, 0, 0, widthImg, heightImg, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
 	glGenerateTextureMipmap(tex);
 
