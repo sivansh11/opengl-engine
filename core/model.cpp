@@ -41,6 +41,8 @@ Model& Model::operator=(Model&& model) {
 
 
 void Model::loadModelFromPath(const char *modelPath) {
+    m_meshes.clear();
+    texturesLoaded.clear();
     m_filePath = modelPath;
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(modelPath,
@@ -153,7 +155,6 @@ std::unique_ptr<Material> Model::processMaterial(aiMaterial *material) {
 
     if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &color)) {
         mat->assign("material.specular", float((color.r + color.g + color.b) / 3));
-        std::cout << color.r << ' ' << color.g << ' ' << color.b << ' ' << color.a << '\n';
     } else {
         mat->assign("material.specular", float(1));
     }
@@ -235,11 +236,26 @@ void Model::draw(gfx::ShaderProgram& shader) {
 }
 
 void Model::componentPanel(Model& model, event::Dispatcher& dispatcher, ecs::EntityID ent) {
-    // if (ImGui::BeginDragDropTarget()) {
-    //     ImGui::SetDragDropPayload()
-    //     ImGui::EndDragDropTarget();
-    // }
-    ImGui::Text("%s", model.m_filePath.c_str());
+    if (ImGui::BeginDragDropTarget()) {
+        const ImGuiPayload *payload = ImGui::GetDragDropPayload();
+        if (std::memcmp(payload->DataType, "PATH", 4) != 0) {
+            ImGui::EndDragDropTarget();
+            return;
+        }
+        model.loadModelFromPath(std::string{reinterpret_cast<char *>(payload->Data), payload->DataSize}.c_str());
+        ImGui::EndDragDropTarget();
+    }
+
+    if (model.m_filePath.empty()) {
+        ImGui::Text("Empty Model");
+    } else {
+        ImGui::Text("%s", model.m_filePath.c_str());
+    }
+
+    if (ImGui::Button("Clear model")) {
+        model = {};
+    }
+    
     // if (ImGui::)
 }
 

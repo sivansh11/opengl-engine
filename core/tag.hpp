@@ -8,10 +8,10 @@
 
 namespace core {
 
-struct Tag {
+struct TagComponent {
     std::string tag;
 
-    static void componentPanel(Tag& tag) {
+    static void componentPanel(TagComponent& tag) {
         ImGui::InputText("Tag", &tag.tag);
     }
 };

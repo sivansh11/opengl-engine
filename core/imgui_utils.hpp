@@ -128,6 +128,17 @@ void setupImGuiStyle()
     easyThemingImGui(color_for_text, color_for_head, color_for_area, color_for_body, color_for_pops, color_for_tabs);
 }
 
+void myDefaultImGuiStyle() {
+    ImVec3 color_for_text = ImVec3(255.f / 255.f, 255.f / 255.f, 255.f / 255.f);
+    ImVec3 color_for_head = ImVec3(55.f / 255.f, 55.f / 255.f, 55.f / 255.f);
+    ImVec3 color_for_area = ImVec3(55.f / 255.f, 55.f / 255.f, 55.f / 255.f);
+    ImVec3 color_for_body = ImVec3(0.f / 255.f, 0.f / 255.f, 0.f / 255.f);
+    ImVec3 color_for_pops = ImVec3(60.f / 255.f, 60.f / 255.f, 60.f / 255.f);
+    ImVec3 color_for_tabs = ImVec3(55.f / 255.f, 55.f / 255.f, 55.f / 255.f);
+    easyThemingImGui(color_for_text, color_for_head, color_for_area, color_for_body, color_for_pops, color_for_tabs);
+
+} 
+
 } // namespace core
 
 #endif

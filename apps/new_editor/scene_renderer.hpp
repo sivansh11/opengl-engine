@@ -30,21 +30,21 @@ public:
         gBufferInfo.attachments.push_back({GL_DEPTH_ATTACHMENT, {GL_DONT_CARE, GL_DONT_CARE}});
         gBuffer = core::gfx::FrameBuffer{gBufferInfo};
 
-        dispatcher.subscribe<core::ViewPortSizeUpdateEvent>([this](const event::Event& e) {  // callback for viewport size update event
-            const core::ViewPortSizeUpdateEvent& event = reinterpret_cast<const core::ViewPortSizeUpdateEvent&>(e);
+        dispatcher.subscribe<core::ViewPortResizeEvent>([this](const event::Event& e) {  // callback for viewport size update event
+            const core::ViewPortResizeEvent& event = reinterpret_cast<const core::ViewPortResizeEvent&>(e);
             this->gBuffer.invalidate(event.width, event.height);
         });
 
-        core::gfx::FrameBufferInfo viewPortInfo{};           // viewport
-        viewPortInfo.width = 100, viewPortInfo.height = 100; // temporaries
-        viewPortInfo.attachments.push_back({GL_COLOR_ATTACHMENT0, {GL_RGBA16F, GL_FLOAT}});
-        // viewPortInfo.attachments.push_back({GL_DEPTH_ATTACHMENT, {GL_DONT_CARE, GL_DONT_CARE}});
-        viewPort = core::gfx::FrameBuffer{viewPortInfo};
+        // core::gfx::FrameBufferInfo viewPortInfo{};           // viewport
+        // viewPortInfo.width = 100, viewPortInfo.height = 100; // temporaries
+        // viewPortInfo.attachments.push_back({GL_COLOR_ATTACHMENT0, {GL_RGBA16F, GL_FLOAT}});
+        // // viewPortInfo.attachments.push_back({GL_DEPTH_ATTACHMENT, {GL_DONT_CARE, GL_DONT_CARE}});
+        // viewPort = core::gfx::FrameBuffer{viewPortInfo};
 
-        dispatcher.subscribe<core::ViewPortSizeUpdateEvent>([this](const event::Event& e) {  // callback for viewport size update event
-            const core::ViewPortSizeUpdateEvent& event = reinterpret_cast<const core::ViewPortSizeUpdateEvent&>(e);
-            this->viewPort.invalidate(event.width, event.height);
-        });
+        // dispatcher.subscribe<core::ViewPortResizeEvent>([this](const event::Event& e) {  // callback for viewport size update event
+        //     const core::ViewPortResizeEvent& event = reinterpret_cast<const core::ViewPortResizeEvent&>(e);
+        //     this->viewPort.invalidate(event.width, event.height);
+        // });
 
         frameBufferQuadBuffer = core::gfx::Buffer(sizeof(core::gfx::FrameBufferVertex) * core::gfx::frameBufferQuadVertices.size());
         frameBufferQuadBuffer.push(core::gfx::frameBufferQuadVertices.data());
@@ -75,22 +75,23 @@ public:
     }
 
     void render(ecs::Scene& scene, ecs::EntityID cameraEnt) {
-        if (cameraEnt == ecs::null) {
-            viewPort.bind();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            viewPort.unbind();
-            return;
-        }
-        auto& camera = scene.get<core::Camera>(cameraEnt);
+        // if (cameraEnt == ecs::null) {
+        //     viewPort.bind();
+        //     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //     viewPort.unbind();
+        //     return;
+        // }
+        auto& camera = scene.get<core::CameraComponent>(cameraEnt);
+        auto& cameraTransform = scene.get<core::TransformComponent>(cameraEnt);
 
         lights.clear();
-        for (auto [ent, pl] : ecs::SceneView<core::PointLight>(scene)) {
+        for (auto [ent, pl] : ecs::SceneView<core::PointLightComponent>(scene)) {
             core::LightData& lightData = lights.emplace_back();
             lightData.pos = pl.pos;
             lightData.color = pl.color;
             lightData.term = pl.term;
-            if (scene.has<core::AmbienceLight>(ent)) 
-                lightData.ambience = scene.get<core::AmbienceLight>(ent).ambient;
+            if (scene.has<core::AmbienceLightComponent>(ent)) 
+                lightData.ambience = scene.get<core::AmbienceLightComponent>(ent).ambient;
         }
         uint32_t bufferSize = sizeof(core::LightData) * lights.size();
         if (lightBuffer.capacity() < bufferSize) {
@@ -101,42 +102,45 @@ public:
         if (lights.size() > 0)
             std::memcpy(mappedMemory, lights.data(), bufferSize);
         
+        glClearColor(0, 0, 0, 1);   
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         glEnable(GL_DEPTH_TEST);
         gBuffer.bind();
         glClearColor(0, 0, 0, 1);   
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         geometryPass.bind();
-        geometryPass.mat4f("mvp.view", glm::value_ptr(camera.getView()));
+        geometryPass.mat4f("mvp.view", glm::value_ptr(glm::lookAt(cameraTransform.translation, cameraTransform.translation + cameraTransform.rotation, {0, 1, 0})));
         geometryPass.mat4f("mvp.projection", glm::value_ptr(camera.getProjection()));
-        for (auto [ent, model, transform] : ecs::SceneView<core::Model, core::Transform>(scene)) {
+        for (auto [ent, model, transform] : ecs::SceneView<core::Model, core::TransformComponent>(scene)) {
             geometryPass.mat4f("mvp.model", glm::value_ptr(transform.mat4()));
             model.draw(geometryPass);
         }
         gBuffer.unbind();
 
-        glDisable(GL_DEPTH_TEST);
-        viewPort.bind();
+        // glDisable(GL_DEPTH_TEST);
+        // viewPort.bind();
         glClearColor(0, 0, 0, 1);   
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         lightingPass.bind();
         lightingPass.veci("numLights", lights.size());
-        lightingPass.vec3f("viewPos", glm::value_ptr(camera.getPosition())); 
+        lightingPass.vec3f("viewPos", glm::value_ptr(cameraTransform.translation)); 
         glBindTextureUnit(0, gBuffer.getTextureID(GL_COLOR_ATTACHMENT0));
         glBindTextureUnit(1, gBuffer.getTextureID(GL_COLOR_ATTACHMENT1));
         glBindTextureUnit(2, gBuffer.getTextureID(GL_COLOR_ATTACHMENT2));
         lightBuffer.bind(0);
         frameBufferVertexAttribute.bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        viewPort.unbind();
+        // viewPort.unbind();
     }
 
     GLuint displayViewPort() {
-        return viewPort.getTextureID(GL_COLOR_ATTACHMENT0);
+        // return viewPort.getTextureID(GL_COLOR_ATTACHMENT0);
     }
 
 private:
     core::gfx::FrameBuffer gBuffer;
-    core::gfx::FrameBuffer viewPort;
+    // core::gfx::FrameBuffer viewPort;
 
     core::gfx::Buffer frameBufferQuadBuffer;
     core::gfx::VertexAttribute frameBufferVertexAttribute;

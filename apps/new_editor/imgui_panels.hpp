@@ -20,24 +20,24 @@ struct Panel {
 };
 
 void drawEntityNode(ecs::Scene& scene, event::Dispatcher& dispatcher, ecs::EntityID ent, ecs::EntityID& selectedEnt) {
-    auto& tag = scene.get<core::Tag>(ent).tag;
+    auto& tag = scene.get<core::TagComponent>(ent).tag;
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
     bool opened = ImGui::TreeNodeEx(tag.c_str(), flags);
 
     if (ImGui::BeginPopupContextItem(std::to_string(ent).c_str())) {
-        if (!scene.has<core::Transform>(ent) && ImGui::MenuItem("Add Transform")) {
-            scene.assign<core::Transform>(ent);
+        if (!scene.has<core::TransformComponent>(ent) && ImGui::MenuItem("Add Transform")) {
+            scene.assign<core::TransformComponent>(ent);
         }
-        if (!scene.has<core::PointLight>(ent) && ImGui::MenuItem("Add PointLight")) {
-            scene.assign<core::PointLight>(ent);
+        if (!scene.has<core::PointLightComponent>(ent) && ImGui::MenuItem("Add PointLightComponent")) {
+            scene.assign<core::PointLightComponent>(ent);
         }
         if (!scene.has<core::Model>(ent) && ImGui::MenuItem("Add model")) {
             scene.assign<core::Model>(ent);
         }
-        if (scene.has<core::PointLight>(ent) && !scene.has<core::AmbienceLight>(ent) &&  ImGui::MenuItem("Add Ambience Light")) {
-            scene.assign<core::AmbienceLight>(ent);
+        if (scene.has<core::PointLightComponent>(ent) && !scene.has<core::AmbienceLightComponent>(ent) &&  ImGui::MenuItem("Add Ambience Light")) {
+            scene.assign<core::AmbienceLightComponent>(ent);
         }
-        if (scene.has<core::Transform>(ent) && ImGui::MenuItem("Control")) {
+        if (scene.has<core::TransformComponent>(ent) && ImGui::MenuItem("Control")) {
             dispatcher.post<core::SetActiveKeyboardControllerEntityEvent>(ent);
         }
         
@@ -66,7 +66,7 @@ void frameTime() {
 }
 
 void sceneHirarchy(ecs::Scene *scene, event::Dispatcher& dispatcher, ecs::EntityID& selectedEnt) {
-    Panel p{"ScreenHierarchy"};
+    Panel p{"Scene Hierarchy"};
     if (!scene) return;
     
     for (auto& ent : ecs::SceneView<>(*scene)) {
@@ -82,7 +82,7 @@ void sceneHirarchy(ecs::Scene *scene, event::Dispatcher& dispatcher, ecs::Entity
     if (ImGui::BeginPopupContextWindow(NULL, flags)) {
         if (ImGui::MenuItem("Create Empty Entity")) {
             auto newEnt = scene->newEntity();
-            scene->assign<core::Tag>(newEnt).tag = "New Entity";
+            scene->assign<core::TagComponent>(newEnt).tag = "New Entity";
         }
         ImGui::EndPopup();
     }
@@ -93,28 +93,28 @@ void selectedEntityComponentViewer(ecs::Scene *scene, event::Dispatcher& dispatc
     if (!scene) return;
     if (ent == ecs::null) return;
 
-        ImGui::Text("Tag Component");
-    core::Tag::componentPanel(scene->get<core::Tag>(ent));
+    ImGui::Text("Tag Component");
+    core::TagComponent::componentPanel(scene->get<core::TagComponent>(ent));
     ImGui::Separator();
 
-    if (scene->has<core::Transform>(ent)) {
+    if (scene->has<core::TransformComponent>(ent)) {
         ImGui::Text("Transform Component");
-        core::Transform::componentPanel(scene->get<core::Transform>(ent), dispatcher, ent);
+        core::TransformComponent::componentPanel(scene->get<core::TransformComponent>(ent), dispatcher, ent);
         ImGui::Separator();
     }
-    if (scene->has<core::PointLight>(ent)) {
+    if (scene->has<core::PointLightComponent>(ent)) {
         ImGui::Text("Point Light Component");
-        core::PointLight::componentPanel(scene->get<core::PointLight>(ent), dispatcher, ent);
+        core::PointLightComponent::componentPanel(scene->get<core::PointLightComponent>(ent), dispatcher, ent);
         ImGui::Separator();
     }
-    if (scene->has<core::AmbienceLight>(ent)) {
+    if (scene->has<core::AmbienceLightComponent>(ent)) {
         ImGui::Text("Ambience Light Component");
-        core::AmbienceLight::componentPanel(scene->get<core::AmbienceLight>(ent), dispatcher, ent);
+        core::AmbienceLightComponent::componentPanel(scene->get<core::AmbienceLightComponent>(ent), dispatcher, ent);
         ImGui::Separator();
     }
-    if (scene->has<core::Camera>(ent)) {
+    if (scene->has<core::CameraComponent>(ent)) {
         ImGui::Text("Camera Component");
-        core::Camera::componentPanel(scene->get<core::Camera>(ent), dispatcher, ent);
+        core::CameraComponent::componentPanel(scene->get<core::CameraComponent>(ent), dispatcher, ent);
         ImGui::Separator();
     }
     if (scene->has<core::Model>(ent)) {

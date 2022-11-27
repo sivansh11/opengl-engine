@@ -38,7 +38,7 @@ private:
     gfx::Buffer indexBuffer;
     gfx::VertexAttribute vertexAttribute;
     uint32_t indexCount;
-    Transform transform{};
+    TransformComponent transform{};
     std::shared_ptr<Material> material;
 
     friend class Model;

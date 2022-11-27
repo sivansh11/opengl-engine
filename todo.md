@@ -1,11 +1,13 @@
 # TODO
 
-- fix texture mipmapping 
+<!-- - ecs update -->
+<!-- - actually good camera controller -->
+- scene manager to comunicate with the script system
+- add script manager and reloading
+- better content browser
+- add script reloading
+- entity and scene class
 - seperate rendering thread 
-- actually good camera controller
-- editor camera
-
-
 - models and meshes properly
 
 

@@ -38,15 +38,15 @@ void App::run() {
     // shader.link();
 
     core::Model model{"../../../models/2.0/Sponza/glTF/Sponza.gltf"};
-    core::Transform modelTransform{};
+    core::TransformComponent modelTransform{};
     modelTransform.scale = {.01, .01, .01};
 
-    core::Transform cameraTransform{};
-    core::Camera    camera;
+    core::TransformComponent cameraTransform{};
+    core::CameraComponent    camera;
     camera.setPerspectiveProjection(60.0f, window.getAspect(), 0.01, 100);
     core::Controller controller;
 
-    std::vector<core::PointLight> pointLight(1);
+    std::vector<core::PointLightComponent> pointLight(1);
     for (int i = 0; i < pointLight.size(); i++) {
         pointLight[i].pos = glm::vec3(1, 1, 1);
         pointLight[i].ambient = {0.3, 0.3, 0.3};
@@ -55,7 +55,7 @@ void App::run() {
     }
     // pointLight.pos = {1, 1, 1};
 
-    core::Buffer pointLights(sizeof(core::PointLight) * pointLight.size(), core::BufferType::DYNAMIC_BUFFER);
+    core::Buffer pointLights(sizeof(core::PointLightComponent) * pointLight.size(), core::BufferType::DYNAMIC_BUFFER);
     pointLights.push(pointLight.data());
 
     core::FrameBufferInfo gBufferInfo;
@@ -110,7 +110,7 @@ void App::run() {
         } else {
             glm::vec3 temp;
             controller.move(window.getWindow(), static_cast<float>(deltaTime), pointLight[0].pos, temp);
-            std::memcpy(map, &pointLight[0], sizeof(core::PointLight) * pointLight.size());
+            std::memcpy(map, &pointLight[0], sizeof(core::PointLightComponent) * pointLight.size());
         }
 
         glm::mat4 pv = camera.getProjection() * camera.getView();

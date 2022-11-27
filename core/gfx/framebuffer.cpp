@@ -71,6 +71,7 @@ void FrameBuffer::create() {
 
 void FrameBuffer::bind() {
     glBindFramebuffer(GL_FRAMEBUFFER, id);
+    glViewport(0, 0, m_frameBufferInfo.width, m_frameBufferInfo.height);
 }
 
 void FrameBuffer::unbind() {

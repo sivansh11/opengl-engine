@@ -1,264 +1,263 @@
-#ifndef ECS_HPP
-#define ECS_HPP
+#ifndef NEW_ECS_H
+#define NEW_ECS_H
 
-#include <assert.h>
 #include <bitset>
 #include <vector>
 #include <queue>
-#include <unordered_set>
+#include <unordered_map>
+#include <assert.h>
 
 namespace ecs {
 
-#define MAX_COMPONENTS 32
-#define MAX_ENTITIES 100000
-
 using EntityID = unsigned long long;
 using ComponentID = uint32_t;
-using ComponentMask = std::bitset<MAX_COMPONENTS>;
-
-const EntityID null = MAX_ENTITIES;
 
 class BaseComponentPool {
 public:
-    virtual void* get(size_t index) = 0;
-    virtual void* construct(size_t index) = 0;
-    virtual void destroy(size_t index) = 0;
-private:
+    BaseComponentPool(size_t componentSize, uint32_t maxEntites) : m_componentSize(componentSize) {
+        p_data = new char[componentSize * maxEntites];
+    }
 
-};
-template <typename T>
-class ComponentPool : public BaseComponentPool {
-public:
-    ComponentPool() {
-        m_componentSize = sizeof(T);
-        p_data = new char[m_componentSize * MAX_ENTITIES];
-    }
-    ~ComponentPool() {
-        delete[] p_data;
-    }
-    void* get(size_t index) override {
+    inline void *get(size_t index) {
         return p_data + index * m_componentSize;
     }
-    void* construct(size_t index) override {
-        return new (get(index)) T();
-    }
-    void destroy(size_t index) override {
-        ((T*)(get(index)))->~T();
-    }
-private:
-    char* p_data{nullptr};
+    virtual void destroy(size_t index) = 0;
+
+private: 
+    char *p_data{nullptr};
     size_t m_componentSize{0};
 };
 
+template <typename T>
+class ComponentPool : public BaseComponentPool {
+public:
+    ComponentPool(uint32_t maxEntities) : BaseComponentPool(sizeof(T), maxEntities) {}
+    ~ComponentPool() {
+        delete[] p_data;
+    }
+
+    template <typename... Args>
+    inline T* construct(size_t index, Args&&... args) {
+        return new (get(index)) T(std::forward<Args>(args)...);
+    }
+
+    inline void destroy(size_t index) override {
+        reinterpret_cast<T*>(get(index))->~T();
+    }
+};
+
+template <int COMPONENTS = 32>
 class Scene {
+    using ComponentMask = std::bitset<COMPONENTS>;
+
+public:
     struct EntityDescription {
         EntityID id;
         ComponentMask mask;
         bool isValid;
-    };
-public:
-    Scene() {
-        entities.reserve(MAX_ENTITIES);
-        for (int i = 0; i < MAX_ENTITIES; i++) {
-            availableIDs.push(static_cast<EntityID>(i));
+    };  
+
+    Scene(uint32_t maxEntites = 100000) : m_maxEntites(maxEntites), null(maxEntites + 1) {
+        m_entities.reserve(m_maxEntites);
+        m_componentPools.resize(COMPONENTS, nullptr);
+        for (int i = 0; i < m_maxEntites; i++) {
+            m_availableIDs.push(static_cast<EntityID>(i));
         }
     }
+
     ~Scene() {
-        for (auto& componentPool: componentPools) {
-            delete componentPool;
+        for (auto ent : view()) {
+            destroyEntity(ent);
         }
     }
 
     template <typename T>
     ComponentID getComponentID() {
-        static ComponentID s_ComponentID = s_ComponentCounter++;
-        static bool once = [this]() {
-            this->registeredComponents.insert(s_ComponentID);
-            if (this->componentPools.size() <= s_ComponentID) {
-                this->componentPools.resize(s_ComponentID + 1, nullptr);
-            }
-            if (this->componentPools[s_ComponentID] == nullptr) {
-                this->componentPools[s_ComponentID] = new ComponentPool<T>();
-            }
-            return true;
-        }();
-        return s_ComponentID;
+        static ComponentID s_componentID = s_componentCounter++;
+        assert(s_componentID < COMPONENTS);
+        return s_componentID;
     }
 
-    const EntityID newEntity() {
-        EntityID entityID = availableIDs.front();
-        availableIDs.pop();
-        if (entities.size() <= entityID)
-        {
-            entities.push_back({entityID, ComponentMask(), true});
-        }
-        assert(entities[entityID].isValid == true && "this entity should not be in the available queue");
-        return entityID;
-    }
-    void deleteEntity(const EntityID entityID) {
-        assert(entityID != null);
-        assert(entities[entityID].isValid == true && "cannot delete already deleted entity");
-        for (int componentID=0; componentID<MAX_COMPONENTS; componentID++)
-        {
-            if (!entities[entityID].mask.test(componentID)) continue;
-            componentPools[componentID]->destroy(entityID);
-        }
-        entities[entityID].isValid = false;
-        entities[entityID].mask.reset();
-        availableIDs.push(entityID);
-    }
-    // void* assign(EntityID entityID, ComponentID componentID) {
-    //     assert(registeredComponents.find(componentID) != registeredComponents.end(), "component id provided not a registered component, use component ids only given by getComponentID<T>();");
-    //     assert(entities[entityID].mask.test(componentID) == false, "entity already has component");
-    //     void* p_component = componentPools[componentID]->construct(entityID);
-    //     entities[entityID].mask.set(componentID);
-    //     return p_component;
-    // }
-    template <typename... ComponentTypes>
-    decltype(auto) assign(EntityID entityID) {
-        assert(entityID != null);
-        static_assert(sizeof...(ComponentTypes) != 0);   // suggested by zilverblade
-        if constexpr(sizeof...(ComponentTypes) == 1) {
-            return (assign_<ComponentTypes...>(entityID));
+    EntityID createEntity() {
+        EntityID ent = m_availableIDs.front();
+        m_availableIDs.pop();
+        if (m_entities.size() <= ent) {
+            m_entities.push_back({ent, ComponentMask{}, true});
         } else {
-            return std::forward_as_tuple<ComponentTypes&...>(assign_<ComponentTypes>(entityID)...);
-        }
+            assert(!m_entities[ent].isValid && "EntityID should not have been in the available entities queue");
+            m_entities[ent].isValid = true;
+        }   
+        return ent;
     }
-    template <typename... ComponentTypes>
-    decltype(auto) get(EntityID entityID) {
-        assert(entityID != null);
-        static_assert(sizeof...(ComponentTypes) != 0);   // suggested by zilverblade
-        if constexpr(sizeof...(ComponentTypes) == 1) {
-            return (get_<ComponentTypes...>(entityID));
+
+    void destroyEntity(EntityID ent) {
+        assert(ent != null && "Cant destroy null entity!");
+        assert(m_entities[ent].isValid && "Cant destroy already deleted entity!");
+        for (int componentID = 0; componentID < COMPONENTS; componentID++) {
+            if (m_entities[ent].mask.test(componentID)) {
+                if (m_componentPools[componentID]) {
+                    m_componentPools[componentID]->destroy(ent);
+                }
+            }
+        }
+        m_entities[ent].isValid = false;
+        m_entities[ent].mask.reset();
+        m_availableIDs.push(ent);
+    }
+
+    template <typename... Ts, typename... Args>
+    decltype(auto) assign(EntityID ent, Args&&... args) {
+        static_assert(sizeof...(Ts) != 0);   // suggested by zilverblade
+        if constexpr(sizeof...(Ts) == 1) {
+            return (_assign<Ts...>(ent, std::forward<Args>(args)...));
         } else {
-            return std::forward_as_tuple<ComponentTypes&...>(get_<ComponentTypes>(entityID)...);
+            return std::forward_as_tuple<Ts&...>(_assign<Ts>(ent)...);
         }
     }
-    template <typename... ComponentTypes>
-    void remove(EntityID entityID) {
-        assert(entityID != null);
-        static_assert(sizeof...(ComponentTypes) != 0);   // suggested by zilverblade
-        remove_<ComponentTypes...>(entityID);                
-    }
+
+    template <typename... Ts>
+    decltype(auto) get(EntityID ent) {
+        static_assert(sizeof...(Ts) != 0);
+        if constexpr(sizeof...(Ts) == 1) {
+            return (_get<Ts...>(ent));
+        } else {
+            return std::forward_as_tuple<Ts&...>(_get<Ts>(ent)...);
+        }
+    }    
+
     template <typename T>
-    bool has(EntityID entityID) {
-        assert(entityID != null);
-        assert(isValid(entityID) == true && "entity does not exist");
-        return entities[entityID].mask.test(getComponentID<T>());
+    bool has(EntityID ent) {
+        assert(ent != null && "Cant check components of null entity");
+        assert(m_entities[ent].isValid && "Cant check component of deleted entity!");
+        assert(ent < m_entities.size() && "Entity not in the entity list!");
+        ComponentID componentID = getComponentID<T>();
+        return m_entities[ent].mask.test(componentID);
     }
-    
-    bool isValid(EntityID entityID) {
-        assert(entityID != null);
-        assert(entities.size() > entityID && "entity doesnt exist");
-        return entities[entityID].isValid;
+
+    template <typename... Ts>
+    void remove(EntityID ent) {
+        static_assert(sizeof...(Ts) != 0);
+        _remove<Ts...>(ent);
     }
-    std::vector<EntityDescription> entities;
+
+    bool isValid(EntityID ent) {
+        assert(ent != null && "Entity cant be null");
+        assert(ent < m_entities.size() && "Entity not in the entity list!");
+        return m_entities[ent].isValid;
+    }
+
+    template <typename... Ts>
+    struct View {
+        View(Scene& scene) : scene(scene) {
+            if constexpr(sizeof...(Ts) == 0) 
+                all = true;
+            else {
+                ComponentID componentIDs[] = {scene.getComponentID<Ts>()...};
+                for (int i = 0; i < sizeof...(Ts); i++) 
+                    mask.set(componentIDs[i]);
+            }
+        }
+        struct Iterator {
+            Iterator(Scene& scene, EntityID index, ComponentMask mask, bool all) 
+              : scene(scene), index(index), mask(mask), all(all) {}
+            bool isValidIndex() {
+                return scene.isValid(scene.m_entities[index].id) && (all || mask == (mask & scene.m_entities[index].mask));    
+            }
+            decltype(auto) operator*() const {
+                if constexpr(sizeof...(Ts) != 0) {
+                    return std::forward_as_tuple<EntityID&, Ts&...>(scene.m_entities[index].id, scene.get<Ts>(scene.m_entities[index].id)...);
+                } else {
+                    return (scene.m_entities[index].id);
+                }
+            }
+            bool operator==(const Iterator& other) const {
+                return index == other.index || index == scene.m_entities.size();
+            }
+            bool operator!=(const Iterator& other) const {
+                return index != other.index && index != scene.m_entities.size();
+            }
+            decltype(auto) operator++() {
+                do {
+                    index++;
+                } while (index < scene.m_entities.size() && !isValidIndex());
+                return *this;
+            }
+            Scene& scene;
+            EntityID index;
+            ComponentMask mask;
+            bool all;
+        };
+        const Iterator begin() const {
+            EntityID index = 0;
+            while (index < scene.m_entities.size() && (mask != (mask & scene.m_entities[index].mask) || !scene.isValid(scene.m_entities[index].id))) {
+                index ++;
+            }   
+            return Iterator{scene, index, mask, all};            
+        }
+        const Iterator end() const {
+            return Iterator{scene, EntityID{scene.m_entities.size()}, mask, all};
+        }
+        Scene& scene;
+        bool all = false;
+        ComponentMask mask;
+    };
+
+    template <typename... Ts>
+    View<Ts...> view() {
+        return View<Ts...>(*this);
+    }
 
 private:
-    template <typename T, typename... O>
-    void remove_(EntityID entityID) {
-        assert(entityID != null);
+    template <typename T, typename... Args>
+    T& _assign(EntityID ent, Args&&... args) {
+        assert(ent != null && "Cant assign to null entity!");
+        assert(m_entities[ent].isValid && "Cant assign to a deleted entity!");
+        assert(ent < m_entities.size() && "Entity not in the entity list!");
         ComponentID componentID = getComponentID<T>();
-        assert(isValid(entityID) == true && "entity does not exist");
-        assert(entities[entityID].mask.test(componentID) == true && "cannot remove component from entity which doesnt contain it in the first place");
-        componentPools[componentID]->destroy(entityID);
-        entities[entityID].mask.reset(componentID);
-        if constexpr(sizeof...(O) == 0) {
-            return;
-        } else {
-            remove_<O...>(entityID);
-        }
-    }
-    template <typename T>
-    T& get_(EntityID entityID) {
-        assert(entityID != null);
-        assert(entities[entityID].isValid == true && "entity does not exist");
-        assert(has<T>(entityID) == true && "entity does not contain requested component");
-        ComponentID componentID = getComponentID<T>();
-        return *((T*)(componentPools[componentID]->get(entityID)));
-    }
-    template <typename T>
-    T& assign_(EntityID entityID) {
-        assert(entityID != null);
-        assert(entities[entityID].isValid == true && "entity does not exist");
-        ComponentID componentID = getComponentID<T>();
-        assert(entities[entityID].mask.test(componentID) == false && "entity already has component");
-        T* p_component = (T*)(componentPools[componentID]->construct(static_cast<size_t>(entityID)));
-        entities[entityID].mask.set(componentID);
+        assert(componentID < COMPONENTS && "Too many components");
+        assert(!m_entities[ent].mask.test(componentID) && "Entity already has Component");
+        if (!m_componentPools[componentID]) 
+            m_componentPools[componentID] = new ComponentPool<T>(m_maxEntites);
+        T* p_component = reinterpret_cast<ComponentPool<T> *>(m_componentPools[componentID])->construct(ent, std::forward<Args>(args)...);    
+        m_entities[ent].mask.set(componentID);
         return *p_component;
     }
 
+    template <typename T>
+    T& _get(EntityID ent) {
+        assert(ent != null && "Cant get from null entity!");
+        assert(m_entities[ent].isValid && "Cant get from a deleted entity!");
+        assert(ent < m_entities.size() && "Entity not in the entity list!");
+        ComponentID componentID = getComponentID<T>();
+        assert(componentID < COMPONENTS && "Too many components");
+        assert(m_entities[ent].mask.test(componentID) && "Entity does not have Component");
+        return *static_cast<T *>(m_componentPools[componentID]->get(ent));
+    }
+
+    template <typename T, typename... O>
+    void _remove(EntityID ent) {
+        assert(ent != null && "Cant remove from null entity!");
+        assert(m_entities[ent].isValid && "Cant remove from a deleted entity!");
+        assert(ent < m_entities.size() && "Entity not in the entity list!");
+        ComponentID componentID = getComponentID<T>();
+        assert(componentID < COMPONENTS && "Too many components");
+        assert(m_entities[ent].mask.test(componentID) && "Entity does not have Component");
+        m_componentPools[componentID]->destroy(ent);
+        if constexpr(sizeof...(O) == 0) return;
+        _remove<O...>(ent);
+    }
+
+public:
+    const EntityID                   null;
+    std::vector<EntityDescription>   m_entities;
+
 private:
-    std::queue<EntityID> availableIDs;
-    std::vector<BaseComponentPool*> componentPools;
-    ComponentID s_ComponentCounter = 0;
-    std::unordered_set<ComponentID> registeredComponents;
-};
-
-template <typename... ComponentTypes>
-struct SceneView {
-    SceneView(Scene &scene) : scene(scene) {
-        if constexpr(sizeof...(ComponentTypes) == 0) {
-            all = true;
-        } else {
-            ComponentID componentIDs[] = {scene.getComponentID<ComponentTypes>()...};
-            for (int i = 0; i < sizeof...(ComponentTypes); i++) {
-                componentMask.set(componentIDs[i]);
-            }
-        }
-    }
-    struct Iterator {
-        Iterator(Scene &scene, EntityID index, ComponentMask mask, bool all) :
-            scene(scene), index(index), mask(mask), all(all) {
-
-        }
-
-        bool isValidIndex() {
-            return scene.isValid(scene.entities[index].id) && (all || mask == (mask & scene.entities[index].mask));
-        }
-        decltype(auto) operator*() const {
-            if constexpr(sizeof...(ComponentTypes) != 0) {
-                return std::forward_as_tuple<EntityID&, ComponentTypes&...>(scene.entities[index].id, scene.get<ComponentTypes>(scene.entities[index].id)...);
-            } else {
-                return (scene.entities[index].id);
-            }
-        }
-        bool operator==(const Iterator &other) const {
-            return index == other.index || index == scene.entities.size();
-        }
-        bool operator!=(const Iterator &other) const {
-            return index != other.index && index != scene.entities.size();
-        }
-        decltype(auto) operator++() {
-            do  {
-                index++;
-            } while(index < scene.entities.size() && !isValidIndex());
-            return *this;
-        }
-        EntityID index;
-        Scene &scene;
-        ComponentMask mask;
-        bool all = false;
-    };
-
-    const Iterator begin() const {
-        EntityID firstIndex = 0;
-        while (firstIndex < scene.entities.size() && (componentMask != (componentMask & scene.entities[firstIndex].mask) || !scene.isValid(scene.entities[firstIndex].id))) {
-            firstIndex++;
-        } 
-        
-        return Iterator(scene, firstIndex, componentMask, all);
-    }
-    
-    const Iterator end() const  {
-        return Iterator(scene, EntityID{scene.entities.size()}, componentMask, all);
-    }
-    Scene &scene;
-    bool all = false;
-    ComponentMask componentMask;
+    const uint32_t                   m_maxEntites;
+    std::queue<EntityID>             m_availableIDs;
+    std::vector<BaseComponentPool *> m_componentPools;
+    ComponentID                      s_componentCounter = 0;
 };
 
 } // namespace ecs
-
 
 #endif

@@ -13,4 +13,5 @@ target_link_libraries(core
     stb_image
     imgui
     assimp
+    pybind11::embed
 )

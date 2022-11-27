@@ -20,8 +20,8 @@ public:
 
     float getAspect() const { return float(m_width) / float(m_height); }
 
-    float getWidth() const { return m_width; }
-    float getHeight() const { return m_height; }
+    float getWidth() const { return float(m_width); }
+    float getHeight() const { return float(m_height); }
 
     GLFWwindow *getWindow() { return m_window; }
     

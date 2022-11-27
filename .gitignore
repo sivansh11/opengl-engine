@@ -4,3 +4,4 @@ model/
 dumps/
 models/
 todo.md
+__pycache__/
