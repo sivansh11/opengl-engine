@@ -9,8 +9,8 @@
 #include "gfx/shaders.hpp"
 
 #include "model.hpp"
-#include "camera.hpp"
-#include "light.hpp"
+#include "components/camera.hpp"
+#include "components/light.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 

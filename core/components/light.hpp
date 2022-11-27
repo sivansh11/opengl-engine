@@ -1,13 +1,13 @@
 #ifndef LIGHT_HPP
 #define LIGHT_HPP
 
-#include "event_types.hpp"
-#include "ecs.hpp"
+#include "../event_types.hpp"
+#include "../ecs.hpp"
 
 #include <glm/glm.hpp>
 #include "imgui.h"
 
-#include "gfx/shaders.hpp"
+#include "../gfx/shaders.hpp"
 
 namespace core {
 

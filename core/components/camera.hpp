@@ -2,12 +2,14 @@
 #define CAMERA_HPP
 
 #include "imgui.h"
-#include "event_types.hpp"
-#include "ecs.hpp"
+#include "../event_types.hpp"
+#include "../ecs.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+
+#include <GLFW/glfw3.h>
 
 namespace core {
 

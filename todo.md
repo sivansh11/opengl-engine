@@ -2,13 +2,24 @@
 
 <!-- - ecs update -->
 <!-- - actually good camera controller -->
+<!-- - entity and scene class -->
+<!-- - restructure -->
+- fix space below menu bar
+- actually make src files for headers smh this already taking too long to compile
 - scene manager to comunicate with the script system
 - add script manager and reloading
+- start, pause, restart
 - better content browser
-- add script reloading
-- entity and scene class
+- viewports
+- documentation for python
+- readme
+- events
+- python based systems
+- render system
+- rename stuff / folder ??
+- create a logo
 - seperate rendering thread 
-- models and meshes properly
+- textures for models with no textures properly
 
 
 # Dynamic Material System

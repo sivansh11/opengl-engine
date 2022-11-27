@@ -1,8 +1,8 @@
 #ifndef SCRIPT_HPP
 #define SCRIPT_HPP
 
-#include "pyscript/script_engine.hpp"
-#include "entity.hpp"
+#include "../pyscript/script_engine.hpp"
+#include "../entity.hpp"
 
 #include <imgui.h>
 

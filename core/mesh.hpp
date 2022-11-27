@@ -4,7 +4,7 @@
 #include "gfx/vertex_attribute.hpp"
 #include "gfx/buffer.hpp"
 #include "material.hpp"
-#include "transform.hpp"
+#include "components/transform.hpp"
 
 #include <glm/glm.hpp>
 

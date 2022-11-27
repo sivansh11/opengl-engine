@@ -3,8 +3,8 @@
 #include "../entity.hpp"
 #include "imgui.h"
 
-#include "../transform.hpp"
-#include "../light.hpp"
+#include "../components/transform.hpp"
+#include "../components/light.hpp"
 
 #include <iostream>
 #include <sstream>

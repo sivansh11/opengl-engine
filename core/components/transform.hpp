@@ -1,8 +1,8 @@
 #ifndef TRANSFORM_HPP
 #define TRANSFORM_HPP
 
-#include "event_types.hpp"
-#include "ecs.hpp"
+#include "../event_types.hpp"
+#include "../ecs.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>

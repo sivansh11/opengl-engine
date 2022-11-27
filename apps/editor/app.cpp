@@ -6,12 +6,12 @@
 #include "event_types.hpp"
 #include "scene_renderer.hpp"
 
-#include "scene_hierarchy_panel.hpp"
-#include "entity_view_panel.hpp"
-#include "content_browser_panel.hpp"
-#include "registered_script_panel.hpp"
-#include "editor_color_picker_panel.hpp"
-#include "frame_info_panel.hpp"
+#include "panels/scene_hierarchy_panel.hpp"
+#include "panels/entity_view_panel.hpp"
+#include "panels/content_browser_panel.hpp"
+#include "panels/registered_script_panel.hpp"
+#include "panels/editor_color_picker_panel.hpp"
+#include "panels/frame_info_panel.hpp"
 
 App::App() : window("Editor", 1200, 800) {
     core::initImgui(window.getWindow());
