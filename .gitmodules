@@ -10,3 +10,6 @@
 [submodule "deps/imgui/imgui"]
 	path = deps/imgui/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "deps/pybind11"]
+	path = deps/pybind11
+	url = https://github.com/pybind/pybind11.git
