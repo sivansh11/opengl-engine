@@ -4,25 +4,40 @@
 <!-- - actually good camera controller -->
 <!-- - entity and scene class -->
 <!-- - restructure -->
+<!-- - better content browser -->
+- sky box
+- billboards
+- billboards lights
+- dsa program shader (look at the dsa docs fully once)
+- uniform buffers
+- asset manager
+- shader rework, same file shaders, shader options
 - fix space below menu bar
 - actually make src files for headers smh this already taking too long to compile
 - scene manager to comunicate with the script system
+- rework scripting
+- bvh
+- shadows
+- raytracing 
+- raytraced visible tris
+- raytraced shadows
+- frame arenas
 - add script manager and reloading
 - start, pause, restart
-- better content browser
 - viewports
 - documentation for python
 - readme
 - events
 - python based systems
 - render system
+- dynamic material system
 - rename stuff / folder ??
 - create a logo
 - seperate rendering thread 
 - textures for models with no textures properly
 
 
-# Dynamic Material System
+# Dynamic material system
 
 - MaterialTypeBuilder defines the layout of the material     
 - on calling build, the memory is initialized

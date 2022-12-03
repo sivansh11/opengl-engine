@@ -14,6 +14,7 @@ ShaderProgram::ShaderProgram() {
 
 ShaderProgram::~ShaderProgram() {
     glDeleteProgram(id);
+    id = 0;
 }
 
 ShaderProgram::ShaderProgram(ShaderProgram&& shaderProgram) {
@@ -133,41 +134,41 @@ int ShaderProgram::uniformLocation(const char *uniformName) {
     int location = glGetUniformLocation(id, uniformName);
     uniformLocations[uniformName] = location;
     if (location == -1) {
-        throw std::runtime_error("Uniform requested but does not exist!");
+        throw std::runtime_error(std::string("Uniform requested but does not exist!") + "\n\t" + uniformName);
     }
     return location;
 }
 
 void ShaderProgram::mat4f(const char *uniformName, const float *data) {
-    glUniformMatrix4fv(uniformLocation(uniformName), 1, GL_FALSE, data);
+    glProgramUniformMatrix4fv(id, uniformLocation(uniformName), 1, GL_FALSE, data);
 }
 
 void ShaderProgram::mat3f(const char *uniformName, const float *data) {
-    glUniformMatrix3fv(uniformLocation(uniformName), 1, GL_FALSE, data);
+    glProgramUniformMatrix3fv(id, uniformLocation(uniformName), 1, GL_FALSE, data);
 }
 
 void ShaderProgram::mat2f(const char *uniformName, const float *data) {
-    glUniformMatrix2fv(uniformLocation(uniformName), 1, GL_FALSE, data);
+    glProgramUniformMatrix2fv(id, uniformLocation(uniformName), 1, GL_FALSE, data);
 }
 
 void ShaderProgram::vec4f(const char *uniformName, const float *data) {
-    glUniform4fv(uniformLocation(uniformName), 1, data);
+    glProgramUniform4fv(id, uniformLocation(uniformName), 1, data);
 }
 
 void ShaderProgram::vec3f(const char *uniformName, const float *data) {
-    glUniform3fv(uniformLocation(uniformName), 1, data);
+    glProgramUniform3fv(id, uniformLocation(uniformName), 1, data);
 }
 
 void ShaderProgram::vec2f(const char *uniformName, const float *data) {
-    glUniform2fv(uniformLocation(uniformName), 1, data);
+    glProgramUniform2fv(id, uniformLocation(uniformName), 1, data);
 }
 
 void ShaderProgram::vecf(const char *uniformName, const float data) {
-    glUniform1f(uniformLocation(uniformName), data);
+    glProgramUniform1f(id, uniformLocation(uniformName), data);
 }
 
 void ShaderProgram::veci(const char *uniformName, const int data) {
-    glUniform1i(uniformLocation(uniformName), data);
+    glProgramUniform1i(id, uniformLocation(uniformName), data);
 }
 
 } // namespace gfx

@@ -13,9 +13,13 @@
 #include "panels/editor_color_picker_panel.hpp"
 #include "panels/frame_info_panel.hpp"
 
+#include "gfx/shaders.hpp"
+#include "gfx/buffer.hpp"
+
 App::App() : window("Editor", 1200, 800) {
     core::initImgui(window.getWindow());
     core::setupImGuiStyle();
+    core::myDefaultImGuiStyle();
     float size_pixels = 12;
     ImFont *font = ImGui::GetIO().Fonts->AddFontFromFileTTF("../../../apps/editor/fonts/CooperHewitt-Medium.otf", size_pixels);
     ImGui::GetIO().FontDefault = font;
@@ -29,6 +33,7 @@ App::~App() {
 }
 
 void App::run() {
+
     core::Scene scene;
     event::Dispatcher dispatcher;
 
@@ -44,8 +49,8 @@ void App::run() {
     {
         auto light = scene.createEntity();
         light.assign<core::PointLightComponent>();
-        light.assign<core::AmbienceLightComponent>();
-        light.assign<core::TransformComponent>();
+        light.assign<core::AmbienceLightComponent>().ambient = {0.63, 0.63, 0.63};
+        light.assign<core::TransformComponent>().translation = {0, 2, 0};
         light.assign<core::TagComponent>("Point Light");
     }
     // {
@@ -70,12 +75,15 @@ void App::run() {
     core::EditorColorPickerPanel editorColorPickerPanel{};
     core::FrameInfoPanel frameInfoPanel{};
 
+    struct Settings {
+        float fps = 60;
+    } settings;
+
     double lastTime = glfwGetTime();
-    double framerate = 60;
     while (!window.shouldClose()) {
         double currentTime = glfwGetTime(); 
 
-        if(!(currentTime - lastTime >= 1.0 / framerate))  continue;
+        if (!(currentTime - lastTime >= 1.0 / settings.fps)) continue;
         
         lastTime = currentTime;
         
@@ -177,6 +185,10 @@ void App::run() {
         // ImGui::Begin("Camera");
         // core::EditorCamera::componentPanel(editorCamera);
         // ImGui::End();
+
+        ImGui::Begin("Settings");
+        ImGui::DragFloat("Fps", &settings.fps, 1, 20, 10000);
+        ImGui::End();
 
         core::endFrameImgui(window.getWindow());
 

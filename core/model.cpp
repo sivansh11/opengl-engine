@@ -86,17 +86,17 @@ std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene, aiM
         vertex.nor.y = mesh->mNormals[i].y;
         vertex.nor.z = mesh->mNormals[i].z;
 
-        assert(mesh->HasTangentsAndBitangents());
-
-        vertex.tangent.x = mesh->mTangents[i].x;
-        vertex.tangent.y = mesh->mTangents[i].y;
-        vertex.tangent.z = mesh->mTangents[i].z;
-
-        vertex.biTangent.x = mesh->mBitangents[i].x;
-        vertex.biTangent.y = mesh->mBitangents[i].y;
-        vertex.biTangent.z = mesh->mBitangents[i].z;
-
-
+        if (mesh->HasTangentsAndBitangents()) {
+            vertex.tangent.x = mesh->mTangents[i].x;
+            vertex.tangent.y = mesh->mTangents[i].y;
+            vertex.tangent.z = mesh->mTangents[i].z;
+            vertex.biTangent.x = mesh->mBitangents[i].x;
+            vertex.biTangent.y = mesh->mBitangents[i].y;
+            vertex.biTangent.z = mesh->mBitangents[i].z;
+        } else {
+            assert(false);
+        }
+    
         if (mesh->mTextureCoords[0]) {
             vertex.uv.x = mesh->mTextureCoords[0][i].x;
             vertex.uv.y = mesh->mTextureCoords[0][i].y;

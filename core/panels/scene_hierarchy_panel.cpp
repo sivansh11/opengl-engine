@@ -35,7 +35,12 @@ void SceneHierarchyPanel::drawEntityNode(core::Scene32& scene, ecs::EntityID ent
     auto& tag = scene.get<TagComponent>(ent).tag;
 
     ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_SpanAvailWidth;
-    bool opened = ImGui::TreeNodeEx(tag.c_str(), treeFlags);
+    bool opened;
+    if (tag == "") {
+        opened = ImGui::TreeNodeEx(" ", treeFlags);
+    } else {
+        opened = ImGui::TreeNodeEx(tag.c_str(), treeFlags);
+    }
 
     if (ImGui::BeginPopupContextItem(std::to_string(ent).c_str())) {
         if (!scene.has<TransformComponent>(ent) && ImGui::MenuItem("Add Transform")) 

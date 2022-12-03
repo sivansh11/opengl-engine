@@ -3,6 +3,8 @@
 
 #include "panel.hpp"
 
+#include "../gfx/texture.hpp"
+
 #include <iostream>
 #include <filesystem>
 
@@ -20,6 +22,8 @@ private:
 
 private:
     std::filesystem::path m_path;
+    gfx::Texture2D m_directoryIcon;
+    gfx::Texture2D m_fileIcon;
 };
 
 } // namespace core
