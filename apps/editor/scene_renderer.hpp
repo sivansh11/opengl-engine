@@ -82,7 +82,7 @@ public:
         // }
 
         lights.clear();
-        for (auto [ent, pl, t] : scene.view<core::PointLightComponent, core::TransformComponent>()) {
+        for (auto [ent, pl, t] : scene.group<core::PointLightComponent, core::TransformComponent>()) {
             core::LightData& lightData = lights.emplace_back();
             lightData.pos = t.translation;
             lightData.color = pl.color;
@@ -107,7 +107,7 @@ public:
         geometryPass.mat4f("mvp.view", glm::value_ptr(camera.getView()));
         geometryPass.mat4f("mvp.projection", glm::value_ptr(camera.getProjection()));
  
-        for (auto [ent, model, transform] : scene.view<core::Model, core::TransformComponent>()) {
+        for (auto [ent, model, transform] : scene.group<core::Model, core::TransformComponent>()) {
             geometryPass.mat4f("mvp.model", glm::value_ptr(transform.mat4()));
             model.draw(geometryPass);
         }
@@ -188,7 +188,7 @@ private:
 //         // }
 
 //         lights.clear();
-//         for (auto [ent, pl] : scene.view<core::PointLightComponent>()) {
+//         for (auto [ent, pl] : scene.group<core::PointLightComponent>()) {
 //             core::LightData& lightData = lights.emplace_back();
 //             lightData.pos = pl.pos;
 //             lightData.color = pl.color;
@@ -215,7 +215,7 @@ private:
 //         shader.veci("numLights", lights.size());
 //         shader.vec3f("viewPos", glm::value_ptr(camera.getPos())); 
 //         lightBuffer.bind(0);
-//         for (auto [ent, model, transform] : scene.view<core::Model, core::TransformComponent>()) {
+//         for (auto [ent, model, transform] : scene.group<core::Model, core::TransformComponent>()) {
 //             shader.mat4f("mvp.model", glm::value_ptr(transform.mat4()));
 //             model.draw(shader);
 //         }

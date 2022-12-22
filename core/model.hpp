@@ -32,7 +32,7 @@ public:
 
     std::shared_ptr<gfx::Texture2D> loadMaterialTexture(aiMaterial *mat, aiTextureType type, std::string typeName);
 
-    void draw(gfx::ShaderProgram& shader);
+    void draw(gfx::ShaderProgram& shader, bool withMaterial = true);
 
     static void componentPanel(Model& model, event::Dispatcher& dispatcher, ecs::EntityID ent);
 

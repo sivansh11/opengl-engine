@@ -9,7 +9,7 @@ class FrameInfoPanel : public Panel {
 public:
     FrameInfoPanel();
 
-    void renderPanel();
+    void renderPanel() override;
 
 private:
 

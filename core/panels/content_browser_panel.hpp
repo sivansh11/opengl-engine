@@ -14,11 +14,7 @@ class ContentBrowserPanel : public Panel {
 public:
     ContentBrowserPanel(std::filesystem::path initialPath);
 
-    void renderPanel();
-
-private:
-
-    void showTreeNode(const std::filesystem::path& currentPath, bool isDir);
+    void renderPanel() override;
 
 private:
     std::filesystem::path m_path;

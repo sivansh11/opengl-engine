@@ -28,6 +28,7 @@ public:
 
 private:
     GLuint id;
+    GLuint64 handle;
     uint32_t m_width, m_height;
 
 };

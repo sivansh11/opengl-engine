@@ -2,7 +2,7 @@
 
 namespace core {
 
-EditorColorPickerPanel::EditorColorPickerPanel() { 
+EditorColorPickerPanel::EditorColorPickerPanel() : Panel("Editor Color Picker Panel") { 
     m_show = false;    
 }
 

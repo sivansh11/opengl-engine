@@ -3,7 +3,8 @@
 namespace core {
 
 ContentBrowserPanel::ContentBrowserPanel(std::filesystem::path initialPath) 
-  : m_path(initialPath),
+  : Panel("Content Browser Panel"),
+    m_path(initialPath),
     m_directoryIcon("../../../asset/DirectoryIcon.png"),
     m_fileIcon("../../../asset/FileIcon.png") {
 

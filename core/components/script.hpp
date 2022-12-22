@@ -11,12 +11,12 @@
 
 namespace core {
 
-struct Script {
+struct __attribute__((visibility("hidden"))) Script {
     const char *name;
     py::object *object;
 };
 
-struct ScriptComponent {
+struct __attribute__((visibility("hidden"))) ScriptComponent {
     std::unordered_map<std::string, py::object> scripts;
 
     static void componentPanel(ScriptComponent& scriptComponent, event::Dispatcher& dispatcher, core::Scene32& scene, ecs::EntityID ent) {

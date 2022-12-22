@@ -48,8 +48,9 @@ void Model::loadModelFromPath(const char *modelPath) {
     const aiScene *scene = importer.ReadFile(modelPath,
                                              aiProcess_Triangulate |
                                             //  aiProcess_FlipUVs     |
-                                             aiProcess_CalcTangentSpace |
-                                             aiProcess_GenNormals);
+                                             aiProcess_GenNormals |
+                                             aiProcess_CalcTangentSpace
+                                             );
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         throw std::runtime_error(importer.GetErrorString());
     }
@@ -94,7 +95,7 @@ std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene, aiM
             vertex.biTangent.y = mesh->mBitangents[i].y;
             vertex.biTangent.z = mesh->mBitangents[i].z;
         } else {
-            assert(false);
+            // assert(false);
         }
     
         if (mesh->mTextureCoords[0]) {
@@ -228,9 +229,10 @@ std::shared_ptr<gfx::Texture2D> Model::loadMaterialTexture(aiMaterial *mat, aiTe
     return tex;
 }
 
-void Model::draw(gfx::ShaderProgram& shader) {
+void Model::draw(gfx::ShaderProgram& shader, bool withMaterial) {
     for (auto& mesh : m_meshes) {
-        mesh->material->bind(shader);
+        if (withMaterial)
+            mesh->material->bind(shader);
         mesh->draw();
     }
 }

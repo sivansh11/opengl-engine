@@ -31,9 +31,13 @@ class EntityViewPanel : public Panel {
 public:
     EntityViewPanel(event::Dispatcher& dispatcher);
 
-    void renderPanel(core::Scene32 *scene, ecs::EntityID ent);
+    void renderPanel() override;
+    void setSceneContext(core::Scene32 *scene) { EntityViewPanel::scene = scene; }
+    void setSelectecEntity(ecs::EntityID ent) { EntityViewPanel::ent = ent; }
 
 private:
+    core::Scene32 *scene = nullptr;
+    ecs::EntityID ent = ecs::null;
     event::Dispatcher& m_dispatcher;
 };
 

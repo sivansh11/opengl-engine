@@ -62,6 +62,8 @@ public:
     uint32_t getWidth() const { return m_frameBufferInfo.width; }
     uint32_t getHeight() const { return m_frameBufferInfo.height; }
 
+    GLuint getID() { return id; }
+
 private:
     void create();
     void destroy();

@@ -68,12 +68,22 @@ void App::run() {
 
     ImVec2 size{100, 100};
 
+    std::vector<core::Panel *> panels;
+
     core::SceneHierarchyPanel sceneHierarchyPanel(dispatcher); 
+    sceneHierarchyPanel.setSceneContext(&scene.getScene());
     core::RegisteredScriptsPanel registeredScriptsPanel{};
     core::EntityViewPanel entityViewPanel{dispatcher};
     core::ContentBrowserPanel contentBrowserPanel{std::filesystem::current_path().parent_path().parent_path().parent_path()};
     core::EditorColorPickerPanel editorColorPickerPanel{};
     core::FrameInfoPanel frameInfoPanel{};
+
+    panels.push_back(&sceneHierarchyPanel);
+    panels.push_back(&registeredScriptsPanel);
+    panels.push_back(&entityViewPanel);
+    panels.push_back(&contentBrowserPanel);
+    panels.push_back(&editorColorPickerPanel);
+    panels.push_back(&frameInfoPanel);
 
     struct Settings {
         float fps = 60;
@@ -91,7 +101,7 @@ void App::run() {
 
         float ts = ImGui::GetIO().DeltaTime;
 
-        for (auto [ent, scripts] : scene.getScene().view<core::ScriptComponent>()) {
+        for (auto [ent, scripts] : scene.getScene().group<core::ScriptComponent>()) {
             for (auto& kv : scripts.scripts) {
                 kv.second.attr("on_update")(ts);
             }
@@ -134,12 +144,15 @@ void App::run() {
         ImGui::DockSpace(dockspaceID, ImGui::GetContentRegionAvail(), dockspaceFlags);
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Panels")) {
-                if (ImGui::MenuItem("Scene Hierarchy Panel", NULL, &sceneHierarchyPanel.getShow())) {}
-                if (ImGui::MenuItem("Registered Scripts Panel", NULL, &registeredScriptsPanel.getShow())) {}
-                if (ImGui::MenuItem("Entity View Panel", NULL, &entityViewPanel.getShow())) {}
-                if (ImGui::MenuItem("Content Browser Panel", NULL, &contentBrowserPanel.getShow())) {}
-                if (ImGui::MenuItem("Editor Color Picker Panel", NULL, &editorColorPickerPanel.getShow())) {}
-                if (ImGui::MenuItem("Frame Info Panel", NULL, &frameInfoPanel.getShow())) {}
+                for (auto& panel : panels) {
+                    if (ImGui::MenuItem(panel->getName().c_str(), NULL, &panel->getShow())) {}
+                }
+                // if (ImGui::MenuItem("Scene Hierarchy Panel", NULL, &sceneHierarchyPanel.getShow())) {}
+                // if (ImGui::MenuItem("Registered Scripts Panel", NULL, &registeredScriptsPanel.getShow())) {}
+                // if (ImGui::MenuItem("Entity View Panel", NULL, &entityViewPanel.getShow())) {}
+                // if (ImGui::MenuItem("Content Browser Panel", NULL, &contentBrowserPanel.getShow())) {}
+                // if (ImGui::MenuItem("Editor Color Picker Panel", NULL, &editorColorPickerPanel.getShow())) {}
+                // if (ImGui::MenuItem("Frame Info Panel", NULL, &frameInfoPanel.getShow())) {}
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
@@ -147,7 +160,7 @@ void App::run() {
         ImGui::End();
         ImGui::PopStyleVar(2);
 
-        sceneHierarchyPanel.renderPanel(&scene.getScene());
+        sceneHierarchyPanel.renderPanel();
         entityViewPanel.renderPanel(&scene.getScene(), sceneHierarchyPanel.getSelectedEntity());
         registeredScriptsPanel.renderPanel();
         contentBrowserPanel.renderPanel();
@@ -173,7 +186,7 @@ void App::run() {
         ImGui::End();
         ImGui::PopStyleVar(2);
 
-        if (sceneHierarchyPanel.getSelectedEntity() != scene.getScene().null) {
+        if (sceneHierarchyPanel.getSelectedEntity() != ecs::null) {
             if (scene.getScene().has<core::ScriptComponent>(sceneHierarchyPanel.getSelectedEntity())) {
                 auto& scripts = scene.getScene().get<core::ScriptComponent>(sceneHierarchyPanel.getSelectedEntity()).scripts;
                 for (auto& kv : scripts) {

@@ -2,14 +2,16 @@
 
 namespace core {
 
-EntityViewPanel::EntityViewPanel(event::Dispatcher& dispatcher) : m_dispatcher(dispatcher) {}
+EntityViewPanel::EntityViewPanel(event::Dispatcher& dispatcher) : Panel("Entity View Panel"),  m_dispatcher(dispatcher) {}
 
-void EntityViewPanel::renderPanel(core::Scene32 *scene, ecs::EntityID ent) {
+void EntityViewPanel::renderPanel() {
+    if (!scene) return;
+    if (ent == ecs::null) return; 
     if (!m_show) return;
 
     ImGui::Begin("Entity View Panel");
 
-    if (!scene || ent == scene->null) {
+    if (!scene || ent == ecs::null) {
         ImGui::End();
         return;
     }

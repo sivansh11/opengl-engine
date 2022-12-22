@@ -23,6 +23,7 @@ layout (std430, binding = 0) buffer PointLights {
 
 uniform vec3 viewPos;
 uniform int numLights;
+uniform sampler2D shadowMap;
 
 void main() {
     vec3 accumulative = vec3(0, 0, 0);

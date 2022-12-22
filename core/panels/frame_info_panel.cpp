@@ -2,7 +2,7 @@
 
 namespace core {
 
-FrameInfoPanel::FrameInfoPanel() {}
+FrameInfoPanel::FrameInfoPanel() : Panel("Frame Info Panel") {}
 
 void FrameInfoPanel::renderPanel() {
     if (!m_show) return;

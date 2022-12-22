@@ -11,7 +11,7 @@ class RegisteredScriptsPanel : public Panel {
 public:
     RegisteredScriptsPanel();
 
-    void renderPanel();
+    void renderPanel() override;
 
 private:
 

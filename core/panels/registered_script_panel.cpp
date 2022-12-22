@@ -2,7 +2,7 @@
 
 namespace core {
 
-RegisteredScriptsPanel::RegisteredScriptsPanel() {}
+RegisteredScriptsPanel::RegisteredScriptsPanel() : Panel("Register Script Panel") {}
 
 void RegisteredScriptsPanel::renderPanel() {
     if (!m_show) return;

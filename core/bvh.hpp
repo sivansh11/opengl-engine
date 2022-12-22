@@ -29,11 +29,10 @@ namespace bvh {
 
 struct Triangle {
     Triangle() = default;
-    Triangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) : vert0(v0), vert1(v1), vert2(v2) { center = (v0 + v1 + v2) / 3.0f; }
-    glm::vec3 vert0;
-    glm::vec3 vert1;
-    glm::vec3 vert2;
-    glm::vec3 center;
+    Triangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) : vert0(v0), vert1(v1), vert2(v2) {}
+    alignas(16) glm::vec3 vert0;
+    alignas(16) glm::vec3 vert1;
+    alignas(16) glm::vec3 vert2;
 
     void boundingBox(glm::vec3 &min, glm::vec3 &max) {
         min = glm::min(min, vert0);
@@ -45,7 +44,7 @@ struct Triangle {
     }
 
     glm::vec3 centroid(){
-        return center;
+        return (vert0 + vert1 + vert2) / 3.0f;
     }
 };
 
@@ -56,13 +55,39 @@ struct BvhNode {
     uint32_t triangleCount;
 };
 
+bool bvhNodeIsLeaf(BvhNode& node) {
+    return node.triangleCount > 0;
+}
+
+
 class Bvh {
+    struct GpuBufferData {
+        Triangle *triangleBuffer;
+        uint32_t triangleCount;
+        uint32_t *idBuffer;
+        BvhNode  *bvhNodeBuffer;
+    };
+
 public:
     Bvh() = default;
+
+    // void builder(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices) {
+    //     std::vector<Triangle> triangles;
+    //     assert(indices.size() % 3 == 0);
+    //     for (int i = 0; i < indices.size(); i+=3) {
+    //         triangles.push_back(Triangle{vertices[i].pos, vertices[i + 1].pos, vertices[i + 2].pos});
+    //     }   
+    //     builder(triangles);
+    // }
+
 
     void builder(std::vector<Triangle>& triangles) {
         m_triangles = &triangles;
         buildBvh();
+    }
+
+    GpuBufferData getGpuBufferData() {
+        return {m_triangles->data(), static_cast<uint32_t>(m_triangles->size()), m_triangleIDs.data(), m_bvhNodes.data()};
     }
 
 private:
@@ -135,6 +160,19 @@ private:
     uint32_t m_nodeUsed = 1;
 };
 
+std::ostream& operator<<(std::ostream& out, const glm::vec3& vec) {
+    return out << vec.x << ' ' << vec.y << ' ' << vec.z;
+}
+
+std::ostream& operator<<(std::ostream& out, const core::bvh::Triangle& tri) {
+    out << tri.vert0 << "  " << tri.vert1 << "  " << tri.vert2;
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const core::bvh::BvhNode& node) {
+    out << node.aabbMin << "  " << node.leftFirst << "  " << node.aabbMax << "  " << node.triangleCount;
+    return out;
+}
 
 } // namespace bvh
 

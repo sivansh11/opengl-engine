@@ -28,7 +28,6 @@ Texture2D::Texture2D(const char *imagePath) {
     m_width = static_cast<uint32_t>(width);
     m_height = static_cast<uint32_t>(height); 
 
-    // 1 + ceil(log2(max(width, height))
     GLsizei level = 1 + std::ceil(std::log2(static_cast<double>(std::max(m_width, m_height))));
     glTextureStorage2D(id, level, GL_RGBA8, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
 
@@ -42,6 +41,8 @@ Texture2D::Texture2D(const char *imagePath) {
     glGenerateTextureMipmap(id);
 
     stbi_image_free(bytes);
+
+    handle = glGetTextureHandleARB(id);
 }
 
 Texture2D::Texture2D(unsigned char *data, GLenum format) {

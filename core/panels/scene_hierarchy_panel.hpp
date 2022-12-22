@@ -17,7 +17,9 @@ class SceneHierarchyPanel : public  Panel {
 public:
     SceneHierarchyPanel(event::Dispatcher& dispatcher);
 
-    void renderPanel(core::Scene32 *scene);
+    void renderPanel() override;
+
+    void setSceneContext(core::Scene32 *scene);
     
     ecs::EntityID getSelectedEntity() { return m_selectedEntity; }
 
@@ -25,6 +27,7 @@ private:
     void drawEntityNode(core::Scene32& scene, ecs::EntityID ent);
 
 private:
+    core::Scene32 *scene = nullptr;
     event::Dispatcher& m_dispatcher;
     ecs::EntityID m_selectedEntity{};
 };

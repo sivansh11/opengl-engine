@@ -5,7 +5,9 @@
 <!-- - entity and scene class -->
 <!-- - restructure -->
 <!-- - better content browser -->
+- rework scripting, atm its hacked in
 - sky box
+- selected entity panel should show sub meshes
 - billboards
 - billboards lights
 - dsa program shader (look at the dsa docs fully once)
@@ -15,7 +17,6 @@
 - fix space below menu bar
 - actually make src files for headers smh this already taking too long to compile
 - scene manager to comunicate with the script system
-- rework scripting
 - bvh
 - shadows
 - raytracing 

@@ -2,20 +2,24 @@
 
 namespace core {
 
-SceneHierarchyPanel::SceneHierarchyPanel(event::Dispatcher& dispatcher) : m_dispatcher(dispatcher) {}
+SceneHierarchyPanel::SceneHierarchyPanel(event::Dispatcher& dispatcher) : Panel("Scene Hierarchy Panel"), m_dispatcher(dispatcher) {}
 
-void SceneHierarchyPanel::renderPanel(core::Scene32 *scene) {
+void SceneHierarchyPanel::setSceneContext(core::Scene32 *scene) {
+    SceneHierarchyPanel::scene = scene;
+}
+
+void SceneHierarchyPanel::renderPanel() {
     if (!m_show) return;
     ImGui::Begin("Scene Hierarchy Panel");
     if (!scene) {
         ImGui::End();
         return;
     }
-    for (auto ent : scene->view()) 
+    for (auto ent : scene->group()) 
         drawEntityNode(*scene, ent);
 
     if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered()) 
-        m_selectedEntity = scene->null;
+        m_selectedEntity = ecs::null;
 
     ImGuiPopupFlags popupFlags = ImGuiPopupFlags_NoOpenOverItems |
                                     ImGuiPopupFlags_MouseButtonRight;
@@ -57,7 +61,7 @@ void SceneHierarchyPanel::drawEntityNode(core::Scene32& scene, ecs::EntityID ent
         if (ImGui::MenuItem("Delete Entity")) {
             scene.destroyEntity(ent);
             if (ent == m_selectedEntity) {
-                m_selectedEntity = scene.null;
+                m_selectedEntity = ecs::null;
             }
         }
         ImGui::EndPopup();  
