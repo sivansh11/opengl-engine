@@ -9,11 +9,13 @@ layout (location = 4) in vec3 biTangent;
 layout (location = 0) out vec3 out_pos;
 layout (location = 1) out vec3 out_nor;
 layout (location = 2) out vec2 out_uv;
-layout (location = 3) out mat3 out_TBN;
+layout (location = 3) out vec4 out_fragPosLightSpace;
+layout (location = 4) out mat3 out_TBN;
  
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+layout (location = 0) uniform mat4 model;
+layout (location = 1) uniform mat4 view;
+layout (location = 2) uniform mat4 projection;
+layout (location = 3) uniform mat4 lightSpaceMatrix;
 
 void main() {
     gl_Position = projection * view * model * vec4(pos, 1);
@@ -26,4 +28,5 @@ void main() {
     mat3 TBN = mat3(T, B, N);
     out_nor = mat3(transpose(inverse(model))) * nor;
     out_TBN = TBN;
+    out_fragPosLightSpace = lightSpaceMatrix * model * vec4(pos, 1.0);
 }

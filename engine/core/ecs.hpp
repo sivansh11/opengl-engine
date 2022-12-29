@@ -12,12 +12,6 @@ namespace ecs {
 using EntityID = unsigned long long;
 using ComponentID = uint32_t;
 
-namespace utils {
-
-static ComponentID s_componentCounter = 0;
-    
-} // namespace utils
-
 const EntityID null = 0;
 
 class BaseComponentPool {
@@ -155,7 +149,7 @@ public:
 
     template <typename T>
     ComponentID getComponentID() {
-        static ComponentID s_componentID = utils::s_componentCounter++;
+        static ComponentID s_componentID =        m_componentCounter++;
         assert(s_componentID < COMPONENTS && "Too many components!");
         return s_componentID;
     }
@@ -283,7 +277,9 @@ private:
     const uint32_t                   m_maxEntities;
     std::vector<EntityDescription>   m_entities;
     std::queue<EntityID>             m_availableEntities;
-    std::vector<BaseComponentPool *> m_componentPools;       
+    std::vector<BaseComponentPool *> m_componentPools;      
+    ComponentID                      m_componentCounter = 0;
+
 };
 
 } // namespace ecs

@@ -26,8 +26,11 @@ public:
 
     Texture2D(unsigned char *data, GLenum format);
 
+    Texture2D(GLuint id);
+
 private:
     GLuint id;
+    bool m_owned = true;
     GLuint64 handle;
     uint32_t m_width, m_height;
 

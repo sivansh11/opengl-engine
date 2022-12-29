@@ -12,11 +12,18 @@
 #include "core/components.hpp"
 
 #include "scene_renderer.hpp"
+#include "adv_scene_renderer.hpp"
 
 #include "core/imgui_utils.hpp"
 #include "renderer/mesh.hpp"
 
 #include "editor_camera.hpp"
+
+#include "panels/content_browser_panel.hpp"
+#include "panels/editor_color_picker_panel.hpp"
+#include "panels/entity_view_panel.hpp"
+#include "panels/frame_info_panel.hpp"
+#include "panels/scene_hierarchy_panel.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/string_cast.hpp"
@@ -36,36 +43,49 @@ App::~App() {
 }
 
 void App::run() {
-    core::Scene scene;
-    {
-        auto ent = scene.createEntity();
-        scene.assign<renderer::Model>(ent, ASSETS_PATH + "/models/2.0/Sponza/glTF/Sponza.gltf");
-        scene.assign<core::TagComponent>(ent, "Sponza");
-        auto& tc = scene.assign<core::TransformComponent>(ent);
-        tc.rotation = {.01, .01, .01};
-    }
-    {
-        auto ent = scene.createEntity();
-        scene.assign<core::TagComponent>(ent, "Light");
-        auto& ld = scene.assign<core::LightData>(ent);
-        ld.pos = {0, 1, 0};
-        ld.color = {1, 1, 1};
-        ld.term = {.1, .1, .1};
-        ld.ambience = {.1, .1, .1};
-    }
+    AdvSceneRenderer renderer(window);
+    
+    std::shared_ptr<core::Scene> scene = core::Serializer::loadScene(ASSETS_PATH + "/scenes/test.hs");
 
-    SceneRenderer renderer(window);
     EditorCamera camera;
 
     ImVec2 size{100, 100};
 
+    std::vector<Panel *> panels;
+
+    SceneHierarchyPanel sceneHierarchyPanel(window.getDispatcher()); 
+    sceneHierarchyPanel.setSceneContext(&*scene);
+    EntityViewPanel entityViewPanel{window.getDispatcher()};
+    ContentBrowserPanel contentBrowserPanel{ASSETS_PATH};
+    EditorColorPickerPanel editorColorPickerPanel{};
+    FrameInfoPanel frameInfoPanel{};
+
+    panels.push_back(&sceneHierarchyPanel);
+    panels.push_back(&entityViewPanel);
+    panels.push_back(&contentBrowserPanel);
+    panels.push_back(&editorColorPickerPanel);
+    panels.push_back(&frameInfoPanel);
+
+    struct Settings {
+        float fps = 144;
+    } settings;
+
+    double lastTime = glfwGetTime();
+
     while (!window.shouldClose()) {
         window.pollEvents();
+
+        double currentTime = glfwGetTime(); 
+
+        if (!(currentTime - lastTime >= 1.0 / settings.fps)) continue;
+        
+        float dt = currentTime - lastTime;
+
+        lastTime = currentTime;
 
         glClear(GL_COLOR_BUFFER_BIT);
         
         renderer.render(scene, camera);
-
 
         core::startFrameImgui();
 
@@ -93,16 +113,16 @@ void App::run() {
         ImGui::DockSpace(dockspaceID, ImGui::GetContentRegionAvail(), dockspaceFlags);
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Panels")) {
-                // for (auto& panel : panels) {
-                //     if (ImGui::MenuItem(panel->getName().c_str(), NULL, &panel->getShow())) {}
-                // }
-                // // if (ImGui::MenuItem("Scene Hierarchy Panel", NULL, &sceneHierarchyPanel.getShow())) {}
-                // // if (ImGui::MenuItem("Registered Scripts Panel", NULL, &registeredScriptsPanel.getShow())) {}
-                // // if (ImGui::MenuItem("Entity View Panel", NULL, &entityViewPanel.getShow())) {}
-                // // if (ImGui::MenuItem("Content Browser Panel", NULL, &contentBrowserPanel.getShow())) {}
-                // // if (ImGui::MenuItem("Editor Color Picker Panel", NULL, &editorColorPickerPanel.getShow())) {}
-                // // if (ImGui::MenuItem("Frame Info Panel", NULL, &frameInfoPanel.getShow())) {}
-                // ImGui::EndMenu();
+                for (auto& panel : panels) {
+                    if (ImGui::MenuItem(panel->getName().c_str(), NULL, &panel->getShow())) {}
+                }
+                // if (ImGui::MenuItem("Scene Hierarchy Panel", NULL, &sceneHierarchyPanel.getShow())) {}
+                // if (ImGui::MenuItem("Registered Scripts Panel", NULL, &registeredScriptsPanel.getShow())) {}
+                // if (ImGui::MenuItem("Entity View Panel", NULL, &entityViewPanel.getShow())) {}
+                // if (ImGui::MenuItem("Content Browser Panel", NULL, &contentBrowserPanel.getShow())) {}
+                // if (ImGui::MenuItem("Editor Color Picker Panel", NULL, &editorColorPickerPanel.getShow())) {}
+                // if (ImGui::MenuItem("Frame Info Panel", NULL, &frameInfoPanel.getShow())) {}
+                ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
         }
@@ -122,15 +142,25 @@ void App::run() {
             size = vpSize;
             window.getDispatcher().post<ViewPortResizeEvent>(static_cast<uint32_t>(vpSize.x), static_cast<uint32_t>(vpSize.y));
         }
-        camera.onUpdate(0.01);
+        camera.onUpdate(dt);
         ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void*>(renderer.getRender())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
         ImGui::End();
         ImGui::PopStyleVar(2);
 
-        core::endFrameImgui(window);
+        for (auto panel : panels) {
+            panel->renderPanel();
+        }
 
+        entityViewPanel.setSceneContext(&*scene);
+
+        ImGui::Begin("Debug");
+        renderer.imguiRender();
+        ImGui::End();
+
+        core::endFrameImgui(window);
 
         window.updateScreen();
     }
-    
+
+    core::Serializer::saveScene(scene, ASSETS_PATH + "/scenes/test.hs");
 }

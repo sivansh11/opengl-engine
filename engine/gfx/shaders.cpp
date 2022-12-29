@@ -44,6 +44,7 @@ void ShaderProgram::addShader(const std::string& shaderCodePath) {
 void ShaderProgram::link() {
     std::string error = "";
     std::vector<GLuint> shaders(m_shaderCodePaths.size());
+
     for (const auto& shaderCodePath : m_shaderCodePaths) {
         // Read shader code from file
         if (error == "") {
@@ -132,7 +133,7 @@ int ShaderProgram::uniformLocation(const std::string& uniformName) {
     int location = glGetUniformLocation(id, uniformName.c_str());
     uniformLocations[uniformName] = location;
     if (location == -1) {
-        std::cerr << "Uniform requested but does not exist!\n";
+        std::cerr << "Uniform " << uniformName << " requested but does not exist in shaders:\n\t " << m_shaderCodePaths[0].substr(m_shaderCodePaths[0].find_last_of("/") + 1, m_shaderCodePaths[0].find_last_of("/") + 1 + m_shaderCodePaths[0].find_last_of(".")) << "\n";
         // throw std::runtime_error(std::string("Uniform requested but does not exist!") + "\n\t" + uniformName);
     }
     return location;

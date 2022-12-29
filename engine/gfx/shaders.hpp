@@ -38,6 +38,8 @@ public:
 
     void dispatchCompute(uint32_t x, uint32_t y, uint32_t z);
 
+    GLuint getID() const { return id; }
+
 private:
     GLuint id;
     std::vector<std::string> m_shaderCodePaths;

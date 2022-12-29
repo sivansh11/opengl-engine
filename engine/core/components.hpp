@@ -74,9 +74,16 @@ private:
 
 struct LightData {
     alignas(16) glm::vec3 pos;
-    alignas(16) glm::vec3 color;
-    alignas(16) glm::vec3 term;
+    alignas(16) glm::vec3 color{1, 1, 1};
+    alignas(16) glm::vec3 term{.1, .1, .1};
     alignas(16) glm::vec3 ambience;
+
+    static void componentPanel(LightData& lightData, event::Dispatcher& dispatcher, ecs::EntityID ent) {
+        ImGui::DragFloat3("position", reinterpret_cast<float *>(&lightData.pos), 0.01);        
+        ImGui::DragFloat3("color", reinterpret_cast<float *>(&lightData.color), 0.01);        
+        ImGui::DragFloat3("term", reinterpret_cast<float *>(&lightData.term), 0.01);        
+        ImGui::DragFloat3("ambience", reinterpret_cast<float *>(&lightData.ambience), 0.01);        
+    }
 };
 
 } // namespace core

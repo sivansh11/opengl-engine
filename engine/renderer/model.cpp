@@ -19,7 +19,9 @@ void Model::loadModelFromPath(const std::string& modelPath) {
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(modelPath,
                                              aiProcess_Triangulate |
-                                             aiProcess_GenNormals
+                                             aiProcess_GenNormals |
+                                             aiProcess_CalcTangentSpace |
+                                             aiProcess_PreTransformVertices
                                             );
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         throw std::runtime_error(importer.GetErrorString());
@@ -62,6 +64,17 @@ std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene, aiM
             vertex.uv.y = mesh->mTextureCoords[0][i].y;
         } else {
             vertex.uv = {0, 0};
+        }
+
+        if (mesh->HasTangentsAndBitangents()) {
+            vertex.tangent.x = mesh->mTangents[i].x;
+            vertex.tangent.y = mesh->mTangents[i].y;
+            vertex.tangent.z = mesh->mTangents[i].z;
+            vertex.biTangent.x = mesh->mBitangents[i].x;
+            vertex.biTangent.y = mesh->mBitangents[i].y;
+            vertex.biTangent.z = mesh->mBitangents[i].z;
+        } else {
+            // assert(false);
         }
 
         vertices.push_back(vertex);
@@ -153,7 +166,7 @@ std::unique_ptr<Material> Model::processMaterial(aiMaterial *material) {
 }
 
 std::shared_ptr<gfx::Texture2D> Model::loadMaterialTexture(aiMaterial *mat, aiTextureType type, std::string typeName) {
-    if (mat->GetTextureCount(type) == 0) {
+    if (mat->GetTextureCount(type) == 0 && typeName == "diffuse") {
         unsigned char data[4];
         for (int i = 0; i < 4; i++) 
             data[i] = std::numeric_limits<unsigned char>::max();
@@ -195,6 +208,10 @@ void Model::draw(gfx::ShaderProgram& shader, const core::TransformComponent& tra
             mesh->material->bind(shader);
         mesh->draw(shader, transform);
     }
+}
+
+void Model::componentPanel(Model& model, event::Dispatcher& dispatcher, ecs::EntityID ent) {
+    ImGui::Text("%s", model.getFilePath().c_str()); 
 }
 
 } // namespace renderer

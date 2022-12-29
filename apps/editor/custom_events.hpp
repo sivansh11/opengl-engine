@@ -10,4 +10,9 @@ struct ViewPortResizeEvent : public event::Event {
     uint32_t width, height;
 };
 
+struct EntityDeleteEvent : public event::Event {
+    EntityDeleteEvent(ecs::EntityID ent) : ent(ent) {}
+    ecs::EntityID ent;
+};
+
 #endif

@@ -1,6 +1,8 @@
 #ifndef GFX_FRAMEBUFFER_HPP
 #define GFX_FRAMEBUFFER_HPP
 
+#include "texture.hpp"
+
 #include <glad/glad.h>
 
 #include <map>
@@ -51,7 +53,7 @@ public:
     void bind();
     void unbind();
 
-    GLuint getTextureID(GLenum type) const;
+    Texture2D getTextureID(GLenum type) const;
 
     void invalidate(uint32_t newWidth, uint32_t newHeight);
 

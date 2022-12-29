@@ -56,8 +56,13 @@ Texture2D::Texture2D(unsigned char *data, GLenum format) {
     // glGenerateTextureMipmap(id);
 }
 
+Texture2D::Texture2D(GLuint id) : id(id) {
+    m_owned = false;
+}
+
 Texture2D::~Texture2D() {
-    glDeleteTextures(1, &id);
+    if (m_owned)
+        glDeleteTextures(1, &id);
 }
 
 Texture2D::Texture2D(Texture2D&& texture) {

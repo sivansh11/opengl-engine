@@ -12,6 +12,8 @@ Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
     vertexAttribute.attributeLocation(0, 3, offsetof(Vertex, pos));
     vertexAttribute.attributeLocation(1, 3, offsetof(Vertex, nor));
     vertexAttribute.attributeLocation(2, 2, offsetof(Vertex, uv));
+    vertexAttribute.attributeLocation(3, 3, offsetof(Vertex, tangent));
+    vertexAttribute.attributeLocation(4, 3, offsetof(Vertex, biTangent));
 
     vertexAttribute.bindVertexBuffer<Vertex>(vertexBuffer);
     vertexAttribute.bindElementBuffer(indexBuffer);

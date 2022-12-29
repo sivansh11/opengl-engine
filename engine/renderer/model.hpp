@@ -41,6 +41,8 @@ public:
 
     void draw(gfx::ShaderProgram& shader, const core::TransformComponent& transform, bool withMaterial = true);
 
+    static void componentPanel(Model& model, event::Dispatcher& dispatcher, ecs::EntityID ent);
+
 private:
     void processNode(aiNode *node, const aiScene *scene, aiMatrix4x4& transform);
     std::unique_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene, aiMatrix4x4& transform);

@@ -1,22 +1,18 @@
 #ifndef BASE_RENDERER_HPP
 #define BASE_RENDERER_HPP
 
-#include "../gfx/shaders.hpp"
-#include "../gfx/framebuffer.hpp"
-#include "../gfx/buffer.hpp"
-#include "../gfx/vertex_attribute.hpp"
+#include "../core/window.hpp"
+
+#include "../core/entity.hpp"
 
 namespace renderer {
 
 class BaseRenderer {
 public:
-    BaseRenderer() = default;
+    BaseRenderer(core::Window& window);
     ~BaseRenderer() = default;
 
-    void render();
-
-private:
-
+    core::Window& m_window;
 };
 
 } // namespace renderer

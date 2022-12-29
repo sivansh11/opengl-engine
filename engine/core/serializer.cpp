@@ -1,5 +1,6 @@
 #include "serializer.hpp"
 
+#include "../renderer/model.hpp"
 #include "components.hpp"
 
 #include <glm/glm.hpp>
@@ -104,7 +105,7 @@ DEFINE_WRITE_OPERATOR(glm::vec2)
 DEFINE_WRITE_OPERATOR(glm::vec3)
 DEFINE_WRITE_OPERATOR(glm::vec4)
 
-static void serializeEntity(YAML::Emitter& out, const std::unique_ptr<core::Scene>& scene, ecs::EntityID ent) {
+static void serializeEntity(YAML::Emitter& out, const std::shared_ptr<core::Scene>& scene, ecs::EntityID ent) {
     if (scene->has<TagComponent>(ent)) {
         auto& tag = scene->get<TagComponent>(ent).tag;
         out << YAML::Key << "Tag";
@@ -126,15 +127,29 @@ static void serializeEntity(YAML::Emitter& out, const std::unique_ptr<core::Scen
         out << YAML::EndMap;
     }
 
-    // if (scene->has<RenderableComponent>(ent)) {
-    //     auto& rc = scene->get<RenderableComponent>(ent);
-    //     out << YAML::Key << "RenderableComponent";
-    //     out << YAML::Value << rc.model->getFilePath();
-    // }
+    if (scene->has<renderer::Model>(ent)) {
+        auto& model = scene->get<renderer::Model>(ent);
+        out << YAML::Key << "ModelComponent";
+        out << YAML::Value << model.getFilePath();
+    }
 
+    if (scene->has<LightData>(ent)) {
+        auto& ld = scene->get<LightData>(ent);
+        out << YAML::Key << "LightData";
+        out << YAML::Value << YAML::BeginMap;
+            out << YAML::Key << "pos";
+            out << YAML::Value << ld.pos;
+            out << YAML::Key << "color";
+            out << YAML::Value << ld.color;
+            out << YAML::Key << "term";
+            out << YAML::Value << ld.term;
+            out << YAML::Key << "ambience";
+            out << YAML::Value << ld.ambience;
+        out << YAML::EndMap;
+    }
 }
 
-void Serializer::saveScene(const std::unique_ptr<core::Scene>& scene, const std::string& filePath) {
+void Serializer::saveScene(const std::shared_ptr<core::Scene> scene, const std::string& filePath) {
     YAML::Emitter out;
 
     out << YAML::BeginMap;
@@ -153,7 +168,7 @@ void Serializer::saveScene(const std::unique_ptr<core::Scene>& scene, const std:
     fout << out.c_str() << '\n';
 }
 
-std::unique_ptr<core::Scene> Serializer::loadScene(const std::string& filePath) {
+std::shared_ptr<core::Scene> Serializer::loadScene(const std::string& filePath) {
     YAML::Node data;
     try {
         data = YAML::LoadFile(filePath);
@@ -162,7 +177,7 @@ std::unique_ptr<core::Scene> Serializer::loadScene(const std::string& filePath) 
         return {};
     }
 
-    std::unique_ptr<core::Scene> scene = std::make_unique<core::Scene>();
+    std::shared_ptr<core::Scene> scene = std::make_unique<core::Scene>();
 
     auto entities = data["Entities"];
 
@@ -182,6 +197,19 @@ std::unique_ptr<core::Scene> Serializer::loadScene(const std::string& filePath) 
             tc.scale = entity["TransformComponent"]["scale"].as<glm::vec3>();
         }
         
+        if (entity["ModelComponent"]) {
+            auto& mc = scene->assign<renderer::Model>(ent);
+            mc.loadModelFromPath(entity["ModelComponent"].as<std::string>());
+        }
+
+        if (entity["LightData"]) {
+            auto& ld = scene->assign<LightData>(ent);
+            ld.pos = entity["LightData"]["pos"].as<glm::vec3>();
+            ld.color = entity["LightData"]["color"].as<glm::vec3>();
+            ld.term = entity["LightData"]["term"].as<glm::vec3>();
+            ld.ambience = entity["LightData"]["ambience"].as<glm::vec3>();
+        }
+
         // if (entity["RenderableComponent"]) {
         //     auto& rc = scene->assign<RenderableComponent>(ent);
         //     rc.model->loadModelFromPath(entity["RenderableComponent"].as<std::string>().c_str());

@@ -77,7 +77,7 @@ Window::Window(const char *name, uint32_t width, uint32_t height)
     }    
 
     glfwMakeContextCurrent(m_window);                     
-    // glfwSwapInterval(0);
+    glfwSwapInterval(0);
 
     if (!gladLoadGL()) {
         throw std::runtime_error("Failed to load opengl!");

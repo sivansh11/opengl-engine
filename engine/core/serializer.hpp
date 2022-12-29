@@ -14,8 +14,8 @@ public:
     Serializer() = default;
     ~Serializer() = default;
 
-    static void saveScene(const std::unique_ptr<core::Scene>& scene, const std::string& filePath);
-    static std::unique_ptr<core::Scene> loadScene(const std::string& filePath);
+    static void saveScene(const std::shared_ptr<core::Scene> scene, const std::string& filePath);
+    static std::shared_ptr<core::Scene> loadScene(const std::string& filePath);
 private:
 
 };

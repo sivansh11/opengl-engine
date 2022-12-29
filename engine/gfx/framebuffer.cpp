@@ -50,11 +50,20 @@ void FrameBuffer::create() {
             attachments.push_back(attachmentTypeFormat.attachment);
             m_frameBufferAttachments.emplace(attachmentTypeFormat.attachment, tex);
         } else {
-            GLuint ren;
-            glCreateRenderbuffers(1, &ren);
-            glNamedRenderbufferStorage(ren, GL_DEPTH_COMPONENT, static_cast<GLsizei>(m_frameBufferInfo.width), static_cast<GLsizei>(m_frameBufferInfo.height));
-            glNamedFramebufferRenderbuffer(id, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, ren);
-            m_frameBufferAttachments.emplace(GL_DEPTH_ATTACHMENT, ren);
+            GLuint tex;
+            glCreateTextures(GL_TEXTURE_2D, 1, &tex);
+            glBindTexture(GL_TEXTURE_2D, tex);
+            glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTextureParameteri(tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTextureParameteri(tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+            glTextureParameterfv(tex, GL_TEXTURE_BORDER_COLOR, borderColor);
+            glTexImage2D(GL_TEXTURE_2D, 0, attachmentTypeFormat.formatType.format, static_cast<GLsizei>(m_frameBufferInfo.width), static_cast<GLsizei>(m_frameBufferInfo.height), 0, GL_DEPTH_COMPONENT, attachmentTypeFormat.formatType.type, nullptr);
+            glNamedFramebufferTexture(id, attachmentTypeFormat.attachment, tex, 0);
+            // attachments.push_back(attachmentTypeFormat.attachment);
+            m_frameBufferAttachments.emplace(attachmentTypeFormat.attachment, tex);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
     }
 
@@ -76,9 +85,9 @@ void FrameBuffer::unbind() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-GLuint FrameBuffer::getTextureID(GLenum type) const {
+Texture2D FrameBuffer::getTextureID(GLenum type) const {
     assert(m_frameBufferAttachments.contains(type));
-    return m_frameBufferAttachments.at(type);
+    return Texture2D{m_frameBufferAttachments.at(type)};
 }
 
 void FrameBuffer::destroy() {

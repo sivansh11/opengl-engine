@@ -17,6 +17,8 @@ public:
         ImVec2 vp = ImGui::GetWindowSize();
         update(vp.x / vp.y);
 
+        if (!ImGui::IsWindowHovered()) return;
+
         float velocity = m_speed * ts;
 
         if (ImGui::IsKeyDown(ImGuiKey_W)) 
