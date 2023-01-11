@@ -37,12 +37,27 @@ struct Material {
 	float transparency; 
 };
 
+struct Settings {
+	bool indirectSpecularLight; // Whether indirect specular light should be rendered or not.
+	bool indirectDiffuseLight; // Whether indirect diffuse light should be rendered or not.
+	bool directLight; // Whether direct light should be rendered or not.
+	bool shadows; // Whether shadows should be rendered or not.
+};
+
+uniform Material material;
+uniform Settings settings;
+uniform PointLight pointLights[MAX_LIGHTS];
+uniform int numberOfLights; // Number of lights currently uploaded.
+uniform vec3 cameraPosition; // World campera position.
+uniform int state; // Only used for testing / debugging.
+uniform sampler3D voxels; // Voxelization texture.
+
 layout (location = 0) in vec3 worldPositionFrag;
 layout (location = 1) in vec3 normalFrag;
 
 out vec4 color;
 
-
+vec3 normal = normalize(normalFrag); 
 float MAX_DISTANCE = distance(vec3(abs(worldPositionFrag)), vec3(-1));
 
 // Returns an attenuation factor given a distance.
@@ -78,8 +93,8 @@ float traceShadowCone(vec3 from, vec3 direction, float targetDistance){
 		if(!isInsideCube(c, 0)) break;
 		c = scaleAndBias(c);
 		float l = pow(dist, 2); // Experimenting with inverse square falloff for shadows.
-		float s1 = 0.062 * textureLod(texture3D, c, 1 + 0.75 * l).a;
-		float s2 = 0.135 * textureLod(texture3D, c, 4.5 * l).a;
+		float s1 = 0.062 * textureLod(voxels, c, 1 + 0.75 * l).a;
+		float s2 = 0.135 * textureLod(voxels, c, 4.5 * l).a;
 		float s = s1 + s2;
 		acc += (1 - acc) * s;
 		dist += 0.9 * VOXEL_SIZE * (1 + 0.05 * l);
@@ -107,7 +122,7 @@ vec3 traceDiffuseVoxelCone(const vec3 from, vec3 direction){
 		float l = (1 + CONE_SPREAD * dist / VOXEL_SIZE);
 		float level = log2(l);
 		float ll = (level + 1) * (level + 1);
-		vec4 voxel = textureLod(texture3D, c, min(MIPMAP_HARDCAP, level));
+		vec4 voxel = textureLod(voxels, c, min(MIPMAP_HARDCAP, level));
 		acc += 0.075 * ll * voxel * pow(1 - voxel.a, 2);
 		dist += ll * VOXEL_SIZE * 2;
 	}
@@ -132,14 +147,14 @@ vec3 traceSpecularVoxelCone(vec3 from, vec3 direction){
 		if(!isInsideCube(c, 0)) break;
 		c = scaleAndBias(c); 
 		
-		float level = 0.1 * material.specularDiffusion * log2(1 + dist / VOXEL_SIZE);
-		vec4 voxel = textureLod(texture3D, c, min(level, MIPMAP_HARDCAP));
+		float level = 0.1 * log2(1 + dist / VOXEL_SIZE);
+		vec4 voxel = textureLod(voxels, c, min(level, MIPMAP_HARDCAP));
 		float f = 1 - acc.a;
-		acc.rgb += 0.25 * (1 + material.specularDiffusion) * voxel.rgb * voxel.a * f;
+		acc.rgb += 0.25 * (1) * voxel.rgb * voxel.a * f;
 		acc.a += 0.25 * voxel.a * f;
 		dist += STEP * (1.0f + 0.125f * level);
 	}
-	return 1.0 * pow(material.specularDiffusion + 1, 0.8) * acc.rgb;
+	return 1.0 * pow(1, 0.8) * acc.rgb;
 }
 
 // Calculates indirect diffuse light using voxel cone tracing.
@@ -196,18 +211,18 @@ vec3 indirectDiffuseLight(){
 	acc += w[2] * traceDiffuseVoxelCone(C_ORIGIN - CONE_OFFSET * corner2, c4);
 
 	// Return result.
-	return DIFFUSE_INDIRECT_FACTOR * material.diffuseReflectivity * acc * (material.diffuseColor + vec3(0.001f));
+	return DIFFUSE_INDIRECT_FACTOR * material.reflectivity * acc * (material.diffuseColor + vec3(0.001f));
 }
 
 // Calculates indirect specular light using voxel cone tracing.
 vec3 indirectSpecularLight(vec3 viewDirection){
 	const vec3 reflection = normalize(reflect(viewDirection, normal));
-	return material.specularReflectivity * material.specularColor * traceSpecularVoxelCone(worldPositionFrag, reflection);
+	return material.reflectivity * material.specularColor * traceSpecularVoxelCone(worldPositionFrag, reflection);
 }
 
 // Calculates refractive light using voxel cone tracing.
 vec3 indirectRefractiveLight(vec3 viewDirection){
-	const vec3 refraction = refract(viewDirection, normal, 1.0 / material.refractiveIndex);
+	const vec3 refraction = refract(viewDirection, normal, 1.0 / 1);
 	const vec3 cmix = mix(material.specularColor, 0.5 * (material.specularColor + vec3(1)), material.transparency);
 	return cmix * traceSpecularVoxelCone(worldPositionFrag, refraction);
 }
@@ -240,7 +255,7 @@ vec3 calculateDirectLight(const PointLight light, const vec3 viewDirection){
 
 	float refractiveAngle = 0;
 	if(material.transparency > 0.01){
-		vec3 refraction = refract(viewDirection, normal, 1.0 / material.refractiveIndex);
+		vec3 refraction = refract(viewDirection, normal, 1.0 / 1);
 		refractiveAngle = max(0, material.transparency * dot(refraction, lightDirection));
 	}
 
@@ -258,12 +273,12 @@ vec3 calculateDirectLight(const PointLight light, const vec3 viewDirection){
 	// --------------------
 	diffuseAngle = min(shadowBlend, diffuseAngle);
 	specularAngle = min(shadowBlend, max(specularAngle, refractiveAngle));
-	const float df = 1.0f / (1.0f + 0.25f * material.specularDiffusion); // Diffusion factor.
+	const float df = 1.0f / (1.0f + 0.25f); // Diffusion factor.
 	const float specular = SPECULAR_FACTOR * pow(specularAngle, df * SPECULAR_POWER);
 	const float diffuse = diffuseAngle * (1.0f - material.transparency);
 
-	const vec3 diff = material.diffuseReflectivity * material.diffuseColor * diffuse;
-	const vec3 spec = material.specularReflectivity * material.specularColor * specular;
+	const vec3 diff = material.reflectivity * material.diffuseColor * diffuse;
+	const vec3 spec = material.reflectivity * material.specularColor * specular;
 	const vec3 total = light.color * (diff + spec);
 	return attenuate(distanceToLight) * total;
 };
@@ -282,11 +297,11 @@ void main(){
 	const vec3 viewDirection = normalize(worldPositionFrag - cameraPosition);
 
 	// Indirect diffuse light.
-	if(settings.indirectDiffuseLight && material.diffuseReflectivity * (1.0f - material.transparency) > 0.01f) 
+	if(settings.indirectDiffuseLight && material.reflectivity * (1.0f - material.transparency) > 0.01f) 
 		color.rgb += indirectDiffuseLight();
 
 	// Indirect specular light (glossy reflections).
-	if(settings.indirectSpecularLight && material.specularReflectivity * (1.0f - material.transparency) > 0.01f) 
+	if(settings.indirectSpecularLight && material.reflectivity * (1.0f - material.transparency) > 0.01f) 
 		color.rgb += indirectSpecularLight(viewDirection);
 
 	// Emissivity.

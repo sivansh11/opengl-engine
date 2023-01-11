@@ -37,6 +37,8 @@ void App::run() {
     voxelizationPass.addShader(ASSETS_PATH + "/shaders/voxels/voxelize.frag");
     voxelizationPass.link();
 
+    std::cout << "----------------------------\n";
+
     gfx::ShaderProgram VCT{};
     VCT.addShader(ASSETS_PATH + "/shaders/voxels/voxel_cone_tracing.vert");
     VCT.addShader(ASSETS_PATH + "/shaders/voxels/voxel_cone_tracing.frag");

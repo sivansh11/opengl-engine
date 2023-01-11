@@ -11,6 +11,5 @@ project(app)
 # add_subdirectory(bvh_test)
 
 add_subdirectory(test)
-add_subdirectory(test_fw)
 add_subdirectory(editor)
 add_subdirectory(vxgi)
