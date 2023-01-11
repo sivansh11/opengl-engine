@@ -6,7 +6,7 @@
 #include "core/components.hpp"
 #include "renderer/model.hpp"
 
-#include "panel.hpp"
+#include "core/panel.hpp"
 
 namespace utils {
 
@@ -21,11 +21,11 @@ struct Section {
 
 } // namespace utils
 
-class EntityViewPanel : public Panel {
+class EntityViewPanel : public core::Panel {
 public:
     EntityViewPanel(event::Dispatcher& dispatcher);
 
-    void renderPanel() override;
+    void onImGuiRender() override;
     void setSceneContext(core::Scene *scene) { EntityViewPanel::scene = scene; }
     void setSelectecEntity(ecs::EntityID ent) { EntityViewPanel::ent = ent; }
 

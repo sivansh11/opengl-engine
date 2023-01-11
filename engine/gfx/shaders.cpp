@@ -43,7 +43,8 @@ void ShaderProgram::addShader(const std::string& shaderCodePath) {
 
 void ShaderProgram::link() {
     std::string error = "";
-    std::vector<GLuint> shaders(m_shaderCodePaths.size());
+    std::vector<GLuint> shaders;
+    shaders.reserve(m_shaderCodePaths.size());
 
     for (const auto& shaderCodePath : m_shaderCodePaths) {
         // Read shader code from file
@@ -55,6 +56,7 @@ void ShaderProgram::link() {
             if (shaderCodePath.find(".vert") != std::string::npos) shaderType = GL_VERTEX_SHADER;
             if (shaderCodePath.find(".frag") != std::string::npos) shaderType = GL_FRAGMENT_SHADER;
             if (shaderCodePath.find(".comp") != std::string::npos) shaderType = GL_COMPUTE_SHADER;
+            if (shaderCodePath.find(".geom") != std::string::npos) shaderType = GL_GEOMETRY_SHADER;
             
             GLuint shaderID = glCreateShader(shaderType);
             const char * codePtr = code.c_str();
@@ -114,6 +116,12 @@ void ShaderProgram::link() {
         uniformLocation(name);
     }
     delete[] name;
+}
+
+void ShaderProgram::reload() {
+    glDeleteProgram(id);
+    id = glCreateProgram();
+    link();
 }
 
 void ShaderProgram::bind() const {

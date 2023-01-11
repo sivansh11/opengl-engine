@@ -133,8 +133,8 @@ static void serializeEntity(YAML::Emitter& out, const std::shared_ptr<core::Scen
         out << YAML::Value << model.getFilePath();
     }
 
-    if (scene->has<LightData>(ent)) {
-        auto& ld = scene->get<LightData>(ent);
+    if (scene->has<PointLightComponent>(ent)) {
+        auto& ld = scene->get<PointLightComponent>(ent);
         out << YAML::Key << "LightData";
         out << YAML::Value << YAML::BeginMap;
             out << YAML::Key << "pos";
@@ -143,8 +143,29 @@ static void serializeEntity(YAML::Emitter& out, const std::shared_ptr<core::Scen
             out << YAML::Value << ld.color;
             out << YAML::Key << "term";
             out << YAML::Value << ld.term;
+            // out << YAML::Key << "ambience";
+            // out << YAML::Value << ld.ambience;
+        out << YAML::EndMap;
+    }
+
+    if (scene->has<DirectionalLightComponent>(ent)) {
+        auto& ld = scene->get<DirectionalLightComponent>(ent);
+        out << YAML::Key << "DirectionalLight";
+        out << YAML::Value << YAML::BeginMap;
+            out << YAML::Key << "pos";
+            out << YAML::Value << ld.pos;
+            out << YAML::Key << "color";
+            out << YAML::Value << ld.color;
             out << YAML::Key << "ambience";
             out << YAML::Value << ld.ambience;
+            out << YAML::Key << "multiplier";
+            out << YAML::Value << ld.multiplier;
+            out << YAML::Key << "orthoProj";
+            out << YAML::Value << ld.orthoProj;
+            out << YAML::Key << "far";
+            out << YAML::Value << ld.far;
+            out << YAML::Key << "near";
+            out << YAML::Value << ld.near;
         out << YAML::EndMap;
     }
 }
@@ -177,7 +198,7 @@ std::shared_ptr<core::Scene> Serializer::loadScene(const std::string& filePath) 
         return {};
     }
 
-    std::shared_ptr<core::Scene> scene = std::make_unique<core::Scene>();
+    std::shared_ptr<core::Scene> scene = std::make_shared<core::Scene>();
 
     auto entities = data["Entities"];
 
@@ -203,11 +224,22 @@ std::shared_ptr<core::Scene> Serializer::loadScene(const std::string& filePath) 
         }
 
         if (entity["LightData"]) {
-            auto& ld = scene->assign<LightData>(ent);
+            auto& ld = scene->assign<PointLightComponent>(ent);
             ld.pos = entity["LightData"]["pos"].as<glm::vec3>();
             ld.color = entity["LightData"]["color"].as<glm::vec3>();
             ld.term = entity["LightData"]["term"].as<glm::vec3>();
-            ld.ambience = entity["LightData"]["ambience"].as<glm::vec3>();
+            // ld.ambience = entity["LightData"]["ambience"].as<glm::vec3>();
+        }
+
+        if (entity["DirectionalLight"]) {
+            auto& ld = scene->assign<DirectionalLightComponent>(ent);
+            ld.pos = entity["DirectionalLight"]["pos"].as<glm::vec3>();
+            ld.color = entity["DirectionalLight"]["color"].as<glm::vec3>();
+            ld.ambience = entity["DirectionalLight"]["ambience"].as<glm::vec3>();
+            ld.multiplier = entity["DirectionalLight"]["multiplier"].as<float>();
+            ld.orthoProj = entity["DirectionalLight"]["orthoProj"].as<float>();
+            ld.far = entity["DirectionalLight"]["far"].as<float>();
+            ld.near = entity["DirectionalLight"]["near"].as<float>();
         }
 
         // if (entity["RenderableComponent"]) {

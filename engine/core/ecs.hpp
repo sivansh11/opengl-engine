@@ -14,12 +14,20 @@ using ComponentID = uint32_t;
 
 const EntityID null = 0;
 
+static ComponentID s_componentCounter = 0;
+
+template <typename T>
+ComponentID getComponentID() {
+    static ComponentID s_componentID = s_componentCounter++;
+    return s_componentID;
+}
+
 class BaseComponentPool {
 public:
     BaseComponentPool(size_t componentSize, uint32_t maxEntity) : m_componentSize(componentSize) {
         p_data = new char[componentSize * maxEntity];
     }
-    ~BaseComponentPool() {
+    virtual ~BaseComponentPool() {
         delete[] p_data;
     }
 
@@ -147,13 +155,6 @@ public:
         return m_entities[index(ent)].mask.test(componentID);
     }
 
-    template <typename T>
-    ComponentID getComponentID() {
-        static ComponentID s_componentID =        m_componentCounter++;
-        assert(s_componentID < COMPONENTS && "Too many components!");
-        return s_componentID;
-    }
-
     bool isValid(EntityID ent) {
         return m_entities[index(ent)].isValid;
     }
@@ -164,7 +165,7 @@ public:
             if constexpr(sizeof...(Ts) == 0)
                 all = true;
             else {
-                ComponentID componentIDs[] = {scene.getComponentID<Ts>()...};
+                ComponentID componentIDs[] = {getComponentID<Ts>()...};
                 for (int i = 0; i < sizeof...(Ts); i++) 
                     mask.set(componentIDs[i]);
             }
@@ -249,8 +250,11 @@ private:
         assert(m_entities[index(ent)].isValid && "Cant get from deleted entity!");
         assert(index(ent) < m_entities.size() && "Entity not in the entity list!");
         ComponentID componentID = getComponentID<T>();
-        EntityID entID = index(ent);
         assert(m_entities[index(ent)].mask.test(componentID) && "Entity does not have Component!");
+        #ifndef NDEBUG
+        std::string function = __PRETTY_FUNCTION__;
+        #endif
+        EntityID entID = index(ent);
         return *static_cast<T *>(m_componentPools[componentID]->get(entID));
     }
 
@@ -278,8 +282,6 @@ private:
     std::vector<EntityDescription>   m_entities;
     std::queue<EntityID>             m_availableEntities;
     std::vector<BaseComponentPool *> m_componentPools;      
-    ComponentID                      m_componentCounter = 0;
-
 };
 
 } // namespace ecs

@@ -5,66 +5,80 @@
 
 namespace gfx {
 
-FrameBuffer::FrameBuffer(FrameBufferInfo frameBufferInfo) : m_frameBufferInfo(frameBufferInfo) {
-    create();
+FrameBuffer::Builder::Builder(uint32_t width, uint32_t height) : width(width), height(height) {
+
 }
 
-FrameBuffer::FrameBuffer(FrameBuffer&& frameBuffer) {
-    id = frameBuffer.id;
-    m_frameBufferInfo = std::move(frameBuffer.m_frameBufferInfo);
-    m_frameBufferAttachments = std::move(frameBuffer.m_frameBufferAttachments);
+FrameBuffer::FrameBuffer(FrameBuffer&& other) {
+    id = other.id;
+    width = other.width;
+    height = other.height;
+    textures = other.textures;
+    clearColor = other.clearColor;
+    clearStencil = other.clearStencil;
+    clearDepth = other.clearDepth;
 
-    frameBuffer.id = 0;
-    frameBuffer.m_frameBufferInfo = {};
-    frameBuffer.m_frameBufferAttachments = {};
+    other.id = 0;
 }
 
-FrameBuffer& FrameBuffer::operator=(FrameBuffer&& frameBuffer) {
-    id = frameBuffer.id;
-    m_frameBufferInfo = std::move(frameBuffer.m_frameBufferInfo);
-    m_frameBufferAttachments = std::move(frameBuffer.m_frameBufferAttachments);
+FrameBuffer& FrameBuffer::operator=(FrameBuffer&& other) {
+    id = other.id;
+    width = other.width;
+    height = other.height;
+    textures = other.textures;
+    clearColor = other.clearColor;
+    clearStencil = other.clearStencil;
+    clearDepth = other.clearDepth;
 
-    frameBuffer.id = 0;
-    frameBuffer.m_frameBufferInfo = {};
-    frameBuffer.m_frameBufferAttachments = {};
-    
+    other.id = 0;
     return *this;
 }
 
-void FrameBuffer::create() {
+FrameBuffer::Builder& FrameBuffer::Builder::addAttachment(gfx::Texture::Builder& builder, gfx::Texture::Type type, gfx::Texture::InternalFormat internalFormat, FrameBuffer::Attachment attachment, uint32_t mipLevel) {
+    assert(!textures.contains(attachment));
+    auto tex = builder.build(type);
+    gfx::Texture::CreateInfo info;
+    info.width = width;
+    info.height = height;
+    info.genMipMap = false;
+    info.internalFormat = internalFormat;
+    tex->create(info);
+    textures[attachment] = {tex, mipLevel};
+    return *this;
+}
+
+// FrameBuffer::Builder& FrameBuffer::Builder::addAttachment(std::shared_ptr<Texture> texture, Attachment attachment, uint32_t mipLevel) {
+//     assert(!textures.contains(attachment));
+//     textures[attachment] = {texture, mipLevel};
+//     return *this;
+// }
+
+// FrameBuffer::Builder& FrameBuffer::Builder::addAttachment(Texture::Builder& builder, Texture::Type type, Texture::CreateInfo& info, Attachment attachment, uint32_t mipLevel) {
+//     assert(!textures.contains(attachment));
+//     auto tex = builder.build(type);
+//     tex->create(info);
+//     textures[attachment] = {tex, mipLevel};
+//     return *this;
+// }
+
+FrameBuffer FrameBuffer::Builder::build() {
+    GLuint id;
     glCreateFramebuffers(1, &id);
 
     std::vector<GLenum> attachments;
 
-    for (const auto& attachmentTypeFormat : m_frameBufferInfo.attachments) {
+    for (auto& kv : textures) {
+        auto& attachment = kv.first;
+        auto& textureMipLevel = kv.second;
+        auto& texture = textureMipLevel.texture;
+        auto& mipLevel = textureMipLevel.mipLevel;
 
-        if (attachmentTypeFormat.attachment >= GL_COLOR_ATTACHMENT0 && attachmentTypeFormat.attachment <= GL_COLOR_ATTACHMENT31) {
-            GLuint tex;
-            glCreateTextures(GL_TEXTURE_2D, 1, &tex);
-            glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glBindTexture(GL_TEXTURE_2D, tex);
-            glTexImage2D(GL_TEXTURE_2D, 0, attachmentTypeFormat.formatType.format, static_cast<GLsizei>(m_frameBufferInfo.width), static_cast<GLsizei>(m_frameBufferInfo.height), 0, GL_RGBA, attachmentTypeFormat.formatType.type, nullptr);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            glNamedFramebufferTexture(id, attachmentTypeFormat.attachment, tex, 0);
-            attachments.push_back(attachmentTypeFormat.attachment);
-            m_frameBufferAttachments.emplace(attachmentTypeFormat.attachment, tex);
-        } else {
-            GLuint tex;
-            glCreateTextures(GL_TEXTURE_2D, 1, &tex);
-            glBindTexture(GL_TEXTURE_2D, tex);
-            glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTextureParameteri(tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-            glTextureParameteri(tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-            float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-            glTextureParameterfv(tex, GL_TEXTURE_BORDER_COLOR, borderColor);
-            glTexImage2D(GL_TEXTURE_2D, 0, attachmentTypeFormat.formatType.format, static_cast<GLsizei>(m_frameBufferInfo.width), static_cast<GLsizei>(m_frameBufferInfo.height), 0, GL_DEPTH_COMPONENT, attachmentTypeFormat.formatType.type, nullptr);
-            glNamedFramebufferTexture(id, attachmentTypeFormat.attachment, tex, 0);
-            // attachments.push_back(attachmentTypeFormat.attachment);
-            m_frameBufferAttachments.emplace(attachmentTypeFormat.attachment, tex);
-            glBindTexture(GL_TEXTURE_2D, 0);
+        glNamedFramebufferTexture(id, static_cast<GLenum>(attachment), texture->getID(), mipLevel);
+
+        if (attachment != Attachment::eDEPTH && attachment != Attachment::eDEPTH_STENCIL) {
+            attachments.push_back(static_cast<GLenum>(attachment));
         }
+
     }
 
     glNamedFramebufferDrawBuffers(id, attachments.size(), attachments.data());
@@ -74,44 +88,90 @@ void FrameBuffer::create() {
         std::cout << "Framebuffer error: " << fboStatus << "\n";
         throw std::runtime_error("");
     }
+
+    return {id, textures, width, height};
+}
+
+FrameBuffer::FrameBuffer(GLuint id, std::map<Attachment, TextureMipLevel>& textures, uint32_t width, uint32_t height) : id(id), textures(textures), width(width), height(height) {
+    
+}
+FrameBuffer::~FrameBuffer() {
+    glDeleteFramebuffers(1, &id);
+}
+
+std::shared_ptr<Texture> FrameBuffer::getTexture(FrameBuffer::Attachment attachment) const {
+    assert(textures.contains(attachment));
+    return textures.at(attachment).texture;
+}
+
+// TODO: fix bug, create new framebuffer along with textures
+void FrameBuffer::invalidate(uint32_t width, uint32_t height) {
+    if (width != FrameBuffer::width || height != FrameBuffer::height) {
+        FrameBuffer::width = width;
+        FrameBuffer::height = height;
+
+        for (auto& kv : textures) {
+            auto& textureMip = kv.second;
+            auto& texture = textureMip.texture;
+            auto& attachment = kv.first;
+            auto& mipLevel = textureMip.mipLevel;
+
+            auto info = texture->getInfo();
+            info.width = width;
+            info.height = height;
+            texture->resize(info);
+
+            glNamedFramebufferTexture(id, static_cast<GLenum>(attachment), texture->getID(), mipLevel);
+        }
+    }
+
+    auto fboStatus = glCheckNamedFramebufferStatus(id, GL_FRAMEBUFFER);
+    if (fboStatus != GL_FRAMEBUFFER_COMPLETE) {
+        std::cout << "Framebuffer error: " << fboStatus << "\n";
+        throw std::runtime_error("");
+    }
+    
+    // for (auto& kv : textures) {
+    //     auto& texture = kv.second;
+
+    //     auto info = texture->getInfo();
+    //     if (info.width != width || info.height != height) {
+    //         info.width = width;
+    //         info.height = height;
+    //         texture->resize(info);
+    //     }
+    // }
 }
 
 void FrameBuffer::bind() {
     glBindFramebuffer(GL_FRAMEBUFFER, id);
-    glViewport(0, 0, m_frameBufferInfo.width, m_frameBufferInfo.height);
+    glViewport(0, 0, width, height);
 }
 
 void FrameBuffer::unbind() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-Texture2D FrameBuffer::getTextureID(GLenum type) const {
-    assert(m_frameBufferAttachments.contains(type));
-    return Texture2D{m_frameBufferAttachments.at(type)};
+void FrameBuffer::clear(BufferBit bits) {
+    glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+    glClearDepthf(clearDepth);
+    glClearStencil(clearStencil);
+    glClear(bits);
 }
 
-void FrameBuffer::destroy() {
-    for (auto& kv : m_frameBufferAttachments) {
-        if (kv.first >= GL_COLOR_ATTACHMENT0 && kv.first <= GL_COLOR_ATTACHMENT31) {
-            glDeleteTextures(1, &kv.second);
-        } else {
-            glDeleteRenderbuffers(1, &kv.second);
-        }
-    }
-    glDeleteFramebuffers(1, &id);   
-    m_frameBufferAttachments.clear();
+void FrameBuffer::setClearColor(float r, float g, float b, float a) {
+    clearColor[0] = r;
+    clearColor[1] = g;
+    clearColor[2] = b;
+    clearColor[3] = a;
 }
 
-FrameBuffer::~FrameBuffer() {
-    destroy();
+void FrameBuffer::setClearDepth(float d) {
+    clearDepth = d;
 }
 
-void FrameBuffer::invalidate(uint32_t newWidth, uint32_t newHeight) {
-    if (newWidth != m_frameBufferInfo.width || newHeight != m_frameBufferInfo.height) {
-        destroy();
-        m_frameBufferInfo.width = newWidth, m_frameBufferInfo.height = newHeight;
-        create();
-    }
+void FrameBuffer::setClearStencil(int s) {
+    clearStencil = s;
 }
 
 } // namespace gfx

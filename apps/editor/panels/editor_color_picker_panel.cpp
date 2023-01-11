@@ -4,7 +4,7 @@ EditorColorPickerPanel::EditorColorPickerPanel() : Panel("Editor Color Picker Pa
     m_show = false;    
 }
 
-void EditorColorPickerPanel::renderPanel() {
+void EditorColorPickerPanel::onImGuiRender() {
     if (!m_show) return;
     ImGui::Begin("Editor Color Picker");
     ImGui::ColorPicker3("color_for_text", reinterpret_cast<float *>(&color_for_text));

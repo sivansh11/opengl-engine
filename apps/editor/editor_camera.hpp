@@ -62,20 +62,14 @@ public:
         m_view = glm::lookAt(m_pos, m_pos + m_front, glm::vec3{0, 1, 0});
     } 
 
-    const glm::mat4& getView() { 
-        return m_view; 
-    }
-    glm::vec3& getPos() { return m_pos; }
 
     float getYaw() { return m_yaw; }
     float getPitch() { return m_pitch; }
 private:
-    glm::vec3 m_pos{-1, 1, 0};
     glm::vec3 m_front{0};
     glm::vec3 m_up{0, 1, 0};
     glm::vec3 m_right{0};
 
-    glm::mat4 m_view{1};
     glm::vec2 m_initialMouse{};
 
     float m_yaw = 0, m_pitch = 0;

@@ -1,14 +1,14 @@
 #ifndef EDITOR_COLOR_PICKER_PANEL_HPP
 #define EDITOR_COLOR_PICKER_PANEL_HPP
 
-#include "panel.hpp"
+#include "core/panel.hpp"
 #include "core/imgui_utils.hpp"
 
-class EditorColorPickerPanel : public Panel {
+class EditorColorPickerPanel : public core::Panel {
 public:
     EditorColorPickerPanel();
 
-    void renderPanel() override;
+    void onImGuiRender() override;
 private:
     core::ImVec3 color_for_text = core::ImVec3(255.f / 255.f, 255.f / 255.f, 255.f / 255.f);
     core::ImVec3 color_for_head = core::ImVec3(41.f / 255.f, 128.f / 255.f, 185.f / 255.f);

@@ -27,6 +27,8 @@ public:
 
     int uniformLocation(const std::string& uniformName);
 
+    void reload();
+
     void mat4f(const std::string& uniformName, const float *data);
     void mat3f(const std::string& uniformName, const float *data);
     void mat2f(const std::string& uniformName, const float *data);

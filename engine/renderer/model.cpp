@@ -96,24 +96,46 @@ std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene, aiM
 
 std::unique_ptr<Material> Model::processMaterial(aiMaterial *material) {
     static Material::MaterialTypeBuilder builder = Material::MaterialTypeBuilder()
-                                                        .addSampler2D("material.diffuseMap")
-                                                        .addSampler2D("material.normalMap")
-                                                        .addSampler2D("material.specularMap")
-                                                        // .addVec3("material.ambient")
-                                                        .addVec3("material.diffuse")
-                                                        .addFloat("material.specular")
+                                                            .addVec3("material.diffuseColor")
+                                                            .addVec3("material.specularColor")
+                                                            .addFloat("material.reflectivity")
+                                                            .addFloat("material.emissivity")
+                                                            .addFloat("material.transparency")
+                                                        // .addSampler2D("material.diffuseMap")
+                                                        // .addSampler2D("material.normalMap")
+                                                        // .addSampler2D("material.specularMap")
+                                                        // // .addVec3("material.ambient")
+                                                        // .addVec3("material.diffuse")
+                                                        // .addFloat("material.specular")
                                                         // .addFloat("material.shininess")
-                                                        .addBool("material.hasDiffuseMap")
-                                                        .addBool("material.hasNormalMap")
-                                                        .addBool("material.hasSpecularMap")
+                                                        // .addBool("material.hasDiffuseMap")
+                                                        // .addBool("material.hasNormalMap")
+                                                        // .addBool("material.hasSpecularMap")
                                                         ;
     std::unique_ptr<Material> mat(builder.build());
 
-    auto diffuse = loadMaterialTexture(material, aiTextureType_DIFFUSE, "diffuse");
-    auto normal = loadMaterialTexture(material, aiTextureType_NORMALS, "normal");
-    auto specular = loadMaterialTexture(material, aiTextureType_SPECULAR, "specular");
-    
     aiColor4D color;
+    if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color)) {
+        mat->assign("material.diffuseColor", glm::vec3{color.r, color.g, color.b});
+    } else {
+        mat->assign("material.diffuseColor", glm::vec3{1, 1, 1});
+    }
+    if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &color)) {
+        mat->assign("material.diffuseColor", glm::vec3{color.r, color.g, color.b});
+    } else {
+        mat->assign("material.diffuseColor", glm::vec3{1, 1, 1});
+    }
+
+    // if (material->Get())
+    mat->assign("material.reflectivity", float{1});
+    mat->assign("material.emissivity", float{0});
+    mat->assign("material.transparency", float{0});
+
+    // auto diffuse = loadMaterialTexture(material, aiTextureType_DIFFUSE, "diffuse");
+    // auto normal = loadMaterialTexture(material, aiTextureType_NORMALS, "normal");
+    // auto specular = loadMaterialTexture(material, aiTextureType_SPECULAR, "specular");
+    
+    // aiColor4D color;
 
     // if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &color)) {
     //     mat->assign("material.ambient", glm::vec3(color.r, color.g, color.b));
@@ -121,35 +143,35 @@ std::unique_ptr<Material> Model::processMaterial(aiMaterial *material) {
     //     mat->assign("material.ambient", glm::vec3(1, 1, 1));
     // }
 
-    if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color)) {
-        mat->assign("material.diffuse", glm::vec3(color.r, color.g, color.b));
-    } else {
-        mat->assign("material.diffuse", glm::vec3(1, 1, 1));
-    }
+    // if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color)) {
+    //     mat->assign("material.diffuse", glm::vec3(color.r, color.g, color.b));
+    // } else {
+    //     mat->assign("material.diffuse", glm::vec3(1, 1, 1));
+    // }
 
-    if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &color)) {
-        mat->assign("material.specular", float((color.r + color.g + color.b) / 3));
-    } else {
-        mat->assign("material.specular", float(1));
-    }
+    // if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &color)) {
+    //     mat->assign("material.specular", float((color.r + color.g + color.b) / 3));
+    // } else {
+    //     mat->assign("material.specular", float(1));
+    // }
 
-    if (material->GetTextureCount(aiTextureType_DIFFUSE) == 0) {
-        mat->assign("material.hasDiffuseMap", false);
-    } else {
-        mat->assign("material.hasDiffuseMap", true);
-    }
+    // if (material->GetTextureCount(aiTextureType_DIFFUSE) == 0) {
+    //     mat->assign("material.hasDiffuseMap", false);
+    // } else {
+    //     mat->assign("material.hasDiffuseMap", true);
+    // }
 
-    if (material->GetTextureCount(aiTextureType_SPECULAR) == 0) {
-        mat->assign("material.hasSpecularMap", false);
-    } else {
-        mat->assign("material.hasSpecularMap", true);
-    }
+    // if (material->GetTextureCount(aiTextureType_SPECULAR) == 0) {
+    //     mat->assign("material.hasSpecularMap", false);
+    // } else {
+    //     mat->assign("material.hasSpecularMap", true);
+    // }
 
-    if (material->GetTextureCount(aiTextureType_NORMALS) == 0) {
-        mat->assign("material.hasNormalMap", false);
-    } else {
-        mat->assign("material.hasNormalMap", true);
-    }    
+    // if (material->GetTextureCount(aiTextureType_NORMALS) == 0) {
+    //     mat->assign("material.hasNormalMap", false);
+    // } else {
+    //     mat->assign("material.hasNormalMap", true);
+    // }    
 
     // float shininess;
     // if (AI_SUCCESS == aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess) && shininess > 0) {
@@ -158,19 +180,31 @@ std::unique_ptr<Material> Model::processMaterial(aiMaterial *material) {
     //     mat->assign("material.shininess", 32.0f);
     // }
 
-    mat->assign("material.diffuseMap", diffuse);
-    mat->assign("material.normalMap", normal);
-    mat->assign("material.specularMap", specular);
+    // mat->assign("material.diffuseMap", diffuse);
+    // mat->assign("material.normalMap", normal);
+    // mat->assign("material.specularMap", specular);
     
     return mat;
 }
 
-std::shared_ptr<gfx::Texture2D> Model::loadMaterialTexture(aiMaterial *mat, aiTextureType type, std::string typeName) {
+std::shared_ptr<gfx::Texture> Model::loadMaterialTexture(aiMaterial *mat, aiTextureType type, std::string typeName) {
     if (mat->GetTextureCount(type) == 0 && typeName == "diffuse") {
         unsigned char data[4];
         for (int i = 0; i < 4; i++) 
             data[i] = std::numeric_limits<unsigned char>::max();
-        std::shared_ptr<gfx::Texture2D> tex = std::make_shared<gfx::Texture2D>(data, GL_RGBA);
+        std::shared_ptr<gfx::Texture> tex = gfx::Texture::Builder().build(gfx::Texture::Type::e2D);
+        gfx::Texture::CreateInfo info{};
+        info.width = 1;
+        info.height = 1;
+        info.internalFormat = gfx::Texture::InternalFormat::eRGBA8;
+        gfx::Texture::UploadInfo uploadInfo{};
+        uploadInfo.data = data;
+        uploadInfo.dataType = gfx::Texture::DataType::eUNSIGNED_BYTE;
+        uploadInfo.format = gfx::Texture::Format::eRGBA;
+        uploadInfo.level = 0;
+        tex->create(info);
+        tex->upload(uploadInfo);
+
         return tex;
     }
     if (mat->GetTextureCount(type) == 0 && typeName == "normal") {
@@ -178,25 +212,53 @@ std::shared_ptr<gfx::Texture2D> Model::loadMaterialTexture(aiMaterial *mat, aiTe
         data[0] = std::numeric_limits<unsigned char>::max() / 2;
         data[1] = std::numeric_limits<unsigned char>::max() / 2;
         data[2] = std::numeric_limits<unsigned char>::max();
-        std::shared_ptr<gfx::Texture2D> tex = std::make_shared<gfx::Texture2D>(data, GL_RGB);
+        // std::shared_ptr<gfx::Texture> tex = std::make_shared<gfx::Texture>(data, GL_RGB);
+        std::shared_ptr<gfx::Texture> tex = gfx::Texture::Builder().build(gfx::Texture::Type::e2D);
+        gfx::Texture::CreateInfo info{};
+        info.width = 1;
+        info.height = 1;
+        info.internalFormat = gfx::Texture::InternalFormat::eRGBA8;
+        gfx::Texture::UploadInfo uploadInfo{};
+        uploadInfo.data = data;
+        uploadInfo.dataType = gfx::Texture::DataType::eUNSIGNED_BYTE;
+        uploadInfo.format = gfx::Texture::Format::eRGB;
+        uploadInfo.level = 0;
+        tex->create(info);
+        tex->upload(uploadInfo);
         return tex;
     }
     if (mat->GetTextureCount(type) == 0 && typeName == "specular") {
         unsigned char data[1] = {std::numeric_limits<unsigned char>::max() / 2};
-        std::shared_ptr<gfx::Texture2D> tex = std::make_shared<gfx::Texture2D>(data, GL_RED);
+        // std::shared_ptr<gfx::Texture> tex = std::make_shared<gfx::Texture>(data, GL_RED);
+        std::shared_ptr<gfx::Texture> tex = gfx::Texture::Builder().build(gfx::Texture::Type::e2D);
+        gfx::Texture::CreateInfo info{};
+        info.internalFormat = gfx::Texture::InternalFormat::eRGBA8;
+        info.width = 1;
+        info.height = 1;
+        gfx::Texture::UploadInfo uploadInfo{};
+        uploadInfo.data = data;
+        uploadInfo.dataType = gfx::Texture::DataType::eUNSIGNED_BYTE;
+        uploadInfo.format = gfx::Texture::Format::eRED;
+        uploadInfo.level = 0;
+        tex->create(info);
+        tex->upload(uploadInfo);
         return tex;
     }
 
     if (mat->GetTextureCount(type) == 0) return nullptr;
 
-    std::shared_ptr<gfx::Texture2D> tex;
+    std::shared_ptr<gfx::Texture> tex;
+    gfx::Texture::Builder builder;
+    builder.setMinFilter(gfx::Texture::MinFilter::eLINEAR_MIPMAP_LINEAR);
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
         aiString str;
         mat->GetTexture(type, i, &str);
         if (m_texturesLoaded.contains(str.C_Str())) {
             return m_texturesLoaded.at(str.C_Str());
         }
-        tex = std::make_shared<gfx::Texture2D>((m_directory + '/' + str.C_Str()).c_str());
+        tex = builder.build(gfx::Texture::Type::e2D);
+        tex->loadImage((m_directory + '/' + str.C_Str()).c_str());
+        // tex = std::make_shared<gfx::Texture>((m_directory + '/' + str.C_Str()).c_str());
         m_texturesLoaded[str.C_Str()] = tex;
     }
     return tex;

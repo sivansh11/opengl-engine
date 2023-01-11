@@ -2,13 +2,21 @@
 
 ContentBrowserPanel::ContentBrowserPanel(std::filesystem::path initialPath) 
   : Panel("Content Browser Panel"),
-    m_path(initialPath),
-    m_directoryIcon("../../../assets/icons/DirectoryIcon.png"),
-    m_fileIcon("../../../assets/icons/FileIcon.png") {
+    m_path(initialPath)
+    // m_directoryIcon("../../../assets/icons/DirectoryIcon.png"),
+    // m_fileIcon("../../../assets/icons/FileIcon.png")
+    {
+    gfx::Texture::Builder builder;
+    m_directoryIcon = builder
+                    .build(gfx::Texture::Type::e2D);
+    m_fileIcon = builder   
+                .build(gfx::Texture::Type::e2D);
 
+    m_directoryIcon->loadImage("../../../assets/icons/DirectoryIcon.png");
+    m_fileIcon->loadImage("../../../assets/icons/FileIcon.png");
 }
 
-void ContentBrowserPanel::renderPanel() {
+void ContentBrowserPanel::onImGuiRender() {
     if (!m_show) return;
 
     // ImGui::Begin("Content Browser Panel");
@@ -39,9 +47,9 @@ void ContentBrowserPanel::renderPanel() {
         std::string filenameString = path.filename().string();
 
         ImGui::PushID(filenameString.c_str());
-        gfx::Texture2D *icon = directorEntry.is_directory() ? &m_directoryIcon : &m_fileIcon;
+        std::shared_ptr<gfx::Texture> *icon = directorEntry.is_directory() ? &m_directoryIcon : &m_fileIcon;
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-        ImGui::ImageButton(static_cast<ImTextureID>(reinterpret_cast<void*>(icon->getID())), {thumbnailSize, thumbnailSize}, {0, 1}, {1, 0});
+        ImGui::ImageButton(static_cast<ImTextureID>(reinterpret_cast<void*>((*icon)->getID())), {thumbnailSize, thumbnailSize}, {0, 1}, {1, 0});
 
         if (!directorEntry.is_directory() && ImGui::BeginDragDropSource()) {
             static std::filesystem::path s_selectedPath;

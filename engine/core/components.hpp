@@ -1,7 +1,7 @@
 #ifndef COMPONENTS_HPP
 #define COMPONENTS_HPP
 
-#include "ecs.hpp"
+#include "entity.hpp"
 #include "events.hpp"
 
 #include <glm/glm.hpp>
@@ -60,30 +60,67 @@ public:
         return m_projection;
     }
 
+    const glm::mat4& getView() const { 
+        return m_view; 
+    }
+
+    const glm::vec3& getPos() const { return m_pos; }
+
     static void componentPanel(CameraComponent& camera, event::Dispatcher& dispatcher, ecs::EntityID ent) {
         ImGui::DragFloat("FOV", &camera.m_fov, 0.01f);
         ImGui::DragFloat("Far Plane", &camera.m_far, 0.01f);
         ImGui::DragFloat("Near Plane", &camera.m_near, 0.01f);
     }
 
-private:
+    glm::vec3 m_pos{-1, 1, 0};
     glm::mat4 m_projection{1.0f};
+    glm::mat4 m_view{1};
     float m_fov{45.0f};
     float m_far{1000.f}, m_near{0.1f};
 };
 
-struct LightData {
+struct PointLightComponent {
     alignas(16) glm::vec3 pos;
     alignas(16) glm::vec3 color{1, 1, 1};
     alignas(16) glm::vec3 term{.1, .1, .1};
-    alignas(16) glm::vec3 ambience;
+    // alignas(16) glm::vec3 ambience;
 
-    static void componentPanel(LightData& lightData, event::Dispatcher& dispatcher, ecs::EntityID ent) {
+    static void componentPanel(PointLightComponent& lightData, event::Dispatcher& dispatcher, ecs::EntityID ent) {
         ImGui::DragFloat3("position", reinterpret_cast<float *>(&lightData.pos), 0.01);        
         ImGui::DragFloat3("color", reinterpret_cast<float *>(&lightData.color), 0.01);        
         ImGui::DragFloat3("term", reinterpret_cast<float *>(&lightData.term), 0.01);        
-        ImGui::DragFloat3("ambience", reinterpret_cast<float *>(&lightData.ambience), 0.01);        
+        // ImGui::DragFloat3("ambience", reinterpret_cast<float *>(&lightData.ambience), 0.01);        
     }
+};
+
+struct DirectionalLightComponent {
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec3 ambience;
+
+    float multiplier = 1;
+    float orthoProj = 10;
+    float far = 7.5;
+    float near = 1;
+
+    static void componentPanel(DirectionalLightComponent& directionalLight, event::Dispatcher& dispatcher, ecs::EntityID ent) {
+        ImGui::DragFloat3("position", reinterpret_cast<float *>(&directionalLight.pos), 0.01);        
+        ImGui::DragFloat3("color", reinterpret_cast<float *>(&directionalLight.color), 0.01);        
+        ImGui::DragFloat3("ambience", reinterpret_cast<float *>(&directionalLight.ambience), 0.01);
+        ImGui::DragFloat("multiplier", &directionalLight.multiplier, 1);
+        ImGui::DragFloat("orthoProj", &directionalLight.orthoProj, 1);
+        ImGui::DragFloat("far", &directionalLight.far, 1);
+        ImGui::DragFloat("near", &directionalLight.near, 1);
+    }
+};
+
+struct ModelComponent {
+public:
+    ModelComponent(const std::string& file);
+    ~ModelComponent();
+
+private:
+    std::string m_file;
 };
 
 } // namespace core

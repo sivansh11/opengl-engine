@@ -13,7 +13,7 @@ enum FileType {
     BINARY
 };
 
-std::string readFile(const char *filePath, FileType type);
+std::string readFile(const std::string& filePath, FileType type);
 
 template <typename T, typename... Rest>
 void hashCombine(std::size_t& seed, const T& v, const Rest&... rest) {

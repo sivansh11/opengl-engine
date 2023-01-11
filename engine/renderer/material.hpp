@@ -36,17 +36,17 @@ public:
 
     struct MaterialTypeBuilder {
         std::map<std::string, MaterialUniformType> nameToUniformType;
-        MaterialTypeBuilder& addSampler2D(const char *name);
-        MaterialTypeBuilder& addFloat(const char *name);
-        MaterialTypeBuilder& addVec2(const char *name);
-        MaterialTypeBuilder& addVec3(const char *name);
-        MaterialTypeBuilder& addVec4(const char *name);
-        MaterialTypeBuilder& addBool(const char *name);
+        MaterialTypeBuilder& addSampler2D(const std::string& name);
+        MaterialTypeBuilder& addFloat(const std::string& name);
+        MaterialTypeBuilder& addVec2(const std::string& name);
+        MaterialTypeBuilder& addVec3(const std::string& name);
+        MaterialTypeBuilder& addVec4(const std::string& name);
+        MaterialTypeBuilder& addBool(const std::string& name);
         Material* build();
     };
 
     void bind(gfx::ShaderProgram& shader);
-    void assign(const char *name, std::any data);
+    void assign(const std::string& name, std::any data);
 
     bool operator==(const Material& other) const {
         if (uniformNames.size() != other.uniformNames.size()) {
@@ -66,7 +66,7 @@ public:
 private:
     std::set<std::string> uniformNames;
     std::map<std::string, MaterialUniformType> nameToUniformType;
-    std::map<std::string, std::shared_ptr<gfx::Texture2D>> nameToUniformSampler2D;
+    std::map<std::string, std::shared_ptr<gfx::Texture>> nameToUniformSampler2D;
     std::map<std::string, float> nameToUniformFloat;
     std::map<std::string, glm::vec2> nameToUniformVec2;
     std::map<std::string, glm::vec3> nameToUniformVec3;

@@ -8,7 +8,7 @@ void SceneHierarchyPanel::setSceneContext(core::Scene *scene) {
     SceneHierarchyPanel::scene = scene;
 }
 
-void SceneHierarchyPanel::renderPanel() {
+void SceneHierarchyPanel::onImGuiRender() {
     if (!m_show) return;
     ImGui::Begin("Scene Hierarchy Panel");
     if (!scene) {
@@ -60,10 +60,12 @@ void SceneHierarchyPanel::drawEntityNode(core::Scene& scene, ecs::EntityID ent) 
     if (ImGui::BeginPopupContextItem(std::to_string(ent).c_str())) {
         if (!scene.has<core::TransformComponent>(ent) && ImGui::MenuItem("Add Transform")) 
             scene.assign<core::TransformComponent>(ent);
-        if (!scene.has<core::LightData>(ent) && ImGui::MenuItem("Add Light Data")) 
-            scene.assign<core::LightData>(ent);
+        if (!scene.has<core::PointLightComponent>(ent) && ImGui::MenuItem("Add Light Data")) 
+            scene.assign<core::PointLightComponent>(ent);
         if (!scene.has<renderer::Model>(ent) && ImGui::MenuItem("Add Model")) 
             scene.assign<renderer::Model>(ent);
+        if (!scene.has<core::DirectionalLightComponent>(ent) && ImGui::MenuItem("Add Directional Light")) 
+            scene.assign<core::DirectionalLightComponent>(ent);
 
         if (ImGui::MenuItem("Delete Entity")) {
             scene.destroyEntity(ent);

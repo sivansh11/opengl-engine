@@ -44,6 +44,7 @@ void startFrameImgui() {
 }
 
 void endFrameImgui(GLFWwindow *window) {
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui Pass");
     ImGui::Render();
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -60,6 +61,7 @@ void endFrameImgui(GLFWwindow *window) {
         ImGui::RenderPlatformWindowsDefault();
         glfwMakeContextCurrent(backup_current_context);
     }
+    glPopDebugGroup();
 }
 
 void easyThemingImGui(ImVec3 color_for_text, ImVec3 color_for_head, ImVec3 color_for_area, ImVec3 color_for_body, ImVec3 color_for_pops, ImVec3 color_for_tab)

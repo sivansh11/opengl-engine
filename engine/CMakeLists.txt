@@ -6,6 +6,10 @@ file(GLOB_RECURSE SRC_FILES ./*.cpp)
 
 add_library(engine ${SRC_FILES})
 
+include_directories(engine
+    ../deps
+)
+
 target_link_libraries(engine
     glfw
     glad
@@ -15,4 +19,6 @@ target_link_libraries(engine
     assimp
     pybind11::embed
     yaml-cpp
+    efsw
+    ImGuizmo
 )

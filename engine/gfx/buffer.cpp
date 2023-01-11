@@ -5,12 +5,12 @@
 
 namespace gfx {
 
-Buffer::Buffer(uint32_t bytes, BufferType type) : m_bytes(bytes), m_type(type) {
+Buffer::Buffer(uint32_t bytes, Buffer::Useage type) : m_bytes(bytes), m_type(type) {
     glCreateBuffers(1, &id);
     resize(m_bytes);
 }
 
-Buffer::Buffer(BufferType type) : m_type(type) {
+Buffer::Buffer(Buffer::Useage type) : m_type(type) {
     glCreateBuffers(1, &id);
 }
 
@@ -41,18 +41,26 @@ Buffer::~Buffer() {
 }
 
 
-void Buffer::push(const void *sourceData) {
+void Buffer::push(const void *sourceData, uint32_t offset, uint32_t bytes) {
     assert(sourceData != nullptr);
+    GLenum drawType;
     switch (m_type) {
-        case BufferType::STATIC_BUFFER:
-            glNamedBufferData(id, static_cast<GLsizeiptr>(m_bytes), sourceData, GL_STATIC_DRAW);
+        case Buffer::Useage::eSTATIC_DRAW:
+            drawType = GL_STATIC_DRAW;
             break;
-        case BufferType::DYNAMIC_BUFFER:
-            glNamedBufferData(id, static_cast<GLsizeiptr>(m_bytes), sourceData, GL_DYNAMIC_DRAW);
+        case Buffer::Useage::eDYNAMIC_DRAW:
+            drawType = GL_DYNAMIC_DRAW;
             break;
         
         default:
+            throw std::runtime_error("Not implemented!");
             break;
+    }
+
+    if (offset == 0 && bytes == std::numeric_limits<uint32_t>::max()) {
+        glNamedBufferData(id, static_cast<GLsizeiptr>(m_bytes), sourceData, drawType);
+    } else {
+        glNamedBufferSubData(id, offset, bytes, sourceData);
     }
 }
 
@@ -70,31 +78,31 @@ void Buffer::pull(void *destinationBuffer, uint32_t offset, uint32_t bytes) cons
     }
 }
 
-void *Buffer::map(BufferOperation operation, uint32_t offset, uint32_t bytes) {
-    GLenum glOperation{};
-    switch (operation) {
-        case BufferOperation::READ_OPERATION:
-            glOperation = GL_MAP_READ_BIT;
-            break;
-        case BufferOperation::WRITE_OPERATION:
-            glOperation = GL_MAP_WRITE_BIT;
-            break;
-        case BufferOperation::READ_WRITE_OPERATION:
-            glOperation = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+// void *Buffer::map(BufferOperation operation, uint32_t offset, uint32_t bytes) {
+//     GLenum glOperation{};
+//     switch (operation) {
+//         case BufferOperation::READ_OPERATION:
+//             glOperation = GL_MAP_READ_BIT;
+//             break;
+//         case BufferOperation::WRITE_OPERATION:
+//             glOperation = GL_MAP_WRITE_BIT;
+//             break;
+//         case BufferOperation::READ_WRITE_OPERATION:
+//             glOperation = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
         
-        default:
-            break;
-    }
-    if ((offset == 0) && (bytes == std::numeric_limits<uint32_t>::max())) {
-        return glMapNamedBufferRange(id, 0, static_cast<GLsizeiptr>(m_bytes), glOperation);
-    } else {
-        return glMapNamedBufferRange(id, static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(bytes), glOperation); 
-    }
-}
+//         default:
+//             break;
+//     }
+//     if ((offset == 0) && (bytes == std::numeric_limits<uint32_t>::max())) {
+//         return glMapNamedBufferRange(id, 0, static_cast<GLsizeiptr>(m_bytes), glOperation);
+//     } else {
+//         return glMapNamedBufferRange(id, static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(bytes), glOperation); 
+//     }
+// }
 
-void Buffer::unmap() const {
-    glUnmapNamedBuffer(id);
-}
+// void Buffer::unmap() const {
+//     glUnmapNamedBuffer(id);
+// }
 
 void Buffer::bind(uint32_t binding) const {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, static_cast<GLuint>(binding), id);
@@ -103,13 +111,15 @@ void Buffer::bind(uint32_t binding) const {
 void Buffer::resize(uint32_t bytes) {
     m_bytes = bytes;
     switch (m_type) {
-       case BufferType::STATIC_BUFFER:
+       case Buffer::Useage::eSTATIC_DRAW:
             glNamedBufferData(id, m_bytes, nullptr, GL_STATIC_DRAW);
             break;
-        case BufferType::DYNAMIC_BUFFER:
+        case Buffer::Useage::eDYNAMIC_DRAW:
             glNamedBufferData(id, m_bytes, nullptr, GL_DYNAMIC_DRAW);
+            break;
             
         default:
+            throw std::runtime_error("Not implemented!");
             break;
     }
 }

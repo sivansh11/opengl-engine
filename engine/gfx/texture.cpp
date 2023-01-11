@@ -8,86 +8,227 @@
 
 namespace gfx {
 
-Texture2D::Texture2D(const std::string& imagePath) {
+Texture::Builder::Builder() {
+    wrapS = Wrap::eREPEAT;
+    wrapT = Wrap::eREPEAT;
+    wrapR = Wrap::eREPEAT;
+
+    minFilter = MinFilter::eLINEAR;
+    magFilter = MagFilter::eLINEAR;
+
+    borderColor[0] = 0;
+    borderColor[1] = 0;
+    borderColor[2] = 0;
+    borderColor[3] = 0;
+}
+
+Texture::Builder& Texture::Builder::setMinFilter(MinFilter minFilter) {
+    Texture::Builder::minFilter = minFilter;
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setMagFilter(MagFilter magFilter) {
+    Texture::Builder::magFilter = magFilter;
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setWrapS(Wrap wrap) {
+    Texture::Builder::wrapS = wrap;
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setWrapT(Wrap wrap) {
+    Texture::Builder::wrapT = wrap;
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setWrapR(Wrap wrap) {
+    Texture::Builder::wrapR = wrap;
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setBorderColor(float r, float g, float b, float a) {
+    Texture::Builder::borderColor[0] = r;
+    Texture::Builder::borderColor[1] = g;
+    Texture::Builder::borderColor[2] = b;
+    Texture::Builder::borderColor[3] = a;
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setBorderColor(float d) {
+    Texture::Builder::borderColor[0] = d;
+    return *this;
+}
+
+std::shared_ptr<Texture> Texture::Builder::build(Type type) {
+    return std::make_unique<Texture>(getNewID(type), type, *this);
+}
+
+GLuint Texture::Builder::getNewID(Type type) {
+    GLuint id;
+    glCreateTextures(static_cast<GLenum>(type), 1, &id);
+    glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, minFilter);
+    glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, magFilter);
+    glTextureParameteri(id, GL_TEXTURE_WRAP_S, static_cast<GLenum>(wrapS));
+    glTextureParameteri(id, GL_TEXTURE_WRAP_T, static_cast<GLenum>(wrapT));
+    glTextureParameteri(id, GL_TEXTURE_WRAP_R, static_cast<GLenum>(wrapR));
+
+    glTextureParameterfv(id, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    return id;
+}
+
+Texture::Texture(GLuint id, Type type, Builder builder) : id(id), type(type), builder(builder) {}
+
+Texture::~Texture() {
+    glDeleteTextures(1, &id);
+}
+
+void Texture::bind(const std::string& name, uint32_t unit, ShaderProgram& shader) const {
+    glBindTextureUnit(unit, id);
+    shader.veci(name, unit);
+}
+
+void Texture::bindImage(const std::string& name, uint32_t unit, ShaderProgram& shader) const {
+    glBindImageTexture(unit, id, 0, GL_FALSE, 0, GL_WRITE_ONLY, static_cast<GLenum>(info.internalFormat));
+    shader.veci(name, unit);
+}
+
+void Texture::create(const CreateInfo& info) {
+    Texture::info = info;
+    GLsizei targetLevel = 1;
+    switch (type) {
+        case Type::e2D: {
+            if (info.genMipMap) targetLevel = 1 + std::ceil(std::log2(static_cast<double>(std::max(info.width, info.height))));
+            glTextureStorage2D(id, targetLevel, static_cast<GLenum>(info.internalFormat), info.width, info.height);
+        }
+        break; 
+        case Type::e3D: {
+            if (info.genMipMap) targetLevel = 1 + std::ceil(std::log2(static_cast<double>(std::max(std::max(info.width, info.height), info.depth))));
+            glTextureStorage3D(id, targetLevel, static_cast<GLenum>(info.internalFormat), info.width, info.height, info.depth);
+        }
+        break;
+        
+        default:
+            std::runtime_error("Unknown type");
+            break;
+    }
+}
+
+void Texture::upload(const UploadInfo& uploadInfo) {
+    switch (type) {
+        case Type::e2D: {
+            glTextureSubImage2D(id, uploadInfo.level, uploadInfo.xoffset, uploadInfo.yoffset, info.width, info.height, static_cast<GLenum>(uploadInfo.format), static_cast<GLenum>(uploadInfo.dataType), uploadInfo.data);
+        }
+        break; 
+        case Type::e3D: {
+            glTextureSubImage3D(id, uploadInfo.level, uploadInfo.xoffset, uploadInfo.yoffset, uploadInfo.zoffset, info.width, info.height, info.depth, static_cast<GLenum>(uploadInfo.format), static_cast<GLenum>(uploadInfo.dataType), uploadInfo.data);
+        }
+        break;
+        
+        default:
+        std::runtime_error("Unknown type");
+        break;
+    }
+
+    if (info.genMipMap) {
+        glGenerateTextureMipmap(id);
+    }
+}
+
+void Texture::genMipMaps() {
+    glGenerateTextureMipmap(id);
+}
+
+void Texture::loadImage(std::filesystem::path path) {
     int width, height, nChannels;
     stbi_set_flip_vertically_on_load(true);
-    uint8_t *bytes = stbi_load(imagePath.c_str(), &width, &height, &nChannels, 0);
+    uint8_t *bytes = stbi_load(path.c_str(), &width, &height, &nChannels, 0);
 
     if (!bytes) {
         throw std::runtime_error(stbi_failure_reason());
     }
-    glCreateTextures(GL_TEXTURE_2D, 1, &id);
 
-    glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    CreateInfo createInfo{};
+    createInfo.internalFormat = InternalFormat::eRGBA8;
+    createInfo.width = width;
+    createInfo.height = height;
+    createInfo.genMipMap = true;
 
-    m_width = static_cast<uint32_t>(width);
-    m_height = static_cast<uint32_t>(height); 
+    UploadInfo uploadInfo{};
+    uploadInfo.data = bytes;
+    uploadInfo.dataType = DataType::eUNSIGNED_BYTE;
+    uploadInfo.format = Format::eRGBA;
+    uploadInfo.level = 0;
+    if (nChannels == 1) uploadInfo.format = Format::eRED;
+    if (nChannels == 2) uploadInfo.format = Format::eRG;
+    if (nChannels == 3) uploadInfo.format = Format::eRGB;
+    if (nChannels == 4) uploadInfo.format = Format::eRGBA;
 
-    GLsizei level = 1 + std::ceil(std::log2(static_cast<double>(std::max(m_width, m_height))));
-    glTextureStorage2D(id, level, GL_RGBA8, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
-
-    GLenum format = GL_RGBA;
-    if (nChannels == 1) format = GL_RED;
-    if (nChannels == 2) format = GL_RG;
-    if (nChannels == 3) format = GL_RGB;
-    if (nChannels == 4) format = GL_RGBA;
-
-    glTextureSubImage2D(id, 0, 0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), format, GL_UNSIGNED_BYTE, bytes);
-    glGenerateTextureMipmap(id);
+    create(createInfo);
+    upload(uploadInfo);
 
     stbi_image_free(bytes);
-
-    // handle = glGetTextureHandleARB(id);
 }
 
-Texture2D::Texture2D(unsigned char *data, GLenum format) {
-    glCreateTextures(GL_TEXTURE_2D, 1, &id);
-    glTextureStorage2D(id, 1, GL_RGBA8, 1, 1);
+void Texture::resize(Texture::CreateInfo& info) {
+    // if (info.data) info.data = nullptr;
+    this->~Texture();
+    id = builder.getNewID(type);
+    create(info);
+}
 
+CubeMap::CubeMap(const std::string& imagePath) {
+    glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &id);
+
+    glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(id, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    glTextureSubImage2D(id, 0, 0, 0, 1, 1, format, GL_UNSIGNED_BYTE, data);
-    // glGenerateTextureMipmap(id);
+    std::vector<std::string> names = {
+        "right.jpg",
+        "left.jpg",
+        "top.jpg",
+        "bottom.jpg",
+        "front.jpg",
+        "back.jpg"
+    };
+    int width, height, nChannels;
+    bool once = false;
+    for (int i = 0; i < 6; i++) {
+        uint8_t *bytes = stbi_load((imagePath + names[i]).c_str(), &width, &height, &nChannels, 3);
+        if (!once) {
+            glTextureStorage2D(id, 1, GL_RGBA8, width, height);
+            once = true;
+        }
+        
+        if (!bytes) {
+            throw std::runtime_error(stbi_failure_reason());
+        }
+        glTextureSubImage3D(id, 0, 0, 0, i, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, bytes);
+    }
 }
 
-Texture2D::Texture2D(GLuint id) : id(id) {
-    m_owned = false;
+
+CubeMap::~CubeMap() {
+    glDeleteTextures(1, &id);
 }
 
-Texture2D::~Texture2D() {
-    if (m_owned)
-        glDeleteTextures(1, &id);
+CubeMap::CubeMap(CubeMap&& cubeMap) {
+    id = cubeMap.id;
+    cubeMap.id = {};
 }
 
-Texture2D::Texture2D(Texture2D&& texture) {
-    id = texture.id;
-    m_width = texture.m_width;
-    m_height = texture.m_height;
-
-    texture.id = {};
-    texture.m_width = {};
-    texture.m_height = {};
-}
-
-Texture2D& Texture2D::operator=(Texture2D&& texture) {
-    id = texture.id;
-    m_width = texture.m_width;
-    m_height = texture.m_height;
-
-    texture.id = {};
-    texture.m_width = {};
-    texture.m_height = {};
+CubeMap& CubeMap::operator=(CubeMap&& cubeMap) {
+    id = cubeMap.id;
+    cubeMap.id = {};
 
     return *this;
 }
 
-void Texture2D::bind(const std::string& name, uint32_t unit, ShaderProgram& shader) const {
+void CubeMap::bind(const std::string& name, uint32_t unit, ShaderProgram& shader) const {
     glBindTextureUnit(unit, id);
     shader.veci(name, unit);
 }

@@ -10,11 +10,15 @@ EntityViewPanel::EntityViewPanel(event::Dispatcher& dispatcher) : Panel("Entity 
 
 }
 
-void EntityViewPanel::renderPanel() {
-    if (!scene) return;
+void EntityViewPanel::onImGuiRender() {
     if (!m_show) return;
 
     ImGui::Begin("Entity View Panel");
+    
+    if (!scene) {
+        ImGui::End();
+        return;
+    }
 
     if (ent == ecs::null) {
         ImGui::End();
@@ -31,17 +35,22 @@ void EntityViewPanel::renderPanel() {
     ImGui::Separator();
 
     if (scene->has<core::TransformComponent>(ent)) {
-        utils::Section("Transform Component");
+        utils::Section section("Transform Component");
         core::TransformComponent::componentPanel(scene->get<core::TransformComponent>(ent), m_dispatcher, ent);
     }
-    if (scene->has<core::LightData>(ent)) {
-        utils::Section("Point Light Component");
-        core::LightData::componentPanel(scene->get<core::LightData>(ent), m_dispatcher, ent);
+    if (scene->has<core::PointLightComponent>(ent)) {
+        utils::Section section("Point Light Component");
+        core::PointLightComponent::componentPanel(scene->get<core::PointLightComponent>(ent), m_dispatcher, ent);
     }
     
     if (scene->has<renderer::Model>(ent)) {
-        utils::Section("Model Component");
+        utils::Section section("Model Component");
         renderer::Model::componentPanel(scene->get<renderer::Model>(ent), m_dispatcher, ent);
+    }
+
+    if (scene->has<core::DirectionalLightComponent>(ent)) {
+        utils::Section section("Directional Light Component");
+        core::DirectionalLightComponent::componentPanel(scene->get<core::DirectionalLightComponent>(ent), m_dispatcher, ent);
     }
     
     ImGui::End();

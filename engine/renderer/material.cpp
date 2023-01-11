@@ -7,32 +7,32 @@
 
 namespace renderer {
     
-Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addSampler2D(const char *name) {
+Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addSampler2D(const std::string& name) {
     nameToUniformType[name] = MaterialUniformType::SAMPLER_2D;
     return *this;
 }
 
-Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addFloat(const char *name) {
+Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addFloat(const std::string& name) {
     nameToUniformType[name] = MaterialUniformType::FLOAT;
     return *this;
 }
 
-Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addVec2(const char *name) {
+Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addVec2(const std::string& name) {
     nameToUniformType[name] = MaterialUniformType::VEC2;
     return *this;
 }
 
-Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addVec3(const char *name) {
+Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addVec3(const std::string& name) {
     nameToUniformType[name] = MaterialUniformType::VEC3;
     return *this;
 }
 
-Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addVec4(const char *name) {
+Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addVec4(const std::string& name) {
     nameToUniformType[name] = MaterialUniformType::VEC4;
     return *this;
 }
 
-Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addBool(const char *name) {
+Material::MaterialTypeBuilder& Material::MaterialTypeBuilder::addBool(const std::string& name) {
     nameToUniformType[name] = MaterialUniformType::BOOL;
     return *this;
 }
@@ -99,12 +99,12 @@ Material& Material::operator=(Material&& material) {
 }
 
 
-void Material::assign(const char *name, std::any data) {
+void Material::assign(const std::string& name, std::any data) {
     assert(nameToUniformType.contains(name));
     auto& type = nameToUniformType[name];
     switch (type) {
         case MaterialUniformType::SAMPLER_2D:
-            nameToUniformSampler2D[name] = std::any_cast<std::shared_ptr<gfx::Texture2D>>(data);
+            nameToUniformSampler2D[name] = std::any_cast<std::shared_ptr<gfx::Texture>>(data);
             break;
         case MaterialUniformType::FLOAT:
             nameToUniformFloat[name] = std::any_cast<float>(data);
@@ -133,6 +133,7 @@ void Material::bind(gfx::ShaderProgram& shader) {
         auto& type = nameToUniformType[name];
         switch (type) {
             case MaterialUniformType::SAMPLER_2D:
+                assert(nameToUniformSampler2D[name]);
                 nameToUniformSampler2D[name]->bind(name.c_str(), i++, shader);
                 break;
             case MaterialUniformType::FLOAT:

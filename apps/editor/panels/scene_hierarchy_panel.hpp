@@ -6,13 +6,13 @@
 #include "core/components.hpp"
 #include "renderer/model.hpp"
 
-#include "panel.hpp"
+#include "core/panel.hpp"
 
-class SceneHierarchyPanel : public  Panel {
+class SceneHierarchyPanel : public core::Panel {
 public:
     SceneHierarchyPanel(event::Dispatcher& dispatcher);
 
-    void renderPanel() override;
+    void onImGuiRender() override;
 
     void setSceneContext(core::Scene *scene);
     

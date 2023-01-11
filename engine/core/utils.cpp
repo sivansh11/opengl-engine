@@ -4,7 +4,7 @@
 
 namespace core {
 
-std::string readFile(const char *filePath, FileType type) {
+std::string readFile(const std::string& filePath, FileType type) {
     std::ifstream ifs(filePath);
     if (!ifs.is_open()) {
         throw std::runtime_error("Failed to read file!");

@@ -4,11 +4,7 @@
 
 int main() {
     App *app = new App();
-    try {
-        app->run();
-    } catch (std::exception& e) {
-        std::cout << e.what() << '\n';
-    }
+    app->run();
     delete app;
 
     return 0;
