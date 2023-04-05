@@ -1,30 +1,21 @@
-#ifndef PIPELINE_HPP
-#define PIPELINE_HPP
+#ifndef GFX_PIPELINE_HPP
+#define GFX_PIPELINE_HPP
 
-#include "../gfx/shaders.hpp"
+#include <entt/entt.hpp>
 
-#include <vector>
-#include <filesystem>
-#include <string>
-
-namespace renderer {
+namespace gfx {
 
 class Pipeline {
 public:
-    struct Builder {
-        std::vector<std::string> shaders;
+    Pipeline();
+    ~Pipeline();
 
-        Builder& addShader(std::filesystem::path path);
-        Pipeline build();
-    };
-
-    // Pipeline();
-    // ~Pipeline();
+    void bind(entt::registry& registry);
 
 private:
 
 };
 
-} // namespace renderer
+} // namespace gfx
 
 #endif

@@ -12,35 +12,33 @@
 namespace renderer {
 
 struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 nor;
+    glm::vec3 position;
+    glm::vec3 normal;
     glm::vec2 uv;
-    glm::vec3 tangent;
-    glm::vec3 biTangent;
+    static gfx::VertexAttribute getAttributes() {
+        gfx::VertexAttribute vertexAttribute{};
+        vertexAttribute.attributeLocation(0, 3, offsetof(Vertex, position));
+        vertexAttribute.attributeLocation(1, 3, offsetof(Vertex, normal));
+        vertexAttribute.attributeLocation(2, 2, offsetof(Vertex, uv));
+        return vertexAttribute;
+    } 
 };
 
 class Mesh {
 public:
-    Mesh() = default;
-    Mesh(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
+    Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
     ~Mesh();
-    Mesh(Mesh&& mesh) = delete;
-    Mesh& operator=(Mesh&& mesh) = delete;
 
-    Mesh(Mesh& mesh) = delete;
-    Mesh& operator=(Mesh& mesh) = delete;
+    Mesh(const Mesh& mesh) = delete;
+    Mesh& operator=(const Mesh& mesh) = delete;
 
-    void draw(gfx::ShaderProgram& shaderProgram, const core::TransformComponent& transform);
+    void bind() const;
 
 private:
-    gfx::Buffer vertexBuffer;
-    gfx::Buffer indexBuffer;
-    gfx::VertexAttribute vertexAttribute;
-    uint32_t indexCount;
-    core::TransformComponent m_transform{};
-    std::shared_ptr<Material> material;
-
-    friend class Model;
+    gfx::Buffer m_vertices;
+    gfx::Buffer m_indices;
+    gfx::VertexAttribute m_vertexAttribute;
+    uint32_t m_indexCount;
 };
 
 } // namespace renderer

@@ -4,31 +4,23 @@
 
 namespace renderer {
 
-Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices) 
-    : vertexBuffer(sizeof(Vertex) * vertices.size()),
-      indexBuffer(sizeof(uint32_t) * indices.size()) {
-    vertexBuffer.push(vertices.data());
-    indexBuffer.push(indices.data());
-    vertexAttribute.attributeLocation(0, 3, offsetof(Vertex, pos));
-    vertexAttribute.attributeLocation(1, 3, offsetof(Vertex, nor));
-    vertexAttribute.attributeLocation(2, 2, offsetof(Vertex, uv));
-    vertexAttribute.attributeLocation(3, 3, offsetof(Vertex, tangent));
-    vertexAttribute.attributeLocation(4, 3, offsetof(Vertex, biTangent));
-
-    vertexAttribute.bindVertexBuffer<Vertex>(vertexBuffer);
-    vertexAttribute.bindElementBuffer(indexBuffer);
-
-    indexCount = indices.size();
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) 
+  : m_vertices(sizeof(Vertex) * vertices.size()),
+    m_indices(sizeof(uint32_t) * indices.size()),
+    m_vertexAttribute(Vertex::getAttributes()),
+    m_indexCount(indices.size()) {
+	m_vertices.push(vertices.data());
+	m_indices.push(indices.data());
+	m_vertexAttribute.bindVertexBuffer<Vertex>(m_vertices);
+	m_vertexAttribute.bindElementBuffer(m_indices);
 }
 
 Mesh::~Mesh() {
 
 }
 
-void Mesh::draw(gfx::ShaderProgram& program, const core::TransformComponent& transform) {
-    vertexAttribute.bind();
-    program.mat4f("model", glm::value_ptr(transform.mat4() * m_transform.mat4()));
-    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+void Mesh::bind() const {
+	glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);	
 }
 
 } // namespace renderer

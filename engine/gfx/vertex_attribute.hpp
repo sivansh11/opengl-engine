@@ -17,6 +17,9 @@ public:
         glDeleteVertexArrays(1, &id);
     }
 
+    VertexAttribute(const VertexAttribute& vertexAttribute) = delete;
+    VertexAttribute& operator=(const VertexAttribute& vertexAttribute) = delete;
+
     VertexAttribute(VertexAttribute&& vertexAttribute) {
         id = vertexAttribute.id;
 

@@ -21,4 +21,5 @@ target_link_libraries(engine
     yaml-cpp
     efsw
     ImGuizmo
+    EnTT
 )
