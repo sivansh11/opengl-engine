@@ -1,7 +1,7 @@
 #ifndef WINDOW_HPP
 #define WINDOW_HPP
 
-#include "events.hpp"
+#include "event.hpp"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>

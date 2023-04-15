@@ -71,7 +71,7 @@ public:
 
         Builder(uint32_t width, uint32_t height);
 
-        Builder& addAttachment(gfx::Texture::Builder& builder, gfx::Texture::Type type, gfx::Texture::InternalFormat internalFormat, Attachment Attachment, uint32_t mipLevel = 0);
+        Builder& addAttachment(const gfx::Texture::Builder& builder, gfx::Texture::Type type, gfx::Texture::InternalFormat internalFormat, Attachment Attachment, uint32_t mipLevel = 0);
 
         // Builder& addAttachment(std::shared_ptr<Texture> texture, Attachment attachment, uint32_t mipLevel = 0);
         // Builder& addAttachment(Texture::Builder& builder, Texture::Type type, Texture::CreateInfo& info, Attachment attachment, uint32_t mipLevel = 0);

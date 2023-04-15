@@ -10,7 +10,7 @@ struct LightData {
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec3 nor;
 layout (location = 2) in vec2 uv;
-layout (location = 3) in mat3 TBN;
+// layout (location = 3) in mat3 TBN;
 
 out vec4 frag;
 
@@ -73,7 +73,7 @@ vec3 calculateLight(int index) {
     } else {
         norm = nor;
     }
-    norm = normalize(TBN * norm);
+    // norm = normalize(TBN * norm);
 
     vec3 lightDir = normalize(lightData.pos - pos);
     float diff = max(dot(norm, lightDir), 0.0);

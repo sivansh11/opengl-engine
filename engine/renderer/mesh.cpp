@@ -19,7 +19,8 @@ Mesh::~Mesh() {
 
 }
 
-void Mesh::bind() const {
+void Mesh::draw() {
+	m_vertexAttribute.bind();
 	glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);	
 }
 

@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(Editor)
+project(editor)
 
 file(GLOB_RECURSE SRC_FILES ./*.cpp)
 
-add_executable(Editor ${SRC_FILES})
+add_executable(editor ${SRC_FILES})
 
-include_directories(Editor
+include_directories(editor
     ../../engine
     ../../deps/glfw/include
 )
 
-target_link_libraries(Editor
+target_link_libraries(editor
     engine
 )

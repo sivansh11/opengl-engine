@@ -15,11 +15,15 @@ struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 uv;
+    glm::vec3 tangent;
+    glm::vec3 biTangent;
     static gfx::VertexAttribute getAttributes() {
         gfx::VertexAttribute vertexAttribute{};
         vertexAttribute.attributeLocation(0, 3, offsetof(Vertex, position));
         vertexAttribute.attributeLocation(1, 3, offsetof(Vertex, normal));
         vertexAttribute.attributeLocation(2, 2, offsetof(Vertex, uv));
+        vertexAttribute.attributeLocation(3, 3, offsetof(Vertex, tangent));
+        vertexAttribute.attributeLocation(4, 3, offsetof(Vertex, biTangent));
         return vertexAttribute;
     } 
 };
@@ -32,7 +36,10 @@ public:
     Mesh(const Mesh& mesh) = delete;
     Mesh& operator=(const Mesh& mesh) = delete;
 
-    void bind() const;
+    void draw();
+    
+    core::TransformComponent m_transform;
+    std::unique_ptr<Material> material;
 
 private:
     gfx::Buffer m_vertices;

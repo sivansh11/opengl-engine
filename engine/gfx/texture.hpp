@@ -15,28 +15,28 @@ namespace gfx {
 
 class Texture {
 public:
-    class MagFilter : public BaseEnum<GLenum>{
+    class MagFilter : public BaseEnum<GLint>{
     public:
         MagFilter() {}
-        MagFilter(GLenum flag) : BaseEnum(flag) {}
-        operator GLenum() {
+        MagFilter(GLint flag) : BaseEnum(flag) {}
+        operator GLint() {
             return flags;
         }
-        constexpr static GLenum eNEAREST = GL_NEAREST;
-        constexpr static GLenum eLINEAR = GL_LINEAR;
+        constexpr static GLint eNEAREST = GL_NEAREST;
+        constexpr static GLint eLINEAR = GL_LINEAR;
     };
 
     class MinFilter : public MagFilter {
     public:
         MinFilter() {}
-        MinFilter(GLenum flag) : MagFilter(flag) {}
-        operator GLenum() {
+        MinFilter(GLint flag) : MagFilter(flag) {}
+        operator GLint() {
             return flags;
         }
-        constexpr static GLenum eNEAREST_MIPMAP_NEAREST = GL_NEAREST_MIPMAP_NEAREST;
-        constexpr static GLenum eLINEAR_MIPMAP_NEAREST = GL_LINEAR_MIPMAP_NEAREST;
-        constexpr static GLenum eNEAREST_MIPMAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR;
-        constexpr static GLenum eLINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR;
+        constexpr static GLint eNEAREST_MIPMAP_NEAREST = GL_NEAREST_MIPMAP_NEAREST;
+        constexpr static GLint eLINEAR_MIPMAP_NEAREST = GL_LINEAR_MIPMAP_NEAREST;
+        constexpr static GLint eNEAREST_MIPMAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR;
+        constexpr static GLint eLINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR;
     };
 
     enum class Wrap : GLenum {
@@ -74,6 +74,14 @@ public:
         eUNSIGNED_BYTE = GL_UNSIGNED_BYTE,
     };
 
+    enum class Swizzle : GLint {
+        eR = GL_RED,
+        eG = GL_GREEN,
+        eB = GL_BLUE,
+        eA = GL_ALPHA,
+        eONE = GL_ONE,
+        eZERO = GL_ZERO,
+    };
     // creates the texture object of some type
     // sets all the texture settings
     // gpu allocation is not done in the builder
@@ -84,6 +92,8 @@ public:
         MinFilter minFilter;
         MagFilter magFilter;
 
+        Swizzle swizzles[4];
+
         float borderColor[4];
 
         Builder();
@@ -93,15 +103,19 @@ public:
         Builder& setWrapS(Wrap warp);
         Builder& setWrapT(Wrap warp);
         Builder& setWrapR(Wrap warp);
+        Builder& setSwizzleR(Swizzle swizzle);
+        Builder& setSwizzleG(Swizzle swizzle);
+        Builder& setSwizzleB(Swizzle swizzle);
+        Builder& setSwizzleA(Swizzle swizzle);
         // If the texture contains depth components, the first component of GL_TEXTURE_BORDER_COLOR is interpreted as a depth value. The initial value is (0.0,0.0,0.0,0.0).
         Builder& setBorderColor(float r, float g, float b, float a);
         Builder& setBorderColor(float d);
 
-        std::shared_ptr<Texture> build(Type type);
+        std::shared_ptr<Texture> build(Type type) const;
 
         friend class Texture;
     private:
-        GLuint getNewID(Type type);    
+        GLuint getNewID(Type type) const;    
     };
 
     Texture() = default;

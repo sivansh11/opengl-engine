@@ -117,6 +117,9 @@ void Buffer::resize(uint32_t bytes) {
         case Buffer::Useage::eDYNAMIC_DRAW:
             glNamedBufferData(id, m_bytes, nullptr, GL_DYNAMIC_DRAW);
             break;
+        case Buffer::Useage::eSTREAM_DRAW:
+            glNamedBufferData(id, m_bytes, nullptr, GL_STREAM_DRAW);
+            break;
             
         default:
             throw std::runtime_error("Not implemented!");

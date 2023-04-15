@@ -20,6 +20,11 @@ Texture::Builder::Builder() {
     borderColor[1] = 0;
     borderColor[2] = 0;
     borderColor[3] = 0;
+
+    swizzles[0] = Swizzle::eR;
+    swizzles[1] = Swizzle::eG;
+    swizzles[2] = Swizzle::eB;
+    swizzles[3] = Swizzle::eA;
 }
 
 Texture::Builder& Texture::Builder::setMinFilter(MinFilter minFilter) {
@@ -47,6 +52,26 @@ Texture::Builder& Texture::Builder::setWrapR(Wrap wrap) {
     return *this;
 }
 
+Texture::Builder& Texture::Builder::setSwizzleR(Swizzle swizzle) {
+    swizzles[0] = swizzle;   
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setSwizzleG(Swizzle swizzle) {
+    swizzles[1] = swizzle;   
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setSwizzleB(Swizzle swizzle) {
+    swizzles[2] = swizzle;   
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setSwizzleA(Swizzle swizzle) {
+    swizzles[3] = swizzle;   
+    return *this;
+}
+
 Texture::Builder& Texture::Builder::setBorderColor(float r, float g, float b, float a) {
     Texture::Builder::borderColor[0] = r;
     Texture::Builder::borderColor[1] = g;
@@ -60,18 +85,24 @@ Texture::Builder& Texture::Builder::setBorderColor(float d) {
     return *this;
 }
 
-std::shared_ptr<Texture> Texture::Builder::build(Type type) {
+std::shared_ptr<Texture> Texture::Builder::build(Type type) const {
     return std::make_unique<Texture>(getNewID(type), type, *this);
 }
 
-GLuint Texture::Builder::getNewID(Type type) {
+GLuint Texture::Builder::getNewID(Type type) const{
     GLuint id;
+
+    auto minFilter_ = minFilter;
+    auto magFilter_ = magFilter;
+
     glCreateTextures(static_cast<GLenum>(type), 1, &id);
-    glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, minFilter);
-    glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, magFilter);
+    glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, minFilter_);
+    glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, magFilter_);
     glTextureParameteri(id, GL_TEXTURE_WRAP_S, static_cast<GLenum>(wrapS));
     glTextureParameteri(id, GL_TEXTURE_WRAP_T, static_cast<GLenum>(wrapT));
     glTextureParameteri(id, GL_TEXTURE_WRAP_R, static_cast<GLenum>(wrapR));
+
+    glTextureParameteriv(id, GL_TEXTURE_SWIZZLE_RGBA, reinterpret_cast<const GLint*>(swizzles));
 
     glTextureParameterfv(id, GL_TEXTURE_BORDER_COLOR, borderColor);
 

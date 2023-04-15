@@ -34,7 +34,7 @@ FrameBuffer& FrameBuffer::operator=(FrameBuffer&& other) {
     return *this;
 }
 
-FrameBuffer::Builder& FrameBuffer::Builder::addAttachment(gfx::Texture::Builder& builder, gfx::Texture::Type type, gfx::Texture::InternalFormat internalFormat, FrameBuffer::Attachment attachment, uint32_t mipLevel) {
+FrameBuffer::Builder& FrameBuffer::Builder::addAttachment(const gfx::Texture::Builder& builder, gfx::Texture::Type type, gfx::Texture::InternalFormat internalFormat, FrameBuffer::Attachment attachment, uint32_t mipLevel) {
     assert(!textures.contains(attachment));
     auto tex = builder.build(type);
     gfx::Texture::CreateInfo info;

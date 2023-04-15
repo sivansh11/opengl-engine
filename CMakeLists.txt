@@ -6,6 +6,5 @@ project(engine)
 
 add_subdirectory(deps)
 add_subdirectory(engine)
-add_subdirectory(apps)
 add_subdirectory(projects)
 
