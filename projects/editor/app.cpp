@@ -1,18 +1,22 @@
 #include "app.hpp"
 
+#include "core/imgui_utils.hpp"
+
 #include "renderer/renderpass/test.hpp"
 #include "renderer/pipeline/basic_pipeline.hpp"
 #include "renderer/pipeline/deferred_pipeline.hpp"
 #include "renderer/renderpass/basic_renderpass.hpp"
 #include "renderer/renderpass/geomtery_pass.hpp"
 #include "renderer/renderpass/composite_renderpass.hpp"
+#include "renderer/renderpass/depth_renderpass.hpp"
+#include "renderer/pipeline/depth_pipeline.hpp"
+#include "renderer/pipeline/ssao_pipeline.hpp"
+#include "renderer/renderpass/ssao_pass.hpp"
 #include "renderer/model.hpp"
 
 #include "core/event.hpp"
 
 #include "core/components.hpp"
-
-#include "core/imgui_utils.hpp"
 
 #include "editor_camera.hpp"
 
@@ -55,6 +59,19 @@ void App::run() {
         pl.term = {.3, .3, .1};
     }
 
+    {
+        auto ent = registry.create();
+        auto& dl = registry.emplace<core::DirectionalLightComponent>(ent);
+        dl.position = {0, 12, .1};
+        dl.color = {1, 1, 1};
+        dl.ambience = {.01, .01, .01};
+        dl.multiplier = 1;
+        dl.orthoProj = 15;
+        dl.far = 43;
+        dl.near = 0.1;
+        dl.term = {.3, .3, .1};
+    }
+
     std::shared_ptr<renderer::RenderPass> geometryPass = std::make_shared<renderer::GeometryPass>();
     renderer::DeferredPipeline deferredPipeline{dispatcher};
     deferredPipeline.addRenderPass(geometryPass);
@@ -62,6 +79,24 @@ void App::run() {
     std::shared_ptr<renderer::RenderPass> compositePass = std::make_shared<renderer::CompositePass>();
     renderer::BasicPipeline basicPipeline{dispatcher};
     basicPipeline.addRenderPass(compositePass);
+
+    std::shared_ptr<renderer::RenderPass> depthPass = std::make_shared<renderer::DepthPass>();
+    renderer::DepthPipeline depthPipeline{dispatcher};
+    depthPipeline.addRenderPass(depthPass);
+
+    std::shared_ptr<renderer::RenderPass> ssaoPass = std::make_shared<renderer::SSAOPass>();
+    renderer::SSAOPipeline ssaoPipeline{dispatcher};
+    ssaoPipeline.addRenderPass(ssaoPass);
+
+    std::vector<core::BasePanel *> pipelines;
+    pipelines.push_back(&deferredPipeline);
+    pipelines.push_back(&basicPipeline);
+    pipelines.push_back(&depthPipeline);
+    pipelines.push_back(&ssaoPipeline);
+    
+    for (auto pipeline : pipelines) {
+        pipeline->show = false;
+    }
 
     double lastTime = glfwGetTime();
 
@@ -81,7 +116,9 @@ void App::run() {
         renderContext["projection"] = camera.getProjection();
         renderContext["viewPos"] = camera.getPos();
 
+        depthPipeline.render(registry, renderContext);
         deferredPipeline.render(registry, renderContext);
+        ssaoPipeline.render(registry, renderContext);
         basicPipeline.render(registry, renderContext);
 
         core::startFrameImgui();
@@ -109,15 +146,15 @@ void App::run() {
         ImGui::Begin("DockSpace", &dockSpace, windowFlags);
         ImGuiID dockspaceID = ImGui::GetID("DockSpace");
         ImGui::DockSpace(dockspaceID, ImGui::GetContentRegionAvail(), dockspaceFlags);
-        // if (ImGui::BeginMainMenuBar()) {
-        //     if (ImGui::BeginMenu("Panels")) {
-        //         for (auto& panel : panels) {
-        //             if (ImGui::MenuItem(panel->getName().c_str(), NULL, &panel->getShow())) {}
-        //         }
-        //         ImGui::EndMenu();
-        //     }
-        //     ImGui::EndMainMenuBar();
-        // }
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("Pipelines")) {
+                for (auto& panel : pipelines) {
+                    if (ImGui::MenuItem(panel->m_name.c_str(), NULL, &panel->show)) {}
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
         ImGui::End();
         ImGui::PopStyleVar(2);
 
@@ -134,10 +171,18 @@ void App::run() {
         width = vp.x;
         height = vp.y;
         camera.onUpdate(dt);
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<GLuint>(renderContext["finalImage"]))), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["finalImage"])->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
     
         ImGui::End();
         ImGui::PopStyleVar(2);
+
+        for (auto panel : pipelines) {
+            panel->uiPanel();
+        }
+
+        ImGui::Begin("Debug");
+        ImGui::Text("%f", ImGui::GetIO().Framerate);
+        ImGui::End();
 
         core::endFrameImgui(window);
         

@@ -5,13 +5,15 @@
 
 namespace gfx {
 
-Buffer::Buffer(uint32_t bytes, Buffer::Useage type) : m_bytes(bytes), m_type(type) {
+Buffer::Buffer(uint32_t bytes, Buffer::Useage type, const std::string& debugName) : m_bytes(bytes), m_type(type) {
     glCreateBuffers(1, &id);
+    glObjectLabel(GL_BUFFER, id, -1, debugName.c_str());
     resize(m_bytes);
 }
 
-Buffer::Buffer(Buffer::Useage type) : m_type(type) {
+Buffer::Buffer(Buffer::Useage type, const std::string& debugName) : m_type(type) {
     glCreateBuffers(1, &id);
+    glObjectLabel(GL_BUFFER, id, -1, debugName.c_str());
 }
 
 Buffer::Buffer(Buffer&& buffer) {

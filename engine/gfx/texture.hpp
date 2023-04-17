@@ -54,6 +54,9 @@ public:
     };
 
     enum class InternalFormat : GLenum {
+        eR8 = GL_R8,
+        eR16 = GL_R16,
+        eR32F = GL_R32F,
         eRGBA8 = GL_RGBA8,
         eRGBA16F = GL_RGBA16F,
         eDEPTH_COMPONENT32 = GL_DEPTH_COMPONENT32,
@@ -111,7 +114,7 @@ public:
         Builder& setBorderColor(float r, float g, float b, float a);
         Builder& setBorderColor(float d);
 
-        std::shared_ptr<Texture> build(Type type) const;
+        std::shared_ptr<Texture> build(Type type, const std::string& debugName = "default") const;
 
         friend class Texture;
     private:

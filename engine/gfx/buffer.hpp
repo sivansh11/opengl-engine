@@ -31,8 +31,8 @@ public:
     };
 
     Buffer() = default;
-    Buffer(uint32_t bytes, Useage type = Useage::eSTATIC_DRAW);
-    Buffer(Useage type);
+    Buffer(uint32_t bytes, Useage type = Useage::eSTATIC_DRAW, const std::string& debugName = "default");
+    Buffer(Useage type, const std::string& debugName = "default");
 
     Buffer(Buffer&& buffer);
     Buffer& operator=(Buffer&& buffer);

@@ -23,14 +23,12 @@ public:
     } 
 
     void render(entt::registry& registry, RenderContext& renderContext) override {
-        shader.bind();
         vao.bind();
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
 private:
     gfx::VertexAttribute vao;
-    gfx::ShaderProgram shader;
 };
 
 } // namespace renderer

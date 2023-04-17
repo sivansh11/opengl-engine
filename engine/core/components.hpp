@@ -93,9 +93,10 @@ struct PointLightComponent {
 };
 
 struct DirectionalLightComponent {
-    glm::vec3 pos;
+    glm::vec3 position;
     glm::vec3 color;
     glm::vec3 ambience;
+    glm::vec3 term;
 
     float multiplier = 1;
     float orthoProj = 10;

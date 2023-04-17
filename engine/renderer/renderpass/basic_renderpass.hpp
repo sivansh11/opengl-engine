@@ -38,7 +38,6 @@ public:
         pointLigthBuffer.push(pointLights.data());
 
         glEnable(GL_DEPTH_TEST);
-        shader.bind();
         shader.veci("numLights", pointLights.size());
         shader.vec3f("viewPos", glm::value_ptr(std::any_cast<glm::vec3>(renderContext["viewPos"])));
         shader.mat4f("view", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["view"])));
@@ -53,7 +52,6 @@ public:
     }
 
 private:
-    gfx::ShaderProgram shader;
     gfx::Buffer pointLigthBuffer;
 };
 

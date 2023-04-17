@@ -6,6 +6,13 @@ struct PointLight {
     vec3 term;
 };
 
+struct DirectionalLight {
+    vec3 position;
+    vec3 color;
+    vec3 ambience;
+    vec3 term;
+};
+
 layout (location = 0) in vec2 uv;
 
 out vec4 frag;
@@ -21,6 +28,7 @@ layout (std430, binding = 0) buffer PointLightBuffer {
     PointLight pointLightBuffer[];
 };
 
+// float shadowCalculation();
 vec3 calculateLight(int index);
 
 vec3 position;

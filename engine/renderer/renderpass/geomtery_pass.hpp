@@ -28,7 +28,6 @@ public:
         assert(renderContext.contains("projection"));
 
         glEnable(GL_DEPTH_TEST);
-        shader.bind();
         shader.mat4f("view", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["view"])));
         shader.mat4f("projection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["projection"])));
         auto view = registry.view<Model>();
@@ -39,7 +38,7 @@ public:
     }
 
 private:
-    gfx::ShaderProgram shader;
+
 };
 
 } // namespace renderer

@@ -2,6 +2,8 @@
 
 #include "renderpass.hpp"
 
+#include "../core/imgui_utils.hpp"
+
 #include <glad/glad.h>
 
 #include <iostream>
@@ -19,7 +21,8 @@ void BasePipeline::addRenderPass(std::shared_ptr<RenderPass> renderPass) {
 }
 
 void BasePipeline::render(entt::registry& registry, RenderContext& renderContext) {
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, m_pipelineName.c_str());
+    m_renderContextPtr = &renderContext;
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, m_name.c_str());
     preRender(registry, renderContext);
     for (int i = 0; i < m_renderPasses.size(); i++) {
         auto& renderPass = m_renderPasses[i];
@@ -27,9 +30,12 @@ void BasePipeline::render(entt::registry& registry, RenderContext& renderContext
         // auto& timeElapsed = m_timeElapsed[i];
 
         // glBeginQuery(GL_TIME_ELAPSED, query);
-        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderPass->m_renderPassName.c_str());
+
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderPass->m_name.c_str());
+        renderPass->shader.bind();
         renderPass->render(registry, renderContext);
         glPopDebugGroup();
+        
         // glEndQuery(GL_TIME_ELAPSED);
 
         // int done = 0;
@@ -46,6 +52,16 @@ void BasePipeline::render(entt::registry& registry, RenderContext& renderContext
     //     auto& timeElapsed = m_timeElapsed[i];
     //     std::cout << 't' << renderPass->m_renderPassName << ": " << timeElapsed / 1000000.f << "ms" << '\n';
     // }
+}
+
+void BasePipeline::UI() {
+    pipelineUI();
+    ImGui::Separator();
+    for (auto renderPass : m_renderPasses) {
+        ImGui::Text("%s", renderPass->m_name.c_str());
+        renderPass->UI();
+        ImGui::Separator();
+    }
 }
 
 } // namespace renderer

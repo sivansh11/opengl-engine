@@ -85,8 +85,10 @@ Texture::Builder& Texture::Builder::setBorderColor(float d) {
     return *this;
 }
 
-std::shared_ptr<Texture> Texture::Builder::build(Type type) const {
-    return std::make_unique<Texture>(getNewID(type), type, *this);
+std::shared_ptr<Texture> Texture::Builder::build(Type type, const std::string& debugName) const {
+    auto id = getNewID(type);
+    glObjectLabel(GL_TEXTURE, id, -1, debugName.c_str());
+    return std::make_unique<Texture>(id, type, *this);
 }
 
 GLuint Texture::Builder::getNewID(Type type) const{
@@ -130,12 +132,12 @@ void Texture::create(const CreateInfo& info) {
     GLsizei targetLevel = 1;
     switch (type) {
         case Type::e2D: {
-            if (info.genMipMap) targetLevel = 1 + std::ceil(std::log2(static_cast<double>(std::max(info.width, info.height))));
-            glTextureStorage2D(id, targetLevel, static_cast<GLenum>(info.internalFormat), info.width, info.height);
+                if (info.genMipMap) targetLevel = 1 + std::floor(std::log2(static_cast<double>(std::max(info.width, info.height))));
+                glTextureStorage2D(id, targetLevel, static_cast<GLenum>(info.internalFormat), info.width, info.height);
         }
         break; 
         case Type::e3D: {
-            if (info.genMipMap) targetLevel = 1 + std::ceil(std::log2(static_cast<double>(std::max(std::max(info.width, info.height), info.depth))));
+            if (info.genMipMap) targetLevel = 1 + std::floor(std::log2(static_cast<double>(std::max(std::max(info.width, info.height), info.depth))));
             glTextureStorage3D(id, targetLevel, static_cast<GLenum>(info.internalFormat), info.width, info.height, info.depth);
         }
         break;

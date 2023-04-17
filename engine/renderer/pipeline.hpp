@@ -2,6 +2,7 @@
 #define RENDERER_PIPELINE_HPP
 
 #include "../core/event.hpp"
+#include "../core/panel.hpp"
 
 #include <entt/entt.hpp>
 
@@ -19,23 +20,25 @@ using RenderContext = std::map<std::string, std::any>;
 
 class RenderPass;
 
-class BasePipeline {
+class BasePipeline : public core::BasePanel {
 public:
-    BasePipeline(event::Dispatcher& dispatcher, const std::string& pipelineName) : m_dispatcher(dispatcher), m_pipelineName(pipelineName) {}
+    BasePipeline(event::Dispatcher& dispatcher, const std::string& pipelineName) : m_dispatcher(dispatcher), BasePanel(pipelineName) {}
     virtual ~BasePipeline() {}
 
     void addRenderPass(std::shared_ptr<RenderPass> renderPass);
-    void render(entt::registry& registry, RenderContext& renderContext);
+    void render(entt::registry& registry, RenderContext &renderContext);
+    void UI() override;
 
-    virtual void preRender(entt::registry& registry, RenderContext& renderContext) = 0;
-    virtual void postRender(entt::registry& registry, RenderContext& renderContext) = 0;
+    virtual void preRender(entt::registry& registry, RenderContext &renderContext) = 0;
+    virtual void postRender(entt::registry& registry, RenderContext &renderContext) = 0;
+    virtual void pipelineUI() {}
 
 protected:
     event::Dispatcher& m_dispatcher;
+    RenderContext *m_renderContextPtr;
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;
-    std::string m_pipelineName;
     // std::vector<GLuint> m_queries;
     // std::vector<GLint64> m_timeElapsed;
 };
