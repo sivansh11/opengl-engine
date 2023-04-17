@@ -238,6 +238,7 @@ void Model::draw(gfx::ShaderProgram& shader, const core::TransformComponent& tra
         if (withMaterial)
             mesh->material->bind(shader);
         shader.mat4f("model", glm::value_ptr(transform.mat4() * mesh->m_transform.mat4()));
+        shader.mat4f("invModel", glm::value_ptr(glm::inverse(transform.mat4() * mesh->m_transform.mat4())));
         mesh->draw();
     }
 }

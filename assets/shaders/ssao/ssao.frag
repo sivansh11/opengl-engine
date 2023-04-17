@@ -12,7 +12,9 @@ uniform sampler2D texNoise;
 uniform float radius;
 uniform float bias;
 uniform mat4 projection;
+uniform mat4 invProjection;
 uniform mat4 view;
+uniform mat4 invView;
 uniform int numSamples;
 
 layout (std430, binding = 0) buffer SSAOKernelBuffer {
@@ -22,7 +24,7 @@ layout (std430, binding = 0) buffer SSAOKernelBuffer {
 vec4 get_view_position_from_depth(vec2 uv, float depth) {
     float z = depth * 2 - 1;
     vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, z, 1.0);
-    vec4 viewSpacePosition = inverse(projection) * clipSpacePosition;
+    vec4 viewSpacePosition = invProjection * clipSpacePosition;
 
     viewSpacePosition /= viewSpacePosition.w;
 

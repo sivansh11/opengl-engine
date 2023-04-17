@@ -100,7 +100,9 @@ public:
         shader.vecf("bias", bias);
         shader.veci("numSamples", numSamples);
         shader.mat4f("projection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["projection"])));
+        shader.mat4f("invProjection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invProjection"])));
         shader.mat4f("view", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["view"])));
+        shader.mat4f("invView", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invView"])));
         ssaoKernelBuffer.bind(0);
         noiseTexture->bind("texNoise", 3, shader);
         vao.bind();

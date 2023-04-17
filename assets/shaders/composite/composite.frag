@@ -18,7 +18,7 @@ layout (location = 0) in vec2 uv;
 out vec4 frag;
 
 uniform sampler2D texAlbedoSpec;
-uniform sampler2D texPosition;
+uniform sampler2D texDepth;
 uniform sampler2D texNormal;
 
 uniform bool useSSAO;
@@ -29,6 +29,9 @@ uniform DirectionalLight directionalLight;
 uniform bool hasDirectionalLight;
 
 uniform mat4 lightSpaceMatrix;
+
+uniform mat4 invView;
+uniform mat4 invProjection;
 
 uniform vec3 viewPos;
 uniform int numLights;
@@ -46,8 +49,18 @@ vec3 normal;
 vec3 color;
 float specular;
 
+vec4 get_view_position_from_depth(vec2 uv, float depth) {
+    float z = depth * 2 - 1;
+    vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, z, 1.0);
+    vec4 viewSpacePosition = invProjection * clipSpacePosition;
+
+    viewSpacePosition /= viewSpacePosition.w;
+
+    return viewSpacePosition.xyzw;
+}
+
 void main() {
-    position = texture(texPosition, uv).rgb;
+    position = vec3(invView * get_view_position_from_depth(uv, texture(texDepth, uv).r));
     normal = normalize(texture(texNormal, uv).rgb);
     color = texture(texAlbedoSpec, uv).rgb;
     specular = texture(texAlbedoSpec, uv).a;

@@ -104,7 +104,9 @@ void App::run() {
         renderContext["width"] = width;
         renderContext["height"] = height;
         renderContext["view"] = camera.getView();
+        renderContext["invView"] = glm::inverse(camera.getView());
         renderContext["projection"] = camera.getProjection();
+        renderContext["invProjection"] = glm::inverse(camera.getProjection());
         renderContext["viewPos"] = camera.getPos();
 
         depthPipeline.render(registry, renderContext);

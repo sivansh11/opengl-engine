@@ -6,12 +6,12 @@ layout (location = 2) in vec2 inUv;
 layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 biTangent;
 
-layout (location = 0) out vec3 outPosition;
 layout (location = 1) out vec3 outNormal;
 layout (location = 2) out vec2 outUv;
 layout (location = 3) out mat3 outTBN;
 
 uniform mat4 model;
+uniform mat4 invModel;
 uniform mat4 view;
 uniform mat4 projection;
 
@@ -21,8 +21,8 @@ void main() {
     vec3 N = normalize(vec3(model * vec4(inNormal, 0)));
     mat3 TBN = mat3(T, B, N);
 
-    outPosition = vec3(model * vec4(inPosition, 1));
-    outNormal = mat3(transpose(inverse(model))) * inNormal;
+    vec3 outPosition = vec3(model * vec4(inPosition, 1));
+    outNormal = mat3(transpose(invModel)) * inNormal;
     outUv = inUv;
     outTBN = TBN;
 

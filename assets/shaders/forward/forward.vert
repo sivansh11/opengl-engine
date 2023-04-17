@@ -12,6 +12,7 @@ layout (location = 2) out vec2 outUv;
 layout (location = 3) out mat3 outTBN;
 
 uniform mat4 model;
+uniform mat4 invModel;
 uniform mat4 view;
 uniform mat4 projection;
 
@@ -22,7 +23,7 @@ void main() {
     mat3 TBN = mat3(T, B, N);
 
     outPosition = vec3(model * vec4(inPosition, 1));
-    outNormal = mat3(transpose(inverse(model))) * inNormal;
+    outNormal = mat3(transpose(invModel)) * inNormal;
     outUv = inUv;
     outTBN = TBN;
 

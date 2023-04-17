@@ -37,7 +37,7 @@ public:
         assert(renderContext.contains("viewPos"));
         assert(renderContext.contains("lightSpaceMatrix"));
         assert(renderContext.contains("texAlbedoSpec"));
-        assert(renderContext.contains("texPosition"));
+        // assert(renderContext.contains("texPosition"));
         assert(renderContext.contains("texNormal"));
         assert(renderContext.contains("ssaoImage"));
 
@@ -74,9 +74,12 @@ public:
         shader.veci("numLights", pointLights.size());
         shader.vec3f("viewPos", glm::value_ptr(std::any_cast<glm::vec3>(renderContext["viewPos"])));
         shader.mat4f("lightSpaceMatrix", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["lightSpaceMatrix"])));
+        shader.mat4f("invView", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invView"])));
+        shader.mat4f("invProjection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invProjection"])));
         
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texAlbedoSpec"])->bind("texAlbedoSpec", 0, shader);
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texPosition"])->bind("texPosition", 1, shader);
+        // std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texPosition"])->bind("texPosition", 1, shader);
+        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texNormal"])->bind("texNormal", 2, shader);
         if (useSSAO) {
             std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["ssaoImage"])->bind("texSSAO", 2, shader);
