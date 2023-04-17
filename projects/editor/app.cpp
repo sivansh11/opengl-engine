@@ -3,9 +3,8 @@
 #include "core/imgui_utils.hpp"
 
 #include "renderer/renderpass/test.hpp"
-#include "renderer/pipeline/basic_pipeline.hpp"
+#include "renderer/pipeline/forward_pipeline.hpp"
 #include "renderer/pipeline/deferred_pipeline.hpp"
-#include "renderer/renderpass/basic_renderpass.hpp"
 #include "renderer/renderpass/geomtery_pass.hpp"
 #include "renderer/renderpass/composite_renderpass.hpp"
 #include "renderer/renderpass/depth_renderpass.hpp"
@@ -51,25 +50,17 @@ void App::run() {
         registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
     }
 
-    {
-        auto ent = registry.create();
-        auto& pl = registry.emplace<core::PointLightComponent>(ent);
-        pl.position = {6, 1, 0};
-        pl.color = {1, 1, 1};
-        pl.term = {.3, .3, .1};
-    }
+    // {
+    //     auto ent = registry.create();
+    //     auto& pl = registry.emplace<core::PointLightComponent>(ent);
+    //     pl.position = {6, 1, 0};
+    //     pl.color = {1, 1, 1};
+    //     pl.term = {.3, .3, .1};
+    // }
 
     {
         auto ent = registry.create();
         auto& dl = registry.emplace<core::DirectionalLightComponent>(ent);
-        dl.position = {0, 12, .1};
-        dl.color = {1, 1, 1};
-        dl.ambience = {.01, .01, .01};
-        dl.multiplier = 1;
-        dl.orthoProj = 15;
-        dl.far = 43;
-        dl.near = 0.1;
-        dl.term = {.3, .3, .1};
     }
 
     std::shared_ptr<renderer::RenderPass> geometryPass = std::make_shared<renderer::GeometryPass>();
@@ -77,8 +68,8 @@ void App::run() {
     deferredPipeline.addRenderPass(geometryPass);
 
     std::shared_ptr<renderer::RenderPass> compositePass = std::make_shared<renderer::CompositePass>();
-    renderer::BasicPipeline basicPipeline{dispatcher};
-    basicPipeline.addRenderPass(compositePass);
+    renderer::ForwardPipeline forwardPipeline{dispatcher};
+    forwardPipeline.addRenderPass(compositePass);
 
     std::shared_ptr<renderer::RenderPass> depthPass = std::make_shared<renderer::DepthPass>();
     renderer::DepthPipeline depthPipeline{dispatcher};
@@ -90,7 +81,7 @@ void App::run() {
 
     std::vector<core::BasePanel *> pipelines;
     pipelines.push_back(&deferredPipeline);
-    pipelines.push_back(&basicPipeline);
+    pipelines.push_back(&forwardPipeline);
     pipelines.push_back(&depthPipeline);
     pipelines.push_back(&ssaoPipeline);
     
@@ -119,7 +110,7 @@ void App::run() {
         depthPipeline.render(registry, renderContext);
         deferredPipeline.render(registry, renderContext);
         ssaoPipeline.render(registry, renderContext);
-        basicPipeline.render(registry, renderContext);
+        forwardPipeline.render(registry, renderContext);
 
         core::startFrameImgui();
 

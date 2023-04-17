@@ -24,6 +24,7 @@ public:
                                                   .setWrapT(gfx::Texture::Wrap::eCLAMP_TO_EDGE), gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA16F, gfx::FrameBuffer::Attachment::eCOLOR2)
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eDEPTH_COMPONENT32, gfx::FrameBuffer::Attachment::eDEPTH)
             .build();
+        frameBuffer.setClearDepth(1);
     }
 
     ~DeferredPipeline() {
@@ -41,6 +42,8 @@ public:
         renderContext["texAlbedoSpec"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR0);
         renderContext["texPosition"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR2);
         renderContext["texNormal"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR1);
+        renderContext["texDepth"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eDEPTH);
+
     }
 
     void pipelineUI() override {

@@ -9,9 +9,9 @@
 
 namespace renderer {
 
-class BasicPipeline : public BasePipeline {
+class ForwardPipeline : public BasePipeline {
 public:
-    BasicPipeline(event::Dispatcher& dispatcher) : BasePipeline(dispatcher, "Basic Pipeline") {
+    ForwardPipeline(event::Dispatcher& dispatcher) : BasePipeline(dispatcher, "Forward Pipeline") {
         frameBuffer = gfx::FrameBuffer::Builder{800, 600}
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA8, gfx::FrameBuffer::Attachment::eCOLOR0)
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eDEPTH_COMPONENT32, gfx::FrameBuffer::Attachment::eDEPTH)
@@ -23,7 +23,7 @@ public:
         // });
     }
 
-    ~BasicPipeline() {
+    ~ForwardPipeline() {
 
     }
 

@@ -39,11 +39,6 @@ struct TransformComponent {
             * rot
             * glm::scale(glm::mat4(1.0f), scale);
     }
-    // static void componentPanel(TransformComponent& transform, event::Dispatcher& dispatcher, ecs::EntityID ent) {
-    //     ImGui::DragFloat3("Translation", reinterpret_cast<float*>(&transform.translation), 0.01f);
-    //     ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&transform.rotation), 0.01f);
-    //     ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&transform.scale), 0.01f);
-    // }
 };
 
 class CameraComponent {
@@ -65,12 +60,6 @@ public:
 
     const glm::vec3& getPos() const { return m_pos; }
 
-    // static void componentPanel(CameraComponent& camera, event::Dispatcher& dispatcher, ecs::EntityID ent) {
-    //     ImGui::DragFloat("FOV", &camera.m_fov, 0.01f);
-    //     ImGui::DragFloat("Far Plane", &camera.m_far, 0.01f);
-    //     ImGui::DragFloat("Near Plane", &camera.m_near, 0.01f);
-    // }
-
     glm::vec3 m_pos{-1, 1, 0};
     glm::mat4 m_projection{1.0f};
     glm::mat4 m_view{1};
@@ -82,14 +71,6 @@ struct PointLightComponent {
     alignas(16) glm::vec3 position;
     alignas(16) glm::vec3 color{1, 1, 1};
     alignas(16) glm::vec3 term{.1, .1, .1};
-    // alignas(16) glm::vec3 ambience;
-
-    // static void componentPanel(PointLightComponent& lightData, event::Dispatcher& dispatcher, ecs::EntityID ent) {
-    //     ImGui::DragFloat3("position", reinterpret_cast<float *>(&lightData.pos), 0.01);        
-    //     ImGui::DragFloat3("color", reinterpret_cast<float *>(&lightData.color), 0.01);        
-    //     ImGui::DragFloat3("term", reinterpret_cast<float *>(&lightData.term), 0.01);        
-    //     // ImGui::DragFloat3("ambience", reinterpret_cast<float *>(&lightData.ambience), 0.01);        
-    // }
 };
 
 struct DirectionalLightComponent {
@@ -102,16 +83,6 @@ struct DirectionalLightComponent {
     float orthoProj = 10;
     float far = 7.5;
     float near = 1;
-
-    // static void componentPanel(DirectionalLightComponent& directionalLight, event::Dispatcher& dispatcher, ecs::EntityID ent) {
-    //     ImGui::DragFloat3("position", reinterpret_cast<float *>(&directionalLight.pos), 0.01);        
-    //     ImGui::DragFloat3("color", reinterpret_cast<float *>(&directionalLight.color), 0.01);        
-    //     ImGui::DragFloat3("ambience", reinterpret_cast<float *>(&directionalLight.ambience), 0.01);
-    //     ImGui::DragFloat("multiplier", &directionalLight.multiplier, 1);
-    //     ImGui::DragFloat("orthoProj", &directionalLight.orthoProj, 1);
-    //     ImGui::DragFloat("far", &directionalLight.far, 1);
-    //     ImGui::DragFloat("near", &directionalLight.near, 1);
-    // }
 };
 
 

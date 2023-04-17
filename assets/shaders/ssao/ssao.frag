@@ -28,7 +28,7 @@ void main() {
     mat3 TBN = mat3(tangent, biTangent, fragNormal);
 
     float occlusion = 0.0;
-    for (int i = 0; i < samples.length(); i++) {
+    for (int i = 0; i < numSamples; i++) {
         vec3 samplePos = TBN * vec3(samples[i]);
         samplePos = fragPos + samplePos * radius;
 
@@ -43,6 +43,6 @@ void main() {
 
         occlusion += (sampleDepth > samplePos.z + bias ? 1 : 0) * rangeCheck;
     }
-    occlusion = 1.0 - (occlusion / float(samples.length()));
+    occlusion = 1.0 - (occlusion / float(numSamples));
     frag = occlusion;
 }

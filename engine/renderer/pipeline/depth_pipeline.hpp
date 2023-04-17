@@ -20,6 +20,9 @@ public:
         //     const core::ViewPortResizeEvent& e = reinterpret_cast<const core::ViewPortResizeEvent&>(event);
         //     this->frameBuffer.invalidate(e.width, e.height);
         // });
+
+        dimensions[0] = 1024;
+        dimensions[1] = 1024;
     }
 
     ~DepthPipeline() {
@@ -27,22 +30,24 @@ public:
     }
 
     void preRender(entt::registry& registry, RenderContext& renderContext) override {
-        frameBuffer.invalidate(std::any_cast<uint32_t>(renderContext["width"]), std::any_cast<uint32_t>(renderContext["height"]));
+        frameBuffer.invalidate(dimensions[0], dimensions[1]);
         frameBuffer.bind();
         frameBuffer.clear(gfx::FrameBuffer::BufferBit::eDEPTH);
     }
 
     void postRender(entt::registry& registry, RenderContext& renderContext) override {
         frameBuffer.unbind();
-        renderContext["depthImage"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eDEPTH);
+        renderContext["depthMap"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eDEPTH);
     }
     
     void pipelineUI() override {
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(m_renderContextPtr->at("depthImage"))->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(m_renderContextPtr->at("depthMap"))->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::DragFloat2("Dimensions", dimensions);
     }
     
 private:
     gfx::FrameBuffer frameBuffer;
+    float dimensions[2];
 };
 
 } // namespace renderer
