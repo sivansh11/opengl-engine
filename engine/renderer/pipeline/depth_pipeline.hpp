@@ -13,7 +13,13 @@ class DepthPipeline : public BasePipeline {
 public:
     DepthPipeline(event::Dispatcher& dispatcher) : BasePipeline(dispatcher, "Depth Pipeline") {
         frameBuffer = gfx::FrameBuffer::Builder{800, 600}
-            .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eDEPTH_COMPONENT32, gfx::FrameBuffer::Attachment::eDEPTH)
+            .addAttachment(gfx::Texture::Builder{}
+                                .setMagFilter(gfx::Texture::MagFilter::eLINEAR)
+                                .setMinFilter(gfx::Texture::MinFilter::eLINEAR)
+                                .setWrapS(gfx::Texture::Wrap::eCLAMP_TO_EDGE)
+                                .setWrapT(gfx::Texture::Wrap::eCLAMP_TO_EDGE)
+                                .setCompareFunc(gfx::Texture::CompareFunc::eLEQUAL)
+                                , gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eDEPTH_COMPONENT32, gfx::FrameBuffer::Attachment::eDEPTH)
             .build();
         frameBuffer.setClearDepth(1);
         // m_dispatcher.subscribe<core::ViewPortResizeEvent>([this](const event::Event& event) {
@@ -21,8 +27,8 @@ public:
         //     this->frameBuffer.invalidate(e.width, e.height);
         // });
 
-        dimensions[0] = 1024;
-        dimensions[1] = 1024;
+        dimensions[0] = 1024 * 4;
+        dimensions[1] = 1024 * 4;
     }
 
     ~DepthPipeline() {

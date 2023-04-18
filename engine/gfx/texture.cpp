@@ -25,6 +25,9 @@ Texture::Builder::Builder() {
     swizzles[1] = Swizzle::eG;
     swizzles[2] = Swizzle::eB;
     swizzles[3] = Swizzle::eA;
+
+    compareFunc = CompareFunc::eLEQUAL;
+    compareMode = CompareMode::eCOMPARE_REF_TO_TEXTURE;
 }
 
 Texture::Builder& Texture::Builder::setMinFilter(MinFilter minFilter) {
@@ -85,6 +88,16 @@ Texture::Builder& Texture::Builder::setBorderColor(float d) {
     return *this;
 }
 
+Texture::Builder& Texture::Builder::setCompareFunc(CompareFunc compareFunc) {
+    Texture::Builder::compareFunc = compareFunc;
+    return *this;
+}
+
+Texture::Builder& Texture::Builder::setCompareMode(CompareMode compareMode) {
+    Texture::Builder::compareMode = compareMode;
+    return *this;
+}
+
 std::shared_ptr<Texture> Texture::Builder::build(Type type, const std::string& debugName) const {
     auto id = getNewID(type);
     glObjectLabel(GL_TEXTURE, id, -1, debugName.c_str());
@@ -103,6 +116,8 @@ GLuint Texture::Builder::getNewID(Type type) const{
     glTextureParameteri(id, GL_TEXTURE_WRAP_S, static_cast<GLenum>(wrapS));
     glTextureParameteri(id, GL_TEXTURE_WRAP_T, static_cast<GLenum>(wrapT));
     glTextureParameteri(id, GL_TEXTURE_WRAP_R, static_cast<GLenum>(wrapR));
+    glTextureParameteri(id, GL_TEXTURE_COMPARE_FUNC, static_cast<GLint>(compareFunc));
+    glTextureParameteri(id, GL_TEXTURE_COMPARE_MODE, static_cast<GLint>(compareMode));
 
     glTextureParameteriv(id, GL_TEXTURE_SWIZZLE_RGBA, reinterpret_cast<const GLint*>(swizzles));
 
@@ -123,7 +138,7 @@ void Texture::bind(const std::string& name, uint32_t unit, ShaderProgram& shader
 }
 
 void Texture::bindImage(const std::string& name, uint32_t unit, ShaderProgram& shader) const {
-    glBindImageTexture(unit, id, 0, GL_FALSE, 0, GL_WRITE_ONLY, static_cast<GLenum>(info.internalFormat));
+    glBindImageTexture(unit, id, 0, GL_TRUE, 0, GL_WRITE_ONLY, static_cast<GLenum>(info.internalFormat));
     shader.veci(name, unit);
 }
 

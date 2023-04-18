@@ -30,10 +30,10 @@ public:
         glEnable(GL_DEPTH_TEST);
         shader.mat4f("view", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["view"])));
         shader.mat4f("projection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["projection"])));
-        auto view = registry.view<Model>();
+        auto view = registry.view<Model, core::TransformComponent>();
         for (auto ent : view) {
-            auto& model = registry.get<Model>(ent);
-            model.draw(shader, {});
+            auto [model, transform] = registry.get<Model, core::TransformComponent>(ent);
+            model.draw(shader, transform);
         }
     }
 

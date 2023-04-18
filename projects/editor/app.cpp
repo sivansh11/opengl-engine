@@ -11,6 +11,8 @@
 #include "renderer/pipeline/depth_pipeline.hpp"
 #include "renderer/pipeline/ssao_pipeline.hpp"
 #include "renderer/renderpass/ssao_pass.hpp"
+#include "renderer/renderpass/voxelize_renderpass.hpp"
+#include "renderer/pipeline/voxel_pipeline.hpp"
 #include "renderer/model.hpp"
 
 #include "core/event.hpp"
@@ -45,24 +47,6 @@ void App::run() {
     EditorCamera camera;
     uint32_t width = 100, height = 100;
 
-    {
-        auto ent = registry.create();
-        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
-    }
-
-    // {
-    //     auto ent = registry.create();
-    //     auto& pl = registry.emplace<core::PointLightComponent>(ent);
-    //     pl.position = {6, 1, 0};
-    //     pl.color = {1, 1, 1};
-    //     pl.term = {.3, .3, .1};
-    // }
-
-    {
-        auto ent = registry.create();
-        auto& dl = registry.emplace<core::DirectionalLightComponent>(ent);
-    }
-
     std::shared_ptr<renderer::RenderPass> geometryPass = std::make_shared<renderer::GeometryPass>();
     renderer::DeferredPipeline deferredPipeline{dispatcher};
     deferredPipeline.addRenderPass(geometryPass);
@@ -79,14 +63,39 @@ void App::run() {
     renderer::SSAOPipeline ssaoPipeline{dispatcher};
     ssaoPipeline.addRenderPass(ssaoPass);
 
+    std::shared_ptr<renderer::RenderPass> voxelizePass = std::make_shared<renderer::VoxelizationPass>();
+    renderer::VoxelPipeline voxelPipeline{dispatcher};
+    voxelPipeline.addRenderPass(voxelizePass);
+
     std::vector<core::BasePanel *> pipelines;
     pipelines.push_back(&deferredPipeline);
     pipelines.push_back(&forwardPipeline);
     pipelines.push_back(&depthPipeline);
     pipelines.push_back(&ssaoPipeline);
+    pipelines.push_back(&voxelPipeline);
     
     for (auto pipeline : pipelines) {
         pipeline->show = false;
+    }
+
+    {
+        auto ent = registry.create();
+        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
+        auto& t = registry.emplace<core::TransformComponent>(ent);
+        t.scale = {1, 1, 1};
+    }
+
+    // {
+    //     auto ent = registry.create();
+    //     auto& pl = registry.emplace<core::PointLightComponent>(ent);
+    //     pl.position = {6, 1, 0};
+    //     pl.color = {1, 1, 1};
+    //     pl.term = {.3, .3, .1};
+    // }
+
+    {
+        auto ent = registry.create();
+        auto& dl = registry.emplace<core::DirectionalLightComponent>(ent);
     }
 
     double lastTime = glfwGetTime();
@@ -110,6 +119,7 @@ void App::run() {
         renderContext["viewPos"] = camera.getPos();
 
         depthPipeline.render(registry, renderContext);
+        voxelPipeline.render(registry, renderContext);
         deferredPipeline.render(registry, renderContext);
         ssaoPipeline.render(registry, renderContext);
         forwardPipeline.render(registry, renderContext);

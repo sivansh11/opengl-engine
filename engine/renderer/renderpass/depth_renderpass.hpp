@@ -34,6 +34,9 @@ public:
     } 
 
     void render(entt::registry& registry, RenderContext& renderContext) override {
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        
         bool found = false;
         for (auto [ent, dl] : registry.view<core::DirectionalLightComponent>().each()) {
             dl = m_dlc;
@@ -47,17 +50,17 @@ public:
         }
 
         glEnable(GL_DEPTH_TEST);
-        glm::mat4 lightProjection = glm::ortho(-m_dlc.orthoProj, m_dlc.orthoProj, -m_dlc.orthoProj, m_dlc.orthoProj, m_dlc.near, m_dlc.far);  
-        glm::mat4 lightView = glm::lookAt(m_dlc.position * m_dlc.multiplier, 
-                                  glm::vec3( 0.0f, 0.0f,  0.0f), 
-                                  glm::vec3( 0.0f, 1.0f,  0.0f));  
-        glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
+        glm::mat4 viewMatrix = glm::lookAt(glm::vec3(-0.3, 0.9, -0.25), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    	glm::mat4 projectionMatrix = glm::ortho	<float>(-120, 120, -120, 120, -500, 500);
+
+        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix; 
         renderContext["lightSpaceMatrix"] = lightSpaceMatrix;
+        
         shader.mat4f("lightSpaceMatrix", glm::value_ptr(lightSpaceMatrix));
-        auto view = registry.view<Model>();
+        auto view = registry.view<Model, core::TransformComponent>();
         for (auto ent : view) {
-            auto& model = registry.get<Model>(ent);
-            model.draw(shader, {}, false);
+            auto [model, transform] = registry.get<Model, core::TransformComponent>(ent);
+            model.draw(shader, transform, false);
         }
     }
 

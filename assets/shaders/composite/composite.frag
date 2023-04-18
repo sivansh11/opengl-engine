@@ -24,6 +24,9 @@ uniform sampler2D texNormal;
 uniform bool useSSAO;
 uniform sampler2D texSSAO;
 
+uniform bool useVXGI;
+uniform sampler3D voxels;
+
 uniform sampler2D depthMap;
 uniform DirectionalLight directionalLight;
 uniform bool hasDirectionalLight;

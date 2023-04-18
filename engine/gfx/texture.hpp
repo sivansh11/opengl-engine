@@ -85,6 +85,15 @@ public:
         eONE = GL_ONE,
         eZERO = GL_ZERO,
     };
+
+    enum class CompareFunc : GLint {
+        eLEQUAL = GL_LEQUAL,
+    };
+
+    enum class CompareMode : GLint {
+        eCOMPARE_REF_TO_TEXTURE = GL_COMPARE_REF_TO_TEXTURE,
+    };
+
     // creates the texture object of some type
     // sets all the texture settings
     // gpu allocation is not done in the builder
@@ -99,6 +108,9 @@ public:
 
         float borderColor[4];
 
+        CompareFunc compareFunc;
+        CompareMode compareMode;
+
         Builder();
 
         Builder& setMinFilter(MinFilter minFilter);
@@ -110,6 +122,8 @@ public:
         Builder& setSwizzleG(Swizzle swizzle);
         Builder& setSwizzleB(Swizzle swizzle);
         Builder& setSwizzleA(Swizzle swizzle);
+        Builder& setCompareFunc(CompareFunc compareFunc);
+        Builder& setCompareMode(CompareMode compareMode);
         // If the texture contains depth components, the first component of GL_TEXTURE_BORDER_COLOR is interpreted as a depth value. The initial value is (0.0,0.0,0.0,0.0).
         Builder& setBorderColor(float r, float g, float b, float a);
         Builder& setBorderColor(float d);

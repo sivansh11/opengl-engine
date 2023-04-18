@@ -48,6 +48,10 @@ public:
             has = true;
             break;  
         }
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+
         if (has) {
             shader.veci("hasDirectionalLight", true);
             std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["depthMap"])->bind("depthMap", 3, shader);
@@ -82,10 +86,17 @@ public:
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texNormal"])->bind("texNormal", 2, shader);
         if (useSSAO) {
-            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["ssaoImage"])->bind("texSSAO", 2, shader);
+            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["ssaoImage"])->bind("texSSAO", 3, shader);
             shader.veci("useSSAO", 1);
         } else {
             shader.veci("useSSAO", 0);
+        }
+
+        if (useVXGI) {
+            shader.veci("useVXGI", useVXGI);
+            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["voxels"])->bind("voxels", 4, shader);
+        } else {
+            shader.veci("useVXGI", useVXGI);
         }
 
         pointLigthBuffer.bind(0);
@@ -96,6 +107,7 @@ public:
 
     void UI() override {
         ImGui::Checkbox("use SSAO", &useSSAO);
+        ImGui::Checkbox("use VXGI", &useVXGI);
     }
 
 private:
@@ -103,6 +115,7 @@ private:
     gfx::VertexAttribute vao;
     gfx::Buffer vertexBuffer;
     bool useSSAO = true;
+    bool useVXGI = true;
 };
 
 } // namespace renderer

@@ -95,7 +95,7 @@ void ShaderProgram::link() {
 
     for (const auto& shaderID : shaders) {
         glDeleteShader(shaderID);
-    }
+    }   
 
     if (error != "") {
         throw std::runtime_error(error);
@@ -108,11 +108,13 @@ void ShaderProgram::link() {
     int uniformCount;
     glGetProgramiv(id, GL_ACTIVE_UNIFORMS, &uniformCount);
     
+    std::cout << m_shaderCodePaths[0].c_str() << '\n';
+
     for (int i = 0; i < uniformCount; i++) {
         int size;
         GLenum type;
         glGetActiveUniform(id, i, maxLength, nullptr, &size, &type, name);
-        std::cout << name << '\n';
+        std::cout << '\t' << name << '\n';
         uniformLocation(name);
     }
     delete[] name;
