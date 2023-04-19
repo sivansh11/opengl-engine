@@ -1,8 +1,12 @@
 #version 460 core
 
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec2 uv;
-layout (location = 3) in mat3 TBN;
+in fData {
+    vec3 normal;
+    vec2 uv;
+    vec3 T;
+    vec3 B;
+    vec3 N;
+} frag;
 
 uniform struct Material {
     sampler2D diffuseMap;
@@ -14,15 +18,16 @@ out vec4 fragAlbedoSpec;
 out vec4 fragNormal;
 
 void main() {
-    if (texture(material.diffuseMap, uv).a == 0) {
+    if (texture(material.diffuseMap, frag.uv).a == 0) {
         discard;
     }
 
-    vec3 norm = texture(material.normalMap, uv).xyz * 2 - 1;
+    vec3 norm = texture(material.normalMap, frag.uv).xyz * 2 - 1;
+    mat3 TBN = mat3(frag.T, frag.B, frag.N);
     norm = normalize(TBN * norm);
     fragNormal = vec4(norm, 0);
 
-    fragAlbedoSpec.rgb = texture(material.diffuseMap, uv).rgb;
+    fragAlbedoSpec.rgb = texture(material.diffuseMap, frag.uv).rgb;
 
-    fragAlbedoSpec.a = texture(material.specularMap, uv).r;
+    fragAlbedoSpec.a = texture(material.specularMap, frag.uv).r;
 }

@@ -13,7 +13,7 @@ namespace renderer {
 
 class BasicRenderPass : public RenderPass {
 public:
-    BasicRenderPass() : RenderPass("Basic RenderPass") {
+    BasicRenderPass(event::Dispatcher& dispatcher) : RenderPass("Basic RenderPass", dispatcher) {
         shader.addShader("../../../assets/shaders/basic/basic.vert");
         shader.addShader("../../../assets/shaders/basic/basic.frag");
         shader.link();

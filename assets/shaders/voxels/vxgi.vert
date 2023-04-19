@@ -7,17 +7,19 @@ layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 biTangent;
 
 out fData {
-    vec3 normal;
     vec2 uv;
     vec3 T;
     vec3 B;
     vec3 N;
+    vec3 worldPosition;
+    vec4 lightSpacePosition;
 } frag;
 
 uniform mat4 model;
 uniform mat4 invModel;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightSpace;
 
 void main() {
     mat3 invModelT = transpose(inverse(mat3(model)));
@@ -25,9 +27,10 @@ void main() {
     frag.B = normalize(vec3(invModelT * biTangent));
     frag.N = normalize(vec3(invModelT * inNormal));
 
-    vec3 position = vec3(model * vec4(inPosition, 1));
-    frag.normal = invModelT * inNormal;
+    frag.worldPosition = vec3(model * vec4(inPosition, 1));
+    frag.lightSpacePosition = lightSpace * model * vec4(inPosition, 1);
+
     frag.uv = inUv;
 
-    gl_Position = projection * view * vec4(position, 1);
+    gl_Position = projection * view * vec4(frag.worldPosition, 1);
 }

@@ -12,8 +12,13 @@
 #include "renderer/pipeline/ssao_pipeline.hpp"
 #include "renderer/renderpass/ssao_pass.hpp"
 #include "renderer/renderpass/voxelize_renderpass.hpp"
+#include "renderer/renderpass/vxgi.hpp"
 #include "renderer/pipeline/voxel_pipeline.hpp"
+#include "renderer/pipeline/visulization_pipeline.hpp"
+#include "renderer/renderpass/visulize_voxels.hpp"
 #include "renderer/model.hpp"
+
+#include "testing_panel.hpp"
 
 #include "core/event.hpp"
 
@@ -47,25 +52,31 @@ void App::run() {
     EditorCamera camera;
     uint32_t width = 100, height = 100;
 
-    std::shared_ptr<renderer::RenderPass> geometryPass = std::make_shared<renderer::GeometryPass>();
+    std::shared_ptr<renderer::RenderPass> geometryPass = std::make_shared<renderer::GeometryPass>(dispatcher);
     renderer::DeferredPipeline deferredPipeline{dispatcher};
     deferredPipeline.addRenderPass(geometryPass);
 
-    std::shared_ptr<renderer::RenderPass> compositePass = std::make_shared<renderer::CompositePass>();
+    std::shared_ptr<renderer::RenderPass> compositePass = std::make_shared<renderer::CompositePass>(dispatcher);
     renderer::ForwardPipeline forwardPipeline{dispatcher};
     forwardPipeline.addRenderPass(compositePass);
 
-    std::shared_ptr<renderer::RenderPass> depthPass = std::make_shared<renderer::DepthPass>();
+    std::shared_ptr<renderer::RenderPass> depthPass = std::make_shared<renderer::DepthPass>(dispatcher);
     renderer::DepthPipeline depthPipeline{dispatcher};
     depthPipeline.addRenderPass(depthPass);
 
-    std::shared_ptr<renderer::RenderPass> ssaoPass = std::make_shared<renderer::SSAOPass>();
+    std::shared_ptr<renderer::RenderPass> ssaoPass = std::make_shared<renderer::SSAOPass>(dispatcher);
     renderer::SSAOPipeline ssaoPipeline{dispatcher};
     ssaoPipeline.addRenderPass(ssaoPass);
 
-    std::shared_ptr<renderer::RenderPass> voxelizePass = std::make_shared<renderer::VoxelizationPass>();
+    std::shared_ptr<renderer::RenderPass> voxelizePass = std::make_shared<renderer::VoxelizationPass>(dispatcher);
+    std::shared_ptr<renderer::RenderPass> vxgiPass = std::make_shared<renderer::VXGIPass>(dispatcher);
     renderer::VoxelPipeline voxelPipeline{dispatcher};
     voxelPipeline.addRenderPass(voxelizePass);
+    voxelPipeline.addRenderPass(vxgiPass);
+
+    std::shared_ptr<renderer::RenderPass> visualizePass = std::make_shared<renderer::VisulizationPass>(dispatcher);
+    renderer::VisulizationPipeline visualizePipeline{dispatcher};
+    visualizePipeline.addRenderPass(visualizePass);
 
     std::vector<core::BasePanel *> pipelines;
     pipelines.push_back(&deferredPipeline);
@@ -73,10 +84,14 @@ void App::run() {
     pipelines.push_back(&depthPipeline);
     pipelines.push_back(&ssaoPipeline);
     pipelines.push_back(&voxelPipeline);
+    pipelines.push_back(&visualizePipeline);
     
     for (auto pipeline : pipelines) {
         pipeline->show = false;
     }
+
+    depthPipeline.show = true;
+    voxelPipeline.show = true;
 
     {
         auto ent = registry.create();
@@ -85,23 +100,32 @@ void App::run() {
         t.scale = {1, 1, 1};
     }
 
-    // {
-    //     auto ent = registry.create();
-    //     auto& pl = registry.emplace<core::PointLightComponent>(ent);
-    //     pl.position = {6, 1, 0};
-    //     pl.color = {1, 1, 1};
-    //     pl.term = {.3, .3, .1};
-    // }
+    {
+        auto ent = registry.create();
+        auto& pl = registry.emplace<core::PointLightComponent>(ent);
+        pl.position = {6, 1, 0};
+        pl.color = {5, 5, 5};
+        pl.term = {.3, .3, .1};
+    }
 
     {
         auto ent = registry.create();
         auto& dl = registry.emplace<core::DirectionalLightComponent>(ent);
     }
 
+    ViewPanel viewPanel;
+
+    std::vector<core::BasePanel *> panels;
+    panels.push_back(&viewPanel);
+
     double lastTime = glfwGetTime();
 
     while (!window.shouldClose()) {
         window.pollEvents();
+
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+            dispatcher.post<core::ReloadShaderEvent>();
+        }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -117,11 +141,13 @@ void App::run() {
         renderContext["projection"] = camera.getProjection();
         renderContext["invProjection"] = glm::inverse(camera.getProjection());
         renderContext["viewPos"] = camera.getPos();
+        renderContext["showing"] = viewPanel.selectedImage;
 
         depthPipeline.render(registry, renderContext);
         voxelPipeline.render(registry, renderContext);
         deferredPipeline.render(registry, renderContext);
-        ssaoPipeline.render(registry, renderContext);
+        // ssaoPipeline.render(registry, renderContext);
+        visualizePipeline.render(registry, renderContext);
         forwardPipeline.render(registry, renderContext);
 
         core::startFrameImgui();
@@ -156,6 +182,12 @@ void App::run() {
                 }
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("Panels")) {
+                for (auto& panel : panels) {
+                    if (ImGui::MenuItem(panel->m_name.c_str(), NULL, &panel->show)) {}
+                }
+                ImGui::EndMenu();
+            }
             ImGui::EndMainMenuBar();
         }
         ImGui::End();
@@ -174,12 +206,16 @@ void App::run() {
         width = vp.x;
         height = vp.y;
         camera.onUpdate(dt);
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["finalImage"])->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext[viewPanel.selectedImage])->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
     
         ImGui::End();
         ImGui::PopStyleVar(2);
 
         for (auto panel : pipelines) {
+            panel->uiPanel();
+        }
+
+        for (auto panel : panels) {
             panel->uiPanel();
         }
 

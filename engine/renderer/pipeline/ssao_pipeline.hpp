@@ -41,6 +41,7 @@ public:
     }
 
     void pipelineUI() override {
+        if (m_renderContextPtr->contains("ssaoImage"))
         ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(m_renderContextPtr->at("ssaoImage"))->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
         ImGui::Checkbox("Half Res", &halfRes);
     }

@@ -14,15 +14,15 @@ namespace renderer {
 
 class DepthPass : public RenderPass {
 public:
-    DepthPass() : RenderPass("Depth Pass") {
+    DepthPass(event::Dispatcher& dispatcher) : RenderPass("Depth Pass", dispatcher) {
         shader.addShader("../../../assets/shaders/depth/depth.vert");
         shader.addShader("../../../assets/shaders/depth/depth.frag");
         shader.link();
 
-        m_dlc.position = {0, 12, .1};
-        m_dlc.color = {20, 20, 20};
-        m_dlc.ambience = {.2, .2, .2};
-        m_dlc.multiplier = 1;
+        m_dlc.position = {-.01, 12, 0};
+        m_dlc.color = {5, 5, 5};
+        m_dlc.ambience = {.3, .3, .3};
+        m_dlc.multiplier = 2;
         m_dlc.orthoProj = 15;
         m_dlc.far = 43;
         m_dlc.near = 0.1;
@@ -50,13 +50,18 @@ public:
         }
 
         glEnable(GL_DEPTH_TEST);
-        glm::mat4 viewMatrix = glm::lookAt(glm::vec3(-0.3, 0.9, -0.25), glm::vec3(0,0,0), glm::vec3(0,1,0));
-    	glm::mat4 projectionMatrix = glm::ortho	<float>(-120, 120, -120, 120, -500, 500);
+        // glm::mat4 viewMatrix = glm::lookAt(glm::vec3(-0.3, 0.9, -0.25), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    	// glm::mat4 projectionMatrix = glm::ortho	<float>(-120, 120, -120, 120, -500, 500);
 
-        glm::mat4 lightSpaceMatrix = projectionMatrix * viewMatrix; 
-        renderContext["lightSpaceMatrix"] = lightSpaceMatrix;
+        glm::mat4 lightProjection = glm::ortho(-m_dlc.orthoProj, m_dlc.orthoProj, -m_dlc.orthoProj, m_dlc.orthoProj, m_dlc.near, m_dlc.far);  
+        glm::mat4 lightView = glm::lookAt(m_dlc.position * m_dlc.multiplier, 
+                                  glm::vec3( 0.0f, 0.0f,  0.0f), 
+                                  glm::vec3( 0.0f, 1.0f,  0.0f));  
+
+        glm::mat4 lightSpace = lightProjection * lightView; 
+        renderContext["lightSpace"] = lightSpace;
         
-        shader.mat4f("lightSpaceMatrix", glm::value_ptr(lightSpaceMatrix));
+        shader.mat4f("lightSpace", glm::value_ptr(lightSpace));
         auto view = registry.view<Model, core::TransformComponent>();
         for (auto ent : view) {
             auto [model, transform] = registry.get<Model, core::TransformComponent>(ent);

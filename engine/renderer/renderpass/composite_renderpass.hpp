@@ -14,7 +14,7 @@ namespace renderer {
 
 class CompositePass : public RenderPass {
 public:
-    CompositePass() : RenderPass("Composite Pass") {
+    CompositePass(event::Dispatcher& dispatcher) : RenderPass("Composite Pass", dispatcher) {
         shader.addShader("../../../assets/shaders/composite/composite.vert");
         shader.addShader("../../../assets/shaders/composite/composite.frag");
         shader.link();
@@ -35,11 +35,11 @@ public:
     void render(entt::registry& registry, RenderContext& renderContext) override {
         assert(renderContext.contains("depthMap"));
         assert(renderContext.contains("viewPos"));
-        assert(renderContext.contains("lightSpaceMatrix"));
+        assert(renderContext.contains("lightSpace"));
         assert(renderContext.contains("texAlbedoSpec"));
         // assert(renderContext.contains("texPosition"));
         assert(renderContext.contains("texNormal"));
-        assert(renderContext.contains("ssaoImage"));
+        // assert(renderContext.contains("ssaoImage"));
 
         bool has = false;
         core::DirectionalLightComponent dlc;
@@ -54,7 +54,7 @@ public:
 
         if (has) {
             shader.veci("hasDirectionalLight", true);
-            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["depthMap"])->bind("depthMap", 3, shader);
+            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["depthMap"])->bind("depthMap", 4, shader);
             shader.vec3f("directionalLight.position", glm::value_ptr(dlc.position));
             shader.vec3f("directionalLight.color", glm::value_ptr(dlc.color));
             shader.vec3f("directionalLight.ambience", glm::value_ptr(dlc.ambience));
@@ -77,7 +77,7 @@ public:
         // glEnable(GL_DEPTH_TEST);
         shader.veci("numLights", pointLights.size());
         shader.vec3f("viewPos", glm::value_ptr(std::any_cast<glm::vec3>(renderContext["viewPos"])));
-        shader.mat4f("lightSpaceMatrix", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["lightSpaceMatrix"])));
+        shader.mat4f("lightSpace", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["lightSpace"])));
         shader.mat4f("invView", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invView"])));
         shader.mat4f("invProjection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invProjection"])));
         
@@ -85,18 +85,11 @@ public:
         // std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texPosition"])->bind("texPosition", 1, shader);
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texNormal"])->bind("texNormal", 2, shader);
-        if (useSSAO) {
+        if (useSSAO && renderContext.contains("ssaoImage")) {
             std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["ssaoImage"])->bind("texSSAO", 3, shader);
             shader.veci("useSSAO", 1);
         } else {
             shader.veci("useSSAO", 0);
-        }
-
-        if (useVXGI) {
-            shader.veci("useVXGI", useVXGI);
-            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["voxels"])->bind("voxels", 4, shader);
-        } else {
-            shader.veci("useVXGI", useVXGI);
         }
 
         pointLigthBuffer.bind(0);
@@ -107,7 +100,6 @@ public:
 
     void UI() override {
         ImGui::Checkbox("use SSAO", &useSSAO);
-        ImGui::Checkbox("use VXGI", &useVXGI);
     }
 
 private:
@@ -115,7 +107,6 @@ private:
     gfx::VertexAttribute vao;
     gfx::Buffer vertexBuffer;
     bool useSSAO = true;
-    bool useVXGI = true;
 };
 
 } // namespace renderer

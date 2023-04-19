@@ -5,14 +5,22 @@ layout (triangle_strip, max_vertices = 3) out;
 
 in vData {
     vec2 uv;
-    vec4 position;
+    vec4 lightSpacePosition;
+    vec3 worldPosition;
+    vec3 T;
+    vec3 B;
+    vec3 N;
 } verts[];
 
 out fData {
     vec2 uv;
     mat4 projection;
     flat int axis;
-    vec4 position;
+    vec3 worldPosition;
+    vec4 lightSpacePosition;
+    vec3 T;
+    vec3 B;
+    vec3 N;
 } frag;
 
 uniform mat4 projX;
@@ -33,7 +41,11 @@ void main() {
 
     for (int i = 0; i < gl_in.length(); i++) {
         frag.uv = verts[i].uv;
-        frag.position = verts[i].position;
+        frag.lightSpacePosition = verts[i].lightSpacePosition;
+        frag.worldPosition = verts[i].worldPosition;
+        frag.T = verts[i].T;
+        frag.B = verts[i].B;
+        frag.N = verts[i].N;
         gl_Position = frag.projection * gl_in[i].gl_Position;
         EmitVertex();
     }

@@ -12,7 +12,7 @@ namespace renderer {
 
 class Test : public RenderPass {
 public:
-    Test() : RenderPass("Test") {
+    Test(event::Dispatcher& dispatcher) : RenderPass("Test", dispatcher) {
         shader.addShader("../../../assets/shaders/test/test.vert");
         shader.addShader("../../../assets/shaders/test/test.frag");
         shader.link();

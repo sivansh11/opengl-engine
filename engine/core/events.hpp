@@ -11,6 +11,10 @@ struct ViewPortResizeEvent : public event::Event {
     uint32_t width, height;
 };
 
+struct ReloadShaderEvent : public event::Event {};
+
+struct UpdateDebugVoxel : public event::Event {};
+
 } // namespace core
 
 #endif

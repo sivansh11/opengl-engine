@@ -110,12 +110,51 @@ void ShaderProgram::link() {
     
     std::cout << m_shaderCodePaths[0].c_str() << '\n';
 
+    auto glEnumToStr = [](GLenum enumm) {
+        switch (enumm) {
+            case GL_SAMPLER_2D:
+                return "sampler2D";
+            case GL_SAMPLER_3D:
+                return "sampler3D";
+            case GL_SAMPLER_2D_SHADOW:
+                return "sampeler2DShadow";
+            case GL_FLOAT_VEC2:
+                return "vec2";
+            case GL_FLOAT_VEC3:
+                return "vec3";
+            case GL_FLOAT_VEC4:
+                return "vec4";  
+            case GL_INT_VEC2:
+                return "ivec2";
+            case GL_INT_VEC3:
+                return "ivec3";
+            case GL_INT_VEC4:
+                return "ivec4";
+            case GL_FLOAT_MAT4:
+                return "mat4";
+            case GL_FLOAT_MAT3:
+                return "mat3";
+            case GL_FLOAT:
+                return "float";
+            case GL_INT:
+                return "int";
+            case GL_BOOL:
+                return "int";
+            case GL_IMAGE_3D:
+                return "image3D";
+
+            default:
+                throw std::runtime_error("Failed to identify uniform type, you pronbably need to add it");
+        }
+    };
+
     for (int i = 0; i < uniformCount; i++) {
         int size;
         GLenum type;
         glGetActiveUniform(id, i, maxLength, nullptr, &size, &type, name);
-        std::cout << '\t' << name << '\n';
+        std::cout << '\t' << glEnumToStr(type) << ' ' << name << '\n';
         uniformLocation(name);
+        uniformTypes[name] = UniformType(type);
     }
     delete[] name;
 }

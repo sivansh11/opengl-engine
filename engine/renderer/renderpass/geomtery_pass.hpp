@@ -13,7 +13,7 @@ namespace renderer {
 
 class GeometryPass : public RenderPass {
 public:
-    GeometryPass() : RenderPass("Geometry Pass") {
+    GeometryPass(event::Dispatcher& dispatcher) : RenderPass("Geometry Pass", dispatcher) {
         shader.addShader("../../../assets/shaders/geometry/geometry.vert");
         shader.addShader("../../../assets/shaders/geometry/geometry.frag");
         shader.link();

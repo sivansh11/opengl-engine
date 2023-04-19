@@ -16,7 +16,7 @@ namespace renderer {
 
 class SSAOPass : public RenderPass {
 public:
-    SSAOPass() : RenderPass("SSAO Pass") {
+    SSAOPass(event::Dispatcher& dispatcher) : RenderPass("SSAO Pass", dispatcher) {
         shader.addShader("../../../assets/shaders/ssao/ssao.vert");
         shader.addShader("../../../assets/shaders/ssao/ssao.frag");
         shader.link();
