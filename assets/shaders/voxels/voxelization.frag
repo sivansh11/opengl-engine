@@ -75,7 +75,7 @@ void main() {
 
     vec3 color = vec3(0);
     
-    // color = matColor.rgb * (visibility * directionalLight.color + directionalLight.ambience);
+    color = matColor.rgb * (visibility * directionalLight.color + directionalLight.ambience);
 
     for (int i = 0; i < numLights; i++) {
         color += calculateLight(i);
