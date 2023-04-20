@@ -12,9 +12,9 @@
 
 namespace renderer {
 
-class DepthPass : public RenderPass {
+class ShadowMapPass : public RenderPass {
 public:
-    DepthPass(event::Dispatcher& dispatcher) : RenderPass("Depth Pass", dispatcher) {
+    ShadowMapPass(event::Dispatcher& dispatcher) : RenderPass("ShadowMap Pass", dispatcher) {
         shader.addShader("../../../assets/shaders/depth/depth.vert");
         shader.addShader("../../../assets/shaders/depth/depth.frag");
         shader.link();
@@ -29,7 +29,7 @@ public:
         m_dlc.term = {.3, .3, .1};
     }
 
-    ~DepthPass() override {
+    ~ShadowMapPass() override {
 
     } 
 

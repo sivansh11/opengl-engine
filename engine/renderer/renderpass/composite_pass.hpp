@@ -37,31 +37,23 @@ public:
         assert(renderContext.contains("viewPos"));
         assert(renderContext.contains("lightSpace"));
         assert(renderContext.contains("texAlbedoSpec"));
-        // assert(renderContext.contains("texPosition"));
         assert(renderContext.contains("texNormal"));
-        // assert(renderContext.contains("ssaoImage"));
+        assert(renderContext.contains("texDepth"));
+        assert(renderContext.contains("invView"));
+        assert(renderContext.contains("invProjection"));
 
-        bool has = false;
-        core::DirectionalLightComponent dlc;
-        for (auto [ent, dl] : registry.view<core::DirectionalLightComponent>().each()) {
-            dlc = dl;
-            has = true;
-            break;  
-        }
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
 
-        if (has) {
-            shader.veci("hasDirectionalLight", true);
-            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["depthMap"])->bind("depthMap", 4, shader);
-            shader.vec3f("directionalLight.position", glm::value_ptr(dlc.position));
-            shader.vec3f("directionalLight.color", glm::value_ptr(dlc.color));
-            shader.vec3f("directionalLight.ambience", glm::value_ptr(dlc.ambience));
-            shader.vec3f("directionalLight.term", glm::value_ptr(dlc.term));
-        } else {
-            shader.veci("hasDirectionalLight", false);
+        bool hasDirectionalLight = false;
+        core::DirectionalLightComponent dlc;
+        for (auto [ent, dl] : registry.view<core::DirectionalLightComponent>().each()) {
+            dlc = dl;
+            hasDirectionalLight = true;
+            break;  
         }
+
         std::vector<core::PointLightComponent> pointLights;
         auto pointLightEntities = registry.view<core::PointLightComponent>();
         for (auto [ent, pointLight] : pointLightEntities.each()) {
@@ -73,8 +65,18 @@ public:
         } else {
 
         }
+        // uniforms
+        if (hasDirectionalLight) {
+            shader.veci("hasDirectionalLight", true);
+            shader.vec3f("directionalLight.position", glm::value_ptr(dlc.position));
+            shader.vec3f("directionalLight.color", glm::value_ptr(dlc.color));
+            shader.vec3f("directionalLight.ambience", glm::value_ptr(dlc.ambience));
+            shader.vec3f("directionalLight.term", glm::value_ptr(dlc.term));
+            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["depthMap"])->bind("depthMap", 4, shader);
+        } else {
+            shader.veci("hasDirectionalLight", false);
+        }
 
-        // glEnable(GL_DEPTH_TEST);
         shader.veci("numLights", pointLights.size());
         shader.vec3f("viewPos", glm::value_ptr(std::any_cast<glm::vec3>(renderContext["viewPos"])));
         shader.mat4f("lightSpace", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["lightSpace"])));
@@ -82,18 +84,19 @@ public:
         shader.mat4f("invProjection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invProjection"])));
         
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texAlbedoSpec"])->bind("texAlbedoSpec", 0, shader);
-        // std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texPosition"])->bind("texPosition", 1, shader);
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texNormal"])->bind("texNormal", 2, shader);
+
         if (useSSAO && renderContext.contains("ssaoImage")) {
-            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["ssaoImage"])->bind("texSSAO", 3, shader);
             shader.veci("useSSAO", 1);
+            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["ssaoImage"])->bind("texSSAO", 3, shader);
         } else {
             shader.veci("useSSAO", 0);
         }
-
+        // ssbo
         pointLigthBuffer.bind(0);
 
+        // draw call
         vao.bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }

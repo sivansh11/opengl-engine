@@ -6,16 +6,16 @@
 #include "renderer/pipeline/forward_pipeline.hpp"
 #include "renderer/pipeline/deferred_pipeline.hpp"
 #include "renderer/renderpass/geomtery_pass.hpp"
-#include "renderer/renderpass/composite_renderpass.hpp"
-#include "renderer/renderpass/depth_renderpass.hpp"
-#include "renderer/pipeline/depth_pipeline.hpp"
+#include "renderer/renderpass/composite_pass.hpp"
+#include "renderer/renderpass/shadowmap_pass.hpp"
+#include "renderer/pipeline/shadow_pipeline.hpp"
 #include "renderer/pipeline/ssao_pipeline.hpp"
 #include "renderer/renderpass/ssao_pass.hpp"
-#include "renderer/renderpass/voxelize_renderpass.hpp"
-#include "renderer/renderpass/vxgi.hpp"
+#include "renderer/renderpass/voxelize_pass.hpp"
+#include "renderer/renderpass/vxgi_pass.hpp"
 #include "renderer/pipeline/voxel_pipeline.hpp"
-#include "renderer/pipeline/visulization_pipeline.hpp"
-#include "renderer/renderpass/visulize_voxels.hpp"
+#include "renderer/pipeline/visualization_pipeline.hpp"
+#include "renderer/renderpass/visualize_voxels_pass.hpp"
 #include "renderer/model.hpp"
 
 #include "testing_panel.hpp"
@@ -60,9 +60,9 @@ void App::run() {
     renderer::ForwardPipeline forwardPipeline{dispatcher};
     forwardPipeline.addRenderPass(compositePass);
 
-    std::shared_ptr<renderer::RenderPass> depthPass = std::make_shared<renderer::DepthPass>(dispatcher);
-    renderer::DepthPipeline depthPipeline{dispatcher};
-    depthPipeline.addRenderPass(depthPass);
+    std::shared_ptr<renderer::RenderPass> shadowMapPass = std::make_shared<renderer::ShadowMapPass>(dispatcher);
+    renderer::ShadowPipeline shadowPipeline{dispatcher};
+    shadowPipeline.addRenderPass(shadowMapPass);
 
     std::shared_ptr<renderer::RenderPass> ssaoPass = std::make_shared<renderer::SSAOPass>(dispatcher);
     renderer::SSAOPipeline ssaoPipeline{dispatcher};
@@ -74,23 +74,23 @@ void App::run() {
     voxelPipeline.addRenderPass(voxelizePass);
     voxelPipeline.addRenderPass(vxgiPass);
 
-    std::shared_ptr<renderer::RenderPass> visualizePass = std::make_shared<renderer::VisulizationPass>(dispatcher);
-    renderer::VisulizationPipeline visualizePipeline{dispatcher};
-    visualizePipeline.addRenderPass(visualizePass);
+    std::shared_ptr<renderer::RenderPass> visualizePass = std::make_shared<renderer::VisualizePass>(dispatcher);
+    renderer::VisualizationPipeline visualizationPipeline{dispatcher};
+    visualizationPipeline.addRenderPass(visualizePass);
 
     std::vector<core::BasePanel *> pipelines;
     pipelines.push_back(&deferredPipeline);
     pipelines.push_back(&forwardPipeline);
-    pipelines.push_back(&depthPipeline);
+    pipelines.push_back(&shadowPipeline);
     pipelines.push_back(&ssaoPipeline);
     pipelines.push_back(&voxelPipeline);
-    pipelines.push_back(&visualizePipeline);
+    pipelines.push_back(&visualizationPipeline);
     
     for (auto pipeline : pipelines) {
         pipeline->show = false;
     }
 
-    depthPipeline.show = true;
+    shadowPipeline.show = true;
     voxelPipeline.show = true;
 
     {
@@ -141,14 +141,15 @@ void App::run() {
         renderContext["projection"] = camera.getProjection();
         renderContext["invProjection"] = glm::inverse(camera.getProjection());
         renderContext["viewPos"] = camera.getPos();
+        renderContext["viewDir"] = camera.getDir();
         renderContext["showing"] = viewPanel.selectedImage;
 
-        depthPipeline.render(registry, renderContext);
-        voxelPipeline.render(registry, renderContext);
+        shadowPipeline.render(registry, renderContext);
         deferredPipeline.render(registry, renderContext);
+        voxelPipeline.render(registry, renderContext);
         // ssaoPipeline.render(registry, renderContext);
-        visualizePipeline.render(registry, renderContext);
-        forwardPipeline.render(registry, renderContext);
+        visualizationPipeline.render(registry, renderContext);
+        // forwardPipeline.render(registry, renderContext);
 
         core::startFrameImgui();
 

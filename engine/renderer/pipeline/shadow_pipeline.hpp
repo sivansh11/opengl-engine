@@ -9,9 +9,9 @@
 
 namespace renderer {
 
-class DepthPipeline : public BasePipeline {
+class ShadowPipeline : public BasePipeline {
 public:
-    DepthPipeline(event::Dispatcher& dispatcher) : BasePipeline(dispatcher, "Depth Pipeline") {
+    ShadowPipeline(event::Dispatcher& dispatcher) : BasePipeline(dispatcher, "Shadow Pipeline") {
         frameBuffer = gfx::FrameBuffer::Builder{800, 600}
             .addAttachment(gfx::Texture::Builder{}
                                 .setMagFilter(gfx::Texture::MagFilter::eLINEAR)
@@ -21,7 +21,7 @@ public:
                                 .setCompareFunc(gfx::Texture::CompareFunc::eLEQUAL)
                                 , gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eDEPTH_COMPONENT32, gfx::FrameBuffer::Attachment::eDEPTH)
             .build();
-        frameBuffer.setClearDepth(1);
+        // frameBuffer.setClearDepth(1);
         // m_dispatcher.subscribe<core::ViewPortResizeEvent>([this](const event::Event& event) {
         //     const core::ViewPortResizeEvent& e = reinterpret_cast<const core::ViewPortResizeEvent&>(event);
         //     this->frameBuffer.invalidate(e.width, e.height);
@@ -31,7 +31,7 @@ public:
         dimensions[1] = 1024 * 4;
     }
 
-    ~DepthPipeline() {
+    ~ShadowPipeline() {
 
     }
 

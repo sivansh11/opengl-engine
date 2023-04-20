@@ -47,36 +47,8 @@ layout (std430, binding = 0) buffer PointLiDirectionalLightghtBuffer {
     PointLight pointLightBuffer[];
 };
 
-// const int NUM_CONES = 6;
-// vec3 coneDirections[6] = vec3[]
-// (                            vec3(0, 1, 0),
-//                             vec3(0, 0.5, 0.866025),
-//                             vec3(0.823639, 0.5, 0.267617),
-//                             vec3(0.509037, 0.5, -0.700629),
-//                             vec3(-0.509037, 0.5, -0.700629),
-//                             vec3(-0.823639, 0.5, 0.267617)
-//                             );
-// float coneWeights[6] = float[](0.25, 0.15, 0.15, 0.15, 0.15, 0.15);
-
-// 5 90 degree cones
-const int NUM_CONES = 5;
-vec3 coneDirections[5] = vec3[]
-(                            vec3(0, 1, 0),
-                            vec3(0, 0.707, 0.707),
-                            vec3(0, 0.707, -0.707),
-                            vec3(0.707, 0.707, 0),
-                            vec3(-0.707, 0.707, 0)
-                            );
-float coneWeights[5] = float[](0.28, 0.18, 0.18, 0.18, 0.18);
-
-
-float visibility;
-vec3 diffuseColor;
-mat3 TBN;
-
 vec4 sampleVoxel(vec3 worldPosition, float lod);
-vec4 coneTrace(vec3 direction, float tanHalfAngle, out float occlusion);
-vec4 indirect(out float occlusion);
+vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occlusion);
 
 uint pcg_hash(uint seed)
 {
@@ -132,6 +104,13 @@ vec3 random_unit_vector(inout uint seed)
 uniform int samples;
 uniform float tanHalfAngle;
 
+float visibility;
+vec3 diffuseColor;
+mat3 TBN;
+float perVoxelSize;
+
+uniform int outputType;
+
 void main() {
     if (texture(material.diffuseMap, frag.uv).a < 0.05) discard;
 
@@ -141,29 +120,34 @@ void main() {
     visibility = texture(depthMap, vec3(frag.lightSpacePosition.xy * .5 + .5, frag.lightSpacePosition.z * .5 + .5 - 0.001 / frag.lightSpacePosition.w));
     TBN = mat3(frag.T, frag.B, frag.N);
     diffuseColor = texture(material.diffuseMap, frag.uv).rgb;
+    perVoxelSize = voxelGridSize / voxelDim;
     
-    
-    float occlusion;
+    float occlusion = 0;
     vec3 indirectLight = vec3(0);
+
+    vec3 startPos = frag.worldPosition + frag.N * perVoxelSize;
 
     if (samples != 1) {
         for (int i = 0; i < samples; i++) {
             vec3 r = random_in_unit_sphere(seed);
-            r /= 10;
+            r /= 1;
             float oc;
-            indirectLight += coneTrace(TBN * (texture(material.normalMap, frag.uv).rgb + r), tanHalfAngle, oc).rgb;
-            // occlusion += oc;
+            indirectLight += coneTrace(startPos, TBN * (texture(material.normalMap, frag.uv).rgb + r), tanHalfAngle, oc).rgb;
+            occlusion += oc / samples;
         }
     } else {
         float oc;
-        indirectLight += coneTrace(TBN * texture(material.normalMap, frag.uv).rgb, tanHalfAngle, oc).rgb;
+        indirectLight += coneTrace(startPos, TBN * texture(material.normalMap, frag.uv).rgb, tanHalfAngle, oc).rgb;
+        occlusion += oc / samples;
     }
+    
+    // coneTrace(startPos, TBN * texture(material.normalMap, frag.uv).rgb, .577, occlusion);
 
-    coneTrace(TBN * texture(material.normalMap, frag.uv).rgb, tanHalfAngle, occlusion);
-
-    occlusion = 1 - occlusion;
+    occlusion = 1 - occlusion;  
     
     indirectLight /= samples;
+
+    // indirectLight *= occlusion;
 
     vec3 directLight = vec3(0);
     vec3 normal = texture(material.normalMap, frag.uv).rgb;
@@ -174,7 +158,8 @@ void main() {
 
     vec3 viewDir = normalize(viewPos - frag.worldPosition);
     vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 specular = directionalLight.color * pow(max(dot(viewDir, reflectDir), 0), 32) * texture(material.specularMap, frag.uv).r;
+    float oc;
+    vec3 specular = directionalLight.color * pow(max(dot(viewDir, reflectDir), 0), 32) * texture(material.specularMap, frag.uv).r * coneTrace(startPos, reflectDir, 0.07, oc).rgb;
     
     vec3 ambient = directionalLight.ambience;
     
@@ -183,25 +168,35 @@ void main() {
 
     directLight = specular * attenuation + diffuse * attenuation;
     
-    outColor = vec4((directLight * visibility + indirectLight + directionalLight.ambience * occlusion) * diffuseColor.rgb, 1);
+    if (outputType == 0)
+        outColor = vec4((directLight * visibility + indirectLight * occlusion + directionalLight.ambience * occlusion) * diffuseColor.rgb, 1);
+    if (outputType == 1)
+        outColor = vec4(indirectLight * diffuseColor.rgb, 1);
+    if (outputType == 2)
+        outColor = vec4(indirectLight * occlusion * diffuseColor.rgb, 1);
+    if (outputType == 3) 
+        outColor = vec4(directLight * visibility * diffuseColor.rgb, 1);
+    if (outputType == 4)
+        outColor = vec4(occlusion, occlusion, occlusion, 1);
+    if (outputType == 5) 
+        outColor = vec4((directLight * visibility + directionalLight.ambience * occlusion) * diffuseColor.rgb, 1);
 }
 
 uniform float ALPHA_THRESH;
 uniform float MAX_DIST;
+uniform int MAX_COUNT;
 
-vec4 coneTrace(vec3 direction, float tanHalfAngle, out float occlusion) {
+vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occlusion) {
     float lod = 0;
     vec3 color = vec3(0);
     float alpha = 0;
     occlusion = 0;
 
-    float perVoxelSize = voxelGridSize / voxelDim;
     float dist = perVoxelSize;
-    vec3 startPos = frag.worldPosition + frag.N * perVoxelSize;
 
     int count = 0;
 
-    while (dist < MAX_DIST && alpha < ALPHA_THRESH && count < 25) {
+    while (dist < MAX_DIST && alpha < ALPHA_THRESH && count < MAX_COUNT) {
         float diameter = max(perVoxelSize, 2 * tanHalfAngle * dist);
         float lodLevel = log2(diameter / perVoxelSize);
         vec4 voxelColor = sampleVoxel(startPos + dist * direction, lodLevel);
@@ -212,6 +207,7 @@ vec4 coneTrace(vec3 direction, float tanHalfAngle, out float occlusion) {
 
         occlusion += (a * voxelColor.a) / (1 + .03 * diameter);
         dist += diameter * .5;
+        
         count += 1;
     }
 

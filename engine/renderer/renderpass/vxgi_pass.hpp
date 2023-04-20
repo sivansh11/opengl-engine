@@ -28,6 +28,12 @@ public:
 
         // texNoise->loadImage("../../../assets/texture/noise.jpg");
         pointLigthBuffer = gfx::Buffer{gfx::Buffer::Useage::eDYNAMIC_DRAW};
+
+        vertexBuffer = gfx::Buffer{static_cast<uint32_t>(gfx::frameBufferQuadVertices.size() * sizeof(gfx::frameBufferQuadVertices[0])), gfx::Buffer::Useage::eDYNAMIC_DRAW, "PointLightBuffer"};
+        vertexBuffer.push(gfx::frameBufferQuadVertices.data());
+        vao.attributeLocation(0, 2, offsetof(gfx::FrameBufferVertex, pos));
+        vao.attributeLocation(1, 2, offsetof(gfx::FrameBufferVertex, uv));
+        vao.bindVertexBuffer<gfx::FrameBufferVertex>(vertexBuffer);
     }
 
     ~VXGIPass() override {
@@ -35,6 +41,12 @@ public:
     } 
 
     void render(entt::registry& registry, RenderContext& renderContext) override {
+        renderContext["maxDist"] = maxDist;
+        renderContext["maxCount"] = maxCount;
+        renderContext["tanHalfAngles"] = tanHalfAngles;
+        renderContext["alphaThresh"] = alphaThresh;
+        
+        if (std::any_cast<std::string>(renderContext["showing"]) != "vxgiFinalImage") return;
         core::DirectionalLightComponent dlc;
         for (auto [ent, dl] : registry.view<core::DirectionalLightComponent>().each()) {
             dlc = dl;
@@ -62,10 +74,15 @@ public:
         std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["voxels"])->bind("voxels", 7, shader);
         shader.veci("voxelDim", std::any_cast<int>(renderContext["voxelDim"]));
         shader.vecf("voxelGridSize", std::any_cast<float>(renderContext["voxelGridSize"]));
-        shader.vecf("ALPHA_THRESH", alphaThresh);
-        shader.vecf("MAX_DIST", maxDist);
         shader.veci("samples", samples);
+        shader.vecf("MAX_DIST", maxDist);
+        shader.vecf("ALPHA_THRESH", alphaThresh);
+        shader.veci("MAX_COUNT", maxCount);
         shader.vecf("tanHalfAngle", tanHalfAngles);
+
+        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texAlbedoSpec"])->bind("texAlbedoSpec", 0, shader);
+        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
+        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texNormal"])->bind("texNormal", 2, shader);
 
         std::vector<core::PointLightComponent> pointLights;
         auto pointLightEntities = registry.view<core::PointLightComponent>();
@@ -79,9 +96,11 @@ public:
 
         }
         shader.veci("numLights", pointLights.size());
+        shader.veci("outputType", outColor);
         pointLigthBuffer.bind(0);
 
-        // texNoise->bind("texNoise", 9, shader);
+        // vao.bind();
+        // glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         auto view = registry.view<Model, core::TransformComponent>();
         for (auto ent : view) {
@@ -94,16 +113,23 @@ public:
         ImGui::DragFloat("AlphaThresh", &alphaThresh, .001, .01, .99);
         ImGui::DragFloat("MaxDist", &maxDist, 1, 0, 5000);
         ImGui::DragInt("samples", &samples, 1, 1, 15);
+        ImGui::DragInt("maxCount", &maxCount, 1, 1, 30);
         ImGui::DragFloat("tanHalfAngles", &tanHalfAngles, 0.01, 0, 100);
+        ImGui::DragInt("outColor", &outColor, 1, 0, 5);
+
     }
 
 private:
     float alphaThresh = .99;
     float maxDist = 1000;
     int samples = 1;
-    float tanHalfAngles = 2.2;
+    int maxCount = 25;
+    float tanHalfAngles = 1;
     // std::shared_ptr<gfx::Texture> texNoise;
     gfx::Buffer pointLigthBuffer;
+    gfx::VertexAttribute vao;
+    gfx::Buffer vertexBuffer;
+    int outColor = 0;
 
 };
 

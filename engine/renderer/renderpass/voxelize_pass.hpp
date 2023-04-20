@@ -60,6 +60,9 @@ public:
         voxels = gfx::Texture::Builder{}
             .setMinFilter(gfx::Texture::MinFilter::eLINEAR_MIPMAP_LINEAR)
             .setMagFilter(gfx::Texture::MagFilter::eLINEAR)
+            .setWrapR(gfx::Texture::Wrap::eCLAMP_TO_EDGE)
+            .setWrapS(gfx::Texture::Wrap::eCLAMP_TO_EDGE)
+            .setWrapT(gfx::Texture::Wrap::eCLAMP_TO_EDGE)
             .build(gfx::Texture::Type::e3D);
 
         char *data = new char[voxelDimensions * voxelDimensions * voxelDimensions * 4];
@@ -188,13 +191,13 @@ public:
         if (!once) revoxelize = true;
         once = true;
         if (ImGui::Button("revoxelize")) { revoxelize = true; }
-        if (ImGui::DragInt("Voxel Dims", &voxelDimensions, 1, 1, 512)) { revoxelize = true; }
-        if (ImGui::DragFloat("voxel grid size", &voxelGridSize, 1, 1, 1000)) { revoxelize = true; }
+        if (ImGui::DragInt("Voxel Dims", &voxelDimensions, 1, 1, 512));
+        if (ImGui::DragFloat("voxel grid size", &voxelGridSize, 1, 1, 1000));
     }
 
 private:
     std::shared_ptr<gfx::Texture> voxels;
-    float voxelGridSize = 150.f;
+    float voxelGridSize = 30.f;
     int voxelDimensions = 256;
     glm::mat4 projX, projY, projZ;
     bool revoxelize = true;

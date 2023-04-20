@@ -9,16 +9,16 @@
 
 namespace renderer {
 
-class VisulizationPipeline : public BasePipeline {
+class VisualizationPipeline : public BasePipeline {
 public:
-    VisulizationPipeline(event::Dispatcher& dispatcher) : BasePipeline(dispatcher, "Visulization Pipeline") {
+    VisualizationPipeline(event::Dispatcher& dispatcher) : BasePipeline(dispatcher, "Visualization Pipeline") {
         frameBuffer = gfx::FrameBuffer::Builder{800, 600}
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA8, gfx::FrameBuffer::Attachment::eCOLOR0)
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eDEPTH_COMPONENT32, gfx::FrameBuffer::Attachment::eDEPTH)
             .build();
     }
 
-    ~VisulizationPipeline() {
+    ~VisualizationPipeline() {
 
     }
 

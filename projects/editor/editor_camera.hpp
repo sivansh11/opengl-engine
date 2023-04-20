@@ -65,6 +65,11 @@ public:
 
     float getYaw() { return m_yaw; }
     float getPitch() { return m_pitch; }
+
+    glm::vec3 getDir() {
+        return m_pos + m_front;
+    }
+
 private:
     glm::vec3 m_front{0};
     glm::vec3 m_up{0, 1, 0};
