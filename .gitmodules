@@ -25,3 +25,6 @@
 [submodule "deps/entt"]
 	path = deps/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "deps/ctti"]
+	path = deps/ctti
+	url = https://github.com/Manu343726/ctti.git
