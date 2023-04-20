@@ -16,6 +16,7 @@
 #include "renderer/pipeline/voxel_pipeline.hpp"
 #include "renderer/pipeline/visualization_pipeline.hpp"
 #include "renderer/renderpass/visualize_voxels_pass.hpp"
+#include "renderer/renderpass/vxgi_composite_pass.hpp"
 #include "renderer/model.hpp"
 
 #include "testing_panel.hpp"
@@ -69,7 +70,7 @@ void App::run() {
     ssaoPipeline.addRenderPass(ssaoPass);
 
     std::shared_ptr<renderer::RenderPass> voxelizePass = std::make_shared<renderer::VoxelizationPass>(dispatcher);
-    std::shared_ptr<renderer::RenderPass> vxgiPass = std::make_shared<renderer::VXGIPass>(dispatcher);
+    std::shared_ptr<renderer::RenderPass> vxgiPass = std::make_shared<renderer::VXGICompositePass>(dispatcher);
     renderer::VoxelPipeline voxelPipeline{dispatcher};
     voxelPipeline.addRenderPass(voxelizePass);
     voxelPipeline.addRenderPass(vxgiPass);
