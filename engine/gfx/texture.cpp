@@ -137,8 +137,8 @@ void Texture::bind(const std::string& name, uint32_t unit, ShaderProgram& shader
     shader.veci(name, unit);
 }
 
-void Texture::bindImage(const std::string& name, uint32_t unit, ShaderProgram& shader) const {
-    glBindImageTexture(unit, id, 0, GL_TRUE, 0, GL_WRITE_ONLY, static_cast<GLenum>(info.internalFormat));
+void Texture::bindImage(const std::string& name, uint32_t unit, uint32_t level, ShaderProgram& shader) const {
+    glBindImageTexture(unit, id, level, GL_TRUE, 0, GL_WRITE_ONLY, static_cast<GLenum>(info.internalFormat));
     shader.veci(name, unit);
 }
 

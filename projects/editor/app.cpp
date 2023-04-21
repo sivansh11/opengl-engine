@@ -28,10 +28,13 @@
 #include "editor_camera.hpp"
 
 #include "gfx/framebuffer.hpp"
+#include "gfx/timer.hpp"
 
 #include <entt/entt.hpp>
 
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #define ASSETS_PATH std::string("../../../assets")
 
@@ -81,15 +84,15 @@ void App::run() {
 
     std::vector<core::BasePanel *> pipelines;
     pipelines.push_back(&deferredPipeline);
-    pipelines.push_back(&forwardPipeline);
+    // pipelines.push_back(&forwardPipeline);
     pipelines.push_back(&shadowPipeline);
-    pipelines.push_back(&ssaoPipeline);
+    // pipelines.push_back(&ssaoPipeline);
     pipelines.push_back(&voxelPipeline);
     pipelines.push_back(&visualizationPipeline);
     
-    for (auto pipeline : pipelines) {
-        pipeline->show = false;
-    }
+    // for (auto pipeline : pipelines) {
+    //     pipeline->show = false;
+    // }
 
     shadowPipeline.show = true;
     voxelPipeline.show = true;
@@ -97,17 +100,18 @@ void App::run() {
     {
         auto ent = registry.create();
         registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
+        // registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/ABeautifulGame/glTF/ABeautifulGame.gltf");
         auto& t = registry.emplace<core::TransformComponent>(ent);
         t.scale = {1, 1, 1};
     }
 
-    {
-        auto ent = registry.create();
-        auto& pl = registry.emplace<core::PointLightComponent>(ent);
-        pl.position = {6, 1, 0};
-        pl.color = {5, 5, 5};
-        pl.term = {.3, .3, .1};
-    }
+    // {
+    //     auto ent = registry.create();
+    //     auto& pl = registry.emplace<core::PointLightComponent>(ent);
+    //     pl.position = {6, 1, 0};
+    //     pl.color = {2, 2, 2};
+    //     pl.term = {.3, .3, .1};
+    // }
 
     {
         auto ent = registry.create();
@@ -121,29 +125,44 @@ void App::run() {
 
     double lastTime = glfwGetTime();
 
+    float targetFPS = 60.f;
+
+    gfx::AsyncTimerQuery timer{5};
+
     while (!window.shouldClose()) {
         window.pollEvents();
+
+        double currentTime = glfwGetTime(); 
+        float dt = currentTime - lastTime;
+        if (currentTime - lastTime < 1.f / targetFPS) {
+            continue;
+        } 
+        lastTime = currentTime;  
 
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
             dispatcher.post<core::ReloadShaderEvent>();
         }
+        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+            targetFPS = 500;
+        } else {
+            targetFPS = 60;
+        }
+        
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        double currentTime = glfwGetTime(); 
-        float dt = currentTime - lastTime;
-        lastTime = currentTime;
         
         renderer::RenderContext renderContext;
-        renderContext["width"] = width;
-        renderContext["height"] = height;
-        renderContext["view"] = camera.getView();
-        renderContext["invView"] = glm::inverse(camera.getView());
-        renderContext["projection"] = camera.getProjection();
-        renderContext["invProjection"] = glm::inverse(camera.getProjection());
-        renderContext["viewPos"] = camera.getPos();
-        renderContext["viewDir"] = camera.getDir();
-        renderContext["showing"] = viewPanel.selectedImage;
+        renderContext.at("width") = width;
+        renderContext.at("height") = height;
+        renderContext.at("view") = camera.getView();
+        renderContext.at("invView") = glm::inverse(camera.getView());
+        renderContext.at("projection") = camera.getProjection();
+        renderContext.at("invProjection") = glm::inverse(camera.getProjection());
+        renderContext.at("viewPos") = camera.getPos();
+        renderContext.at("viewDir") = camera.getDir();
+        renderContext.at("showing") = viewPanel.selectedImage;
+
+        timer.begin();
 
         shadowPipeline.render(registry, renderContext);
         deferredPipeline.render(registry, renderContext);
@@ -151,6 +170,12 @@ void App::run() {
         // ssaoPipeline.render(registry, renderContext);
         visualizationPipeline.render(registry, renderContext);
         // forwardPipeline.render(registry, renderContext);
+
+        timer.end();
+
+        if (auto time = timer.popTimeStamp()) {
+            std::cout << time.value() / 1000000.0 << "ms" << '\n';
+        }
 
         core::startFrameImgui();
 
@@ -208,7 +233,7 @@ void App::run() {
         width = vp.x;
         height = vp.y;
         camera.onUpdate(dt);
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext[viewPanel.selectedImage])->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext.at(viewPanel.selectedImage).as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
     
         ImGui::End();
         ImGui::PopStyleVar(2);
@@ -229,5 +254,7 @@ void App::run() {
         
         window.updateScreen();
     }
+
+    std::cout << glGetString(GL_RENDERER) << '\n';
 
 }

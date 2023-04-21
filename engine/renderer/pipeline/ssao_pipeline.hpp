@@ -25,25 +25,26 @@ public:
 
     }
 
-    void preRender(entt::registry& registry, RenderContext& renderContext) override {
+    void preRender(entt::registry& registry) override {
         if (halfRes) {
-            frameBuffer.invalidate(std::any_cast<uint32_t>(renderContext["width"]) / 2, std::any_cast<uint32_t>(renderContext["height"]) / 2);
+            frameBuffer.invalidate(renderContext->at("width").as<uint32_t>() / 2, renderContext->at("height").as<uint32_t>() / 2);        
         } else {
-            frameBuffer.invalidate(std::any_cast<uint32_t>(renderContext["width"]), std::any_cast<uint32_t>(renderContext["height"]));
+            frameBuffer.invalidate(renderContext->at("width").as<uint32_t>(), renderContext->at("height").as<uint32_t>());        
         }
         frameBuffer.bind();
         frameBuffer.clear(gfx::FrameBuffer::BufferBit::eCOLOR);
     }
 
-    void postRender(entt::registry& registry, RenderContext& renderContext) override {
+    void postRender(entt::registry& registry) override {
         frameBuffer.unbind();
-        renderContext["ssaoImage"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR0);
+        renderContext->at("ssaoImage") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR0);
     }
 
     void pipelineUI() override {
-        if (m_renderContextPtr->contains("ssaoImage"))
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(m_renderContextPtr->at("ssaoImage"))->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
-        ImGui::Checkbox("Half Res", &halfRes);
+        if (renderContext->contains("ssaoImage")) {
+            ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("ssaoImage").as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+            ImGui::Checkbox("Half Res", &halfRes);
+        }
     }
 
 private:

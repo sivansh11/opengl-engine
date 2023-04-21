@@ -32,15 +32,15 @@ public:
 
     } 
 
-    void render(entt::registry& registry, RenderContext& renderContext) override {
-        assert(renderContext.contains("depthMap"));
-        assert(renderContext.contains("viewPos"));
-        assert(renderContext.contains("lightSpace"));
-        assert(renderContext.contains("texAlbedoSpec"));
-        assert(renderContext.contains("texNormal"));
-        assert(renderContext.contains("texDepth"));
-        assert(renderContext.contains("invView"));
-        assert(renderContext.contains("invProjection"));
+    void render(entt::registry& registry) override {
+        assert(renderContext->contains("depthMap"));
+        assert(renderContext->contains("viewPos"));
+        assert(renderContext->contains("lightSpace"));
+        assert(renderContext->contains("texAlbedoSpec"));
+        assert(renderContext->contains("texNormal"));
+        assert(renderContext->contains("texDepth"));
+        assert(renderContext->contains("invView"));
+        assert(renderContext->contains("invProjection"));
 
 
         glEnable(GL_CULL_FACE);
@@ -72,24 +72,24 @@ public:
             shader.vec3f("directionalLight.color", glm::value_ptr(dlc.color));
             shader.vec3f("directionalLight.ambience", glm::value_ptr(dlc.ambience));
             shader.vec3f("directionalLight.term", glm::value_ptr(dlc.term));
-            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["depthMap"])->bind("depthMap", 4, shader);
+            renderContext->at("depthMap").as<std::shared_ptr<gfx::Texture>>()->bind("depthMap", 4, shader);
         } else {
             shader.veci("hasDirectionalLight", false);
         }
 
         shader.veci("numLights", pointLights.size());
-        shader.vec3f("viewPos", glm::value_ptr(std::any_cast<glm::vec3>(renderContext["viewPos"])));
-        shader.mat4f("lightSpace", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["lightSpace"])));
-        shader.mat4f("invView", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invView"])));
-        shader.mat4f("invProjection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invProjection"])));
+        shader.vec3f("viewPos", glm::value_ptr(renderContext->at("viewPos").as<glm::vec3>()));
+        shader.mat4f("lightSpace", glm::value_ptr(renderContext->at("lightSpace").as<glm::mat4>()));
+        shader.mat4f("invView", glm::value_ptr(renderContext->at("invView").as<glm::mat4>()));
+        shader.mat4f("invProjection", glm::value_ptr(renderContext->at("invProjection").as<glm::mat4>()));
         
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texAlbedoSpec"])->bind("texAlbedoSpec", 0, shader);
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texNormal"])->bind("texNormal", 2, shader);
+        renderContext->at("texAlbedoSpec").as<std::shared_ptr<gfx::Texture>>()->bind("texAlbedoSpec", 0, shader);
+        renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 1, shader);
+        renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 2, shader);
 
-        if (useSSAO && renderContext.contains("ssaoImage")) {
+        if (useSSAO && renderContext->contains("ssaoImage")) {
             shader.veci("useSSAO", 1);
-            std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["ssaoImage"])->bind("texSSAO", 3, shader);
+            renderContext->at("ssaoImage").as<std::shared_ptr<gfx::Texture>>()->bind("texSSAO", 3, shader);
         } else {
             shader.veci("useSSAO", 0);
         }

@@ -25,9 +25,9 @@ public:
 
     } 
 
-    void render(entt::registry& registry, RenderContext& renderContext) override {
-        assert(renderContext.contains("view"));
-        assert(renderContext.contains("projection"));
+    void render(entt::registry& registry) override {
+        assert(renderContext->contains("view"));
+        assert(renderContext->contains("projection"));
 
         std::vector<core::PointLightComponent> pointLights;
         auto pointLightEntities = registry.view<core::PointLightComponent>();
@@ -39,9 +39,9 @@ public:
 
         glEnable(GL_DEPTH_TEST);
         shader.veci("numLights", pointLights.size());
-        shader.vec3f("viewPos", glm::value_ptr(std::any_cast<glm::vec3>(renderContext["viewPos"])));
-        shader.mat4f("view", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["view"])));
-        shader.mat4f("projection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["projection"])));
+        shader.vec3f("viewPos", glm::value_ptr(renderContext->at("viewPos").as<glm::vec3>()));
+        shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
+        shader.mat4f("projection", glm::value_ptr(renderContext->at("projection").as<glm::mat4>()));
         pointLigthBuffer.bind(0);
         auto view = registry.view<Model, core::TransformComponent>();
         for (auto ent : view) {

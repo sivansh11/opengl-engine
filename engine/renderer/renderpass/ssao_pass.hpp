@@ -92,17 +92,17 @@ public:
 
     } 
 
-    void render(entt::registry& registry, RenderContext& renderContext) override {
-        // std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texPosition"])->bind("texPosition", 1, shader);
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texNormal"])->bind("texNormal", 2, shader);
+    void render(entt::registry& registry) override {
+        // renderContext->at("texPosition").as<std::shared_ptr<gfx::Texture>>()->bind("texPosition", 1, shader);
+        renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 1, shader);
+        renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 2, shader);
         shader.vecf("radius", radius);
         shader.vecf("bias", bias);
         shader.veci("numSamples", numSamples);
-        shader.mat4f("projection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["projection"])));
-        shader.mat4f("invProjection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invProjection"])));
-        shader.mat4f("view", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["view"])));
-        shader.mat4f("invView", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invView"])));
+        shader.mat4f("projection", glm::value_ptr(renderContext->at("projection").as<glm::mat4>()));
+        shader.mat4f("invProjection", glm::value_ptr(renderContext->at("invProjection").as<glm::mat4>()));
+        shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
+        shader.mat4f("invView", glm::value_ptr(renderContext->at("invView").as<glm::mat4>()));
         ssaoKernelBuffer.bind(0);
         noiseTexture->bind("texNoise", 3, shader);
         vao.bind();

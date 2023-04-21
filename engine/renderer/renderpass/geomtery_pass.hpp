@@ -23,13 +23,13 @@ public:
 
     } 
 
-    void render(entt::registry& registry, RenderContext& renderContext) override {
-        assert(renderContext.contains("view"));
-        assert(renderContext.contains("projection"));
+    void render(entt::registry& registry) override {
+        assert(renderContext->contains("view"));
+        assert(renderContext->contains("projection"));
 
         glEnable(GL_DEPTH_TEST);
-        shader.mat4f("view", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["view"])));
-        shader.mat4f("projection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["projection"])));
+        shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
+        shader.mat4f("projection", glm::value_ptr(renderContext->at("projection").as<glm::mat4>()));
         auto view = registry.view<Model, core::TransformComponent>();
         for (auto ent : view) {
             auto [model, transform] = registry.get<Model, core::TransformComponent>(ent);

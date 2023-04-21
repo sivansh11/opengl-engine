@@ -12,50 +12,40 @@ namespace renderer {
 
 void BasePipeline::addRenderPass(std::shared_ptr<RenderPass> renderPass) {
     m_renderPasses.push_back(renderPass);
-
-    // GLuint query;
-    // glGenQueries(1, &query);
-    // m_queries.push_back(query);
-    
-    // m_timeElapsed.push_back(0);
 }
 
 void BasePipeline::render(entt::registry& registry, RenderContext& renderContext) {
-    m_renderContextPtr = &renderContext;
+    BasePipeline::renderContext = &renderContext;
+    timer.begin();
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, m_name.c_str());
-    preRender(registry, renderContext);
+    preRender(registry);
     for (int i = 0; i < m_renderPasses.size(); i++) {
         auto& renderPass = m_renderPasses[i];
-        // auto& query = m_queries[i];
-        // auto& timeElapsed = m_timeElapsed[i];
-
-        // glBeginQuery(GL_TIME_ELAPSED, query);
-
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderPass->m_name.c_str());
+        // timer.begin();
         renderPass->shader.bind();
-        renderPass->render(registry, renderContext);
+        renderPass->renderContext = &renderContext;
+        renderPass->render(registry);
+        // timer.end();
+        // if (auto time = timer.popTimeStamp()) {
+        //     renderContext.at(renderPass->m_name) = time.value();
+        // } else {
+        //     renderContext.at(renderPass->m_name) = 0;
+        // }
         glPopDebugGroup();
-        
-        // glEndQuery(GL_TIME_ELAPSED);
-
-        // int done = 0;
-        // glGetQueryObjectiv(query, GL_QUERY_RESULT_AVAILABLE, &done);
-        // if (done)
-        //     glGetQueryObjecti64v(query, GL_QUERY_RESULT, &timeElapsed);
     }
-    postRender(registry, renderContext);
+    postRender(registry);
     glPopDebugGroup();
-
-    // std::cout << m_pipelineName << '\n';
-    // for (int i = 0; i < m_renderPasses.size(); i++) {
-    //     auto& renderPass = m_renderPasses[i];
-    //     auto& timeElapsed = m_timeElapsed[i];
-    //     std::cout << 't' << renderPass->m_renderPassName << ": " << timeElapsed / 1000000.f << "ms" << '\n';
-    // }
+    timer.end();
 }
 
 void BasePipeline::UI() {
     pipelineUI();
+    if (auto time = timer.popTimeStamp()) {
+        ImGui::Text("%s took %fms", m_name.c_str(), float(time.value() / 1000000.0));
+    } else {
+        ImGui::Text("Timer information not availble!");
+    }
     ImGui::Separator();
     for (auto renderPass : m_renderPasses) {
         ImGui::Text("%s", renderPass->m_name.c_str());

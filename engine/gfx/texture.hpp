@@ -171,7 +171,7 @@ public:
     const GLuint getID() const { return id; }
 
     void bind(const std::string& name, uint32_t unit, ShaderProgram& shader) const;
-    void bindImage(const std::string& name, uint32_t unit, ShaderProgram& shader) const;
+    void bindImage(const std::string& name, uint32_t unit, uint32_t level, ShaderProgram& shader) const;
 
     // loses pointer to data 
     void resize(CreateInfo& info);

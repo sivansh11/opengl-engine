@@ -45,8 +45,8 @@ void debugMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsize
 		}
         throw std::runtime_error("Unknown Severity!");
 	}();
-	std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
-    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION) {
+    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION && severity != GL_DEBUG_SEVERITY_MEDIUM) {
+	    std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
         // throw std::runtime_error("");
     } 
 }    

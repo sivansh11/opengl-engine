@@ -33,7 +33,7 @@ public:
 
     } 
 
-    void render(entt::registry& registry, RenderContext& renderContext) override {
+    void render(entt::registry& registry) override {
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         
@@ -59,7 +59,7 @@ public:
                                   glm::vec3( 0.0f, 1.0f,  0.0f));  
 
         glm::mat4 lightSpace = lightProjection * lightView; 
-        renderContext["lightSpace"] = lightSpace;
+        renderContext->at("lightSpace") = lightSpace;
         
         shader.mat4f("lightSpace", glm::value_ptr(lightSpace));
         auto view = registry.view<Model, core::TransformComponent>();

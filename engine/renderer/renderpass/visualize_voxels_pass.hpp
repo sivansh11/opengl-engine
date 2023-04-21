@@ -32,26 +32,26 @@ public:
 
     } 
 
-    void render(entt::registry& registry, RenderContext& renderContext) override {
-        if (std::any_cast<std::string>(renderContext["showing"]) != "voxelVisual") return;
-        renderContext["maxDist"] = 1000.f;
-        renderContext["maxCount"] = 1000;
-        renderContext["alphaThresh"] = 0.99f;
-        renderContext["tanHalfAngles"] = 0.f;
+    void render(entt::registry& registry) override {
+        if (renderContext->at("showing").as<std::string>() != "voxelVisual") return;
+        renderContext->at("maxDist") = 1000.f;
+        renderContext->at("maxCount") = 1000;
+        renderContext->at("alphaThresh") = 0.99f;
+        renderContext->at("tanHalfAngles") = 0.f;
 
-        shader.veci("voxelDim", std::any_cast<int>(renderContext["voxelDim"]));
-        shader.vecf("voxelGridSize", std::any_cast<float>(renderContext["voxelGridSize"]));
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["voxels"])->bind("voxels", 7, shader);
-        shader.mat4f("invView", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invView"])));
-        shader.mat4f("invProjection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["invProjection"])));
-        shader.veci("MAX_COUNT", std::any_cast<int>(renderContext["maxCount"]));
-        shader.vecf("MAX_DIST", std::any_cast<float>(renderContext["maxDist"]));
-        shader.vecf("tanHalfAngle", std::any_cast<float>(renderContext["tanHalfAngles"]));
-        shader.vecf("ALPHA_THRESH", std::any_cast<float>(renderContext["alphaThresh"]));
+        shader.veci("voxelDim", renderContext->at("voxelDim").as<int>());
+        shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
+        renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>()->bind("voxels", 7, shader);
+        shader.mat4f("invView", glm::value_ptr(renderContext->at("invView").as<glm::mat4>()));
+        shader.mat4f("invProjection", glm::value_ptr(renderContext->at("invProjection").as<glm::mat4>()));
+        shader.veci("MAX_COUNT", renderContext->at("maxCount").as<int>());
+        shader.vecf("MAX_DIST", renderContext->at("maxDist").as<float>());
+        shader.vecf("tanHalfAngle", renderContext->at("tanHalfAngles").as<float>());
+        shader.vecf("ALPHA_THRESH", renderContext->at("alphaThresh").as<float>());
 
 
-        shader.vec3f("viewPos", glm::value_ptr(std::any_cast<glm::vec3>(renderContext["viewPos"])));
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
+        shader.vec3f("viewPos", glm::value_ptr(renderContext->at("viewPos").as<glm::vec3>()));
+        renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 1, shader);
 
         vao.bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

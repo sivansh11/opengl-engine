@@ -22,15 +22,15 @@ public:
 
     }
 
-    void preRender(entt::registry& registry, RenderContext& renderContext) override {
-        frameBuffer.invalidate(std::any_cast<uint32_t>(renderContext["width"]), std::any_cast<uint32_t>(renderContext["height"]));
+    void preRender(entt::registry& registry) override {
+        frameBuffer.invalidate(renderContext->at("width").as<uint32_t>(), renderContext->at("height").as<uint32_t>());        
         frameBuffer.bind(); 
         frameBuffer.clear(gfx::FrameBuffer::BufferBit::eCOLOR | gfx::FrameBuffer::BufferBit::eDEPTH);
     }
 
-    void postRender(entt::registry& registry, RenderContext& renderContext) override {
+    void postRender(entt::registry& registry) override {
         frameBuffer.unbind();
-        renderContext["voxelVisual"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR0);
+        renderContext->at("voxelVisual") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR0);
     }
 
     void pipelineUI() override {

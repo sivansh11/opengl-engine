@@ -10,11 +10,11 @@ public:
     void UI() override {
         static int currentItem = 1;
         const char *items[] = {
-            "finalImage",
+            // "finalImage",
             "vxgiFinalImage",
             "voxelVisual",
         };
-        ImGui::ListBox("Views", &currentItem, items, 3);
+        ImGui::ListBox("Views", &currentItem, items, 2);
         selectedImage = items[currentItem];
     }
     std::string selectedImage = "vxgiFinalImage";

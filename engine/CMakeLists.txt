@@ -22,4 +22,5 @@ target_link_libraries(engine
     efsw
     ImGuizmo
     EnTT
+    ctti
 )

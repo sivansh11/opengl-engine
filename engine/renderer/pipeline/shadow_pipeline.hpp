@@ -35,19 +35,21 @@ public:
 
     }
 
-    void preRender(entt::registry& registry, RenderContext& renderContext) override {
+    void preRender(entt::registry& registry) override {
         frameBuffer.invalidate(dimensions[0], dimensions[1]);
         frameBuffer.bind();
         frameBuffer.clear(gfx::FrameBuffer::BufferBit::eDEPTH);
     }
 
-    void postRender(entt::registry& registry, RenderContext& renderContext) override {
+    void postRender(entt::registry& registry) override {
         frameBuffer.unbind();
-        renderContext["depthMap"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eDEPTH);
+        renderContext->at("depthMap") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eDEPTH);
+
     }
     
     void pipelineUI() override {
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(m_renderContextPtr->at("depthMap"))->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("depthMap").as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+        
         ImGui::DragFloat2("Dimensions", dimensions);
     }
     

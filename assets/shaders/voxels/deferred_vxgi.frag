@@ -1,5 +1,11 @@
 #version 460 core
 
+struct PointLight {
+    vec3 position;
+    vec3 color;
+    vec3 term;
+};
+
 struct DirectionalLight {
     vec3 position;
     vec3 color;
@@ -25,12 +31,17 @@ uniform float ALPHA_THRESH;
 uniform float MAX_DIST;
 uniform int voxelDim;
 uniform int samples;
+uniform int numLights;
 uniform int MAX_COUNT;
 uniform sampler2D texAlbedoSpec;
 uniform sampler2D texDepth;
 uniform sampler2D texNormal;
 uniform sampler3D voxels;
 uniform int outputType;
+
+layout (std430, binding = 0) buffer PointLiDirectionalLightghtBuffer {
+    PointLight pointLightBuffer[];
+};
 
 vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occlusion);
 vec4 sampleVoxel(vec3 worldPosition, float lod);
@@ -45,6 +56,7 @@ vec3 rand_vec3(inout uint seed, float min, float max);
 vec3 random_in_unit_sphere(inout uint seed);
 vec3 random_unit_vector(inout uint seed);
 vec4 get_view_position_from_depth(vec2 uv, float depth);
+vec3 calculateLight(int index);
 
 vec4 viewPosition;
 vec4 worldPosition;
@@ -87,7 +99,12 @@ void main() {
 
         float distance = length(directionalLight.position - worldPosition.rgb);
         float attenuation = 1.0f / (directionalLight.term.r + directionalLight.term.g * distance + directionalLight.term.b * distance * distance);
+        
         directLight = specularComponent * attenuation + diffuseComponent * attenuation;
+
+        for (int i = 0; i < numLights; i++) {
+            directLight += calculateLight(i);
+        }
     }
 
     // indirect light 
@@ -104,9 +121,12 @@ void main() {
             }
         }
 
-        occlusion = 1 - occlusion;
         indirectLight /= samples;
     }
+
+    occlusion = 0;
+    coneTrace(startPos, normal, 1, occlusion);
+    occlusion = 1 - occlusion;
 
     if (outputType == 0)
         outColor = vec4((directLight * visibility + indirectLight * occlusion + directionalLight.ambience * occlusion) * diffuseColor.rgb, 1);
@@ -120,6 +140,26 @@ void main() {
         outColor = vec4(occlusion, occlusion, occlusion, 1);
     if (outputType == 5) 
         outColor = vec4((directLight * visibility + directionalLight.ambience * occlusion) * diffuseColor.rgb, 1);
+}
+
+vec3 calculateLight(int index) {
+    PointLight pointLight = pointLightBuffer[index];
+
+    vec3 norm = normal;
+
+    vec3 lightDir = normalize(pointLight.position - worldPosition.rgb);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuseComponent = pointLight.color * diff;
+    
+    vec3 viewDir = normalize(viewPos - worldPosition.rgb);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0), 32);
+    vec3 specularComponent = pointLight.color * spec * specular;
+
+    float distance = length(pointLight.position - worldPosition.rgb);
+    float attenuation = 1.0f / (pointLight.term.r + pointLight.term.g * distance + pointLight.term.b * distance * distance);
+
+    return diffuseColor * attenuation + specularComponent * attenuation;
 }
 
 vec4 get_view_position_from_depth(vec2 uv, float depth) {

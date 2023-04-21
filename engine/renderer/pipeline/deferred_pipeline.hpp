@@ -17,11 +17,7 @@ public:
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA8, gfx::FrameBuffer::Attachment::eCOLOR0)
             // normal
             .addAttachment(gfx::Texture::Builder{}.setSwizzleA(gfx::Texture::Swizzle::eONE), gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA16F, gfx::FrameBuffer::Attachment::eCOLOR1)
-            // position
-            // .addAttachment(gfx::Texture::Builder{}.setMinFilter(gfx::Texture::MinFilter::eNEAREST)
-            //                                       .setMagFilter(gfx::Texture::MagFilter::eNEAREST)
-            //                                       .setWrapS(gfx::Texture::Wrap::eCLAMP_TO_EDGE)
-            //                                       .setWrapT(gfx::Texture::Wrap::eCLAMP_TO_EDGE), gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA16F, gfx::FrameBuffer::Attachment::eCOLOR2)
+            // depth
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eDEPTH_COMPONENT32, gfx::FrameBuffer::Attachment::eDEPTH)
             .build();
         frameBuffer.setClearDepth(1);
@@ -31,26 +27,22 @@ public:
 
     }
 
-    void preRender(entt::registry& registry, RenderContext& renderContext) override {
-        frameBuffer.invalidate(std::any_cast<uint32_t>(renderContext["width"]), std::any_cast<uint32_t>(renderContext["height"]));
+    void preRender(entt::registry& registry) override {
+        frameBuffer.invalidate(renderContext->at("width").as<uint32_t>(), renderContext->at("height").as<uint32_t>());        
         frameBuffer.bind(); 
         frameBuffer.clear(gfx::FrameBuffer::BufferBit::eCOLOR | gfx::FrameBuffer::BufferBit::eDEPTH);
     }
 
-    void postRender(entt::registry& registry, RenderContext& renderContext) override {
+    void postRender(entt::registry& registry) override {
         frameBuffer.unbind();
-        renderContext["texAlbedoSpec"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR0);
-        renderContext["texNormal"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR1);
-        // renderContext["texPosition"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR2);
-        renderContext["texDepth"] = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eDEPTH);
-
+        renderContext->at("texAlbedoSpec") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR0);
+        renderContext->at("texNormal") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR1);
+        renderContext->at("texDepth") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eDEPTH);
     }
 
     void pipelineUI() override {
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(m_renderContextPtr->at("texAlbedoSpec"))->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));
-        // ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(m_renderContextPtr->at("texPosition"))->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));        
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(std::any_cast<std::shared_ptr<gfx::Texture>>(m_renderContextPtr->at("texNormal"))->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));
-
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("texAlbedoSpec").as<std::shared_ptr<gfx::Texture>>()->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));
     }
 
 private:

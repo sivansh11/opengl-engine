@@ -57,6 +57,9 @@ public:
         shader.addShader("../../../assets/shaders/voxels/voxelization.frag");
         shader.link();
 
+        computeMipMap.addShader("../../../assets/shaders/voxels/generate_mip_maps.comp");
+        computeMipMap.link();
+
         voxels = gfx::Texture::Builder{}
             .setMinFilter(gfx::Texture::MinFilter::eLINEAR_MIPMAP_LINEAR)
             .setMagFilter(gfx::Texture::MagFilter::eLINEAR)
@@ -99,23 +102,21 @@ public:
         projY = projectionMatrix * glm::lookAt(glm::vec3(0, voxelGridSize, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, -1));
         projZ = projectionMatrix * glm::lookAt(glm::vec3(0, 0, voxelGridSize), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
-        pointLigthBuffer = gfx::Buffer{gfx::Buffer::Useage::eDYNAMIC_DRAW};
-
+        pointLigthBuffer = gfx::Buffer{gfx::Buffer::Useage::eDYNAMIC_DRAW}; 
     }
 
     ~VoxelizationPass() override {
 
     } 
 
-    void render(entt::registry& registry, RenderContext& renderContext) override {
-        renderContext["voxels"] = voxels;
-        renderContext["voxelGridSize"] = voxelGridSize;
-        renderContext["voxelDim"] = voxelDimensions;
+    void render(entt::registry& registry) override {
+        renderContext->at("voxels") = voxels;
+        renderContext->at("voxelGridSize") = voxelGridSize;
+        renderContext->at("voxelDim") = voxelDimensions;
 
-        if (!revoxelize) return;
+        // if (!revoxelize) return;
+        // remakeVoxels();
         revoxelize = false;
-
-        remakeVoxels();
 
         bool has = false;
         core::DirectionalLightComponent dlc;
@@ -133,7 +134,7 @@ public:
         projZ = projectionMatrix * glm::lookAt(glm::vec3(0, 0, voxelGridSize), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
 
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["depthMap"])->bind("depthMap", 3, shader);
+        renderContext->at("depthMap").as<std::shared_ptr<gfx::Texture>>()->bind("depthMap", 3, shader);
 
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
@@ -152,11 +153,11 @@ public:
         shader.vec3f("directionalLight.ambience", glm::value_ptr(dlc.ambience));
         shader.vec3f("directionalLight.term", glm::value_ptr(dlc.term));
 
-        assert(renderContext.contains("lightSpace"));
+        assert(renderContext->contains("lightSpace"));
 
-        shader.mat4f("lightSpace", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["lightSpace"])));
+        shader.mat4f("lightSpace", glm::value_ptr(renderContext->at("lightSpace").as<glm::mat4>()));
 
-        voxels->bindImage("voxels", 5, shader);
+        voxels->bindImage("voxels", 5, 0, shader);
 
         std::vector<core::PointLightComponent> pointLights;
         auto pointLightEntities = registry.view<core::PointLightComponent>();
@@ -172,24 +173,61 @@ public:
         shader.veci("numLights", pointLights.size());
         pointLigthBuffer.bind(0);
 
+        timer.begin();
         for (auto [ent, model, transform] : registry.view<Model, core::TransformComponent>().each()) {
             model.draw(shader, transform);
         }
+        timer.end();
+        if (auto time = timer.popTimeStamp()) {
+            voxelizationTime = time.value();
+        } else {
+            voxelizationTime = 0;
+        }
 
-        voxels->genMipMaps();
+        // voxels->genMipMaps();
+        timer.begin();
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, std::string("Voxel Mip Mapping Pass").c_str());
+        computeMipMap.bind(); 
+        voxels->bind("voxelsDownSample", 0, computeMipMap);
+        auto& voxelsInfo = voxels->getInfo();  
+        int levels = std::log2(glm::max((glm::max(voxelsInfo.width, voxelsInfo.height)), voxelsInfo.depth)) + 1;
+        for (int i = 1; i < levels; i++) {
+            voxels->bindImage("voxels", 1, i, computeMipMap);
+            glm::vec3 size{voxelsInfo.width / (1 << i), voxelsInfo.height / (1 << i), voxelsInfo.depth / (1 << i)};
+            computeMipMap.veci("lod", i - 1);
+            computeMipMap.dispatchCompute((size.x + 4 - 1) / 4, (size.y + 4 - 1) / 4, (size.z + 4 - 1) / 4);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+        }
+        glPopDebugGroup();
+        timer.end();
+        if (auto time = timer.popTimeStamp()) {
+            mipMappingTime = time.value();
+        } else {
+            mipMappingTime = 0;
+        }
+
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
 
-        renderContext["voxels"] = voxels;
-        renderContext["voxelGridSize"] = voxelGridSize;
-        renderContext["voxelDim"] = voxelDimensions;
+        renderContext->at("voxels") = voxels;
+        renderContext->at("voxelGridSize") = voxelGridSize;
+        renderContext->at("voxelDim") = voxelDimensions;
     }
 
     void UI() override {
-        static bool once = false;
-        if (!once) revoxelize = true;
-        once = true;
+
+        if (mipMappingTime != 0) {
+            ImGui::Text("%s took %fms", "Mip Mapping", float(mipMappingTime / 1000000.0));
+        } else {
+            ImGui::Text("Timer information not availble!");
+        }
+        if (voxelizationTime != 0) {
+            ImGui::Text("%s took %fms", "Voxelization", float(voxelizationTime / 1000000.0));
+        } else {
+            ImGui::Text("Timer information not availble!");
+        }
+
         if (ImGui::Button("revoxelize")) { revoxelize = true; }
         if (ImGui::DragInt("Voxel Dims", &voxelDimensions, 1, 1, 512));
         if (ImGui::DragFloat("voxel grid size", &voxelGridSize, 1, 1, 1000));
@@ -198,10 +236,16 @@ public:
 private:
     std::shared_ptr<gfx::Texture> voxels;
     float voxelGridSize = 30.f;
-    int voxelDimensions = 256;
+    int voxelDimensions = 512;
     glm::mat4 projX, projY, projZ;
     bool revoxelize = true;
     gfx::Buffer pointLigthBuffer;
+
+    gfx::AsyncTimerQuery timer{5};
+    float mipMappingTime;
+    float voxelizationTime;
+
+    gfx::ShaderProgram computeMipMap;
 
 };
 

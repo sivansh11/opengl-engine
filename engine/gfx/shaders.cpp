@@ -171,7 +171,7 @@ void ShaderProgram::bind() const {
 
 void ShaderProgram::dispatchCompute(uint32_t x, uint32_t y, uint32_t z) {
     glDispatchCompute(x, y, z);
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    // glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
 int ShaderProgram::uniformLocation(const std::string& uniformName) {

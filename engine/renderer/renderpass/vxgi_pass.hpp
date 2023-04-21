@@ -40,13 +40,13 @@ public:
 
     } 
 
-    void render(entt::registry& registry, RenderContext& renderContext) override {
-        renderContext["maxDist"] = maxDist;
-        renderContext["maxCount"] = maxCount;
-        renderContext["tanHalfAngles"] = tanHalfAngles;
-        renderContext["alphaThresh"] = alphaThresh;
+    void render(entt::registry& registry) override {
+        renderContext->at("maxDist") = maxDist;
+        renderContext->at("maxCount") = maxCount;
+        renderContext->at("tanHalfAngles") = tanHalfAngles;
+        renderContext->at("alphaThresh") = alphaThresh;
         
-        if (std::any_cast<std::string>(renderContext["showing"]) != "vxgiFinalImage") return;
+        if (renderContext->at("showing").as<std::string>() != "vxgiFinalImage") return;
         core::DirectionalLightComponent dlc;
         for (auto [ent, dl] : registry.view<core::DirectionalLightComponent>().each()) {
             dlc = dl;
@@ -56,33 +56,33 @@ public:
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, std::any_cast<uint32_t>(renderContext["width"]), std::any_cast<uint32_t>(renderContext["height"]));
+        glViewport(0, 0, renderContext->at("width").as<uint32_t>(), renderContext->at("height").as<uint32_t>());
 
-        shader.mat4f("view", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["view"])));
-        shader.mat4f("projection", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["projection"])));
-        shader.mat4f("lightSpace", glm::value_ptr(std::any_cast<glm::mat4>(renderContext["lightSpace"])));
+        shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
+        shader.mat4f("projection", glm::value_ptr(renderContext->at("projection").as<glm::mat4>()));
+        shader.mat4f("lightSpace", glm::value_ptr(renderContext->at("lightSpace").as<glm::mat4>()));
         
-        shader.vec3f("viewPos", glm::value_ptr(std::any_cast<glm::vec3>(renderContext["viewPos"])));
+        shader.vec3f("viewPos", glm::value_ptr(renderContext->at("viewPos").as<glm::vec3>()));
 
         shader.veci("hasDirectionalLight", true);
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["depthMap"])->bind("depthMap", 4, shader);
+        renderContext->at("depthMap").as<std::shared_ptr<gfx::Texture>>()->bind("depthMap", 4, shader);
         shader.vec3f("directionalLight.position", glm::value_ptr(dlc.position));
         shader.vec3f("directionalLight.color", glm::value_ptr(dlc.color));
         shader.vec3f("directionalLight.ambience", glm::value_ptr(dlc.ambience));
         shader.vec3f("directionalLight.term", glm::value_ptr(dlc.term));
         
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["voxels"])->bind("voxels", 7, shader);
-        shader.veci("voxelDim", std::any_cast<int>(renderContext["voxelDim"]));
-        shader.vecf("voxelGridSize", std::any_cast<float>(renderContext["voxelGridSize"]));
+        renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>()->bind("voxels", 7, shader);
+        shader.veci("voxelDim", renderContext->at("voxelDim").as<int>());
+        shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
         shader.veci("samples", samples);
         shader.vecf("MAX_DIST", maxDist);
         shader.vecf("ALPHA_THRESH", alphaThresh);
         shader.veci("MAX_COUNT", maxCount);
         shader.vecf("tanHalfAngle", tanHalfAngles);
 
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texAlbedoSpec"])->bind("texAlbedoSpec", 0, shader);
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texDepth"])->bind("texDepth", 1, shader);
-        std::any_cast<std::shared_ptr<gfx::Texture>>(renderContext["texNormal"])->bind("texNormal", 2, shader);
+        renderContext->at("texAlbedoSpec").as<std::shared_ptr<gfx::Texture>>()->bind("texAlbedoSpec", 0, shader);
+        renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 1, shader);
+        renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 2, shader);
 
         std::vector<core::PointLightComponent> pointLights;
         auto pointLightEntities = registry.view<core::PointLightComponent>();
