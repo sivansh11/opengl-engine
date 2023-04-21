@@ -124,7 +124,8 @@ public:
 protected:
     event::Dispatcher& m_dispatcher;
     RenderContext *renderContext;
-    gfx::AsyncTimerQuery timer{20};
+    gfx::AsyncTimerQuery timer{10};
+    std::map<std::string, float> stats;
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;

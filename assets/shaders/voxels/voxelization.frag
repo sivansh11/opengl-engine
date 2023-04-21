@@ -41,7 +41,7 @@ uniform struct Material {
 uniform sampler2DShadow depthMap;
 uniform DirectionalLight directionalLight;
 
-uniform int voxelDim;
+uniform int voxelDimensions;
 
 vec3 calculateLight(int index);
 
@@ -56,22 +56,22 @@ void main() {
 
     float visibility = texture(depthMap, vec3(frag.lightSpacePosition.xy, (frag.lightSpacePosition.z - 0.001) / frag.lightSpacePosition.w));
 
-    ivec3 camPos = ivec3(gl_FragCoord.x, gl_FragCoord.y, voxelDim * gl_FragCoord.z);
+    ivec3 camPos = ivec3(gl_FragCoord.x, gl_FragCoord.y, voxelDimensions * gl_FragCoord.z);
     ivec3 texPos;
     if (frag.axis == 1) {
-        texPos.x = voxelDim - camPos.z;
+        texPos.x = voxelDimensions - camPos.z;
         texPos.z = camPos.x;
         texPos.y = camPos.y;
 
     } else if (frag.axis == 2) {
         texPos.z = camPos.y;
-        texPos.y = voxelDim - camPos.z;
+        texPos.y = voxelDimensions - camPos.z;
         texPos.x = camPos.x;
     } else {
         texPos = camPos;
     }
 
-    texPos.z = voxelDim - texPos.z - 1;
+    texPos.z = voxelDimensions - texPos.z - 1;
 
     vec3 color = vec3(0);
     

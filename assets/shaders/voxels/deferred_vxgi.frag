@@ -27,9 +27,10 @@ uniform mat4 invView;
 uniform mat4 lightSpace;
 uniform float voxelGridSize;
 uniform float tanHalfAngle;
+uniform float tanHalfAngleForOcclusion;
 uniform float ALPHA_THRESH;
 uniform float MAX_DIST;
-uniform int voxelDim;
+uniform int voxelDimensions;
 uniform int samples;
 uniform int numLights;
 uniform int MAX_COUNT;
@@ -72,7 +73,7 @@ void main() {
     viewPosition = get_view_position_from_depth(frag.uv, texture(texDepth, frag.uv).r);
     worldPosition = invView * viewPosition;
     lightSpacePosition = lightSpace * worldPosition;
-    perVoxelSize = voxelGridSize / voxelDim;
+    perVoxelSize = voxelGridSize / voxelDimensions;
     normal = texture(texNormal, frag.uv).rgb;
     visibility = texture(shadowMap, vec3(lightSpacePosition.xy * .5 + .5, lightSpacePosition.z * .5 + .5 - 0.001 / lightSpacePosition.w));
     diffuseColor = texture(texAlbedoSpec, frag.uv).rgb;
@@ -125,7 +126,7 @@ void main() {
     }
 
     occlusion = 0;
-    coneTrace(startPos, normal, 1, occlusion);
+    coneTrace(startPos, normal, tanHalfAngleForOcclusion, occlusion);
     occlusion = 1 - occlusion;
 
     if (outputType == 0)
@@ -201,7 +202,7 @@ vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occl
 }
 
 vec4 sampleVoxel(vec3 worldPosition, float lod) {
-    const vec3 offset = vec3(1.0 / voxelDim, 1.0 / voxelDim, 0);
+    const vec3 offset = vec3(1.0 / voxelDimensions, 1.0 / voxelDimensions, 0);
     vec3 voxelTextureUV = worldPosition / (voxelGridSize * 0.5);
     voxelTextureUV = voxelTextureUV * 0.5 + 0.5 + offset;
     return textureLod(voxels, voxelTextureUV, lod);

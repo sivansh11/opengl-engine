@@ -37,7 +37,7 @@ uniform bool hasDirectionalLight;
 uniform vec3 viewPos;
 uniform int numLights;
 
-uniform int voxelDim;
+uniform int voxelDimensions;
 uniform float voxelGridSize;
 uniform sampler3D voxels;
 
@@ -120,7 +120,7 @@ void main() {
     visibility = texture(depthMap, vec3(frag.lightSpacePosition.xy * .5 + .5, frag.lightSpacePosition.z * .5 + .5 - 0.001 / frag.lightSpacePosition.w));
     TBN = mat3(frag.T, frag.B, frag.N);
     diffuseColor = texture(material.diffuseMap, frag.uv).rgb;
-    perVoxelSize = voxelGridSize / voxelDim;
+    perVoxelSize = voxelGridSize / voxelDimensions;
     
     float occlusion = 0;
     vec3 indirectLight = vec3(0);
@@ -215,7 +215,7 @@ vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occl
 }
 
 vec4 sampleVoxel(vec3 worldPosition, float lod) {
-    const vec3 offset = vec3(1.0 / voxelDim, 1.0 / voxelDim, 0);
+    const vec3 offset = vec3(1.0 / voxelDimensions, 1.0 / voxelDimensions, 0);
     vec3 voxelTextureUV = worldPosition / (voxelGridSize * 0.5);
     voxelTextureUV = voxelTextureUV * 0.5 + 0.5 + offset;
     return textureLod(voxels, voxelTextureUV, lod);

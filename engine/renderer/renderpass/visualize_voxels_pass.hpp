@@ -39,7 +39,7 @@ public:
         renderContext->at("alphaThresh") = 0.99f;
         renderContext->at("tanHalfAngles") = 0.f;
 
-        shader.veci("voxelDim", renderContext->at("voxelDim").as<int>());
+        shader.veci("voxelDimensions", renderContext->at("voxelDimensions").as<int>());
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
         renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>()->bind("voxels", 7, shader);
         shader.mat4f("invView", glm::value_ptr(renderContext->at("invView").as<glm::mat4>()));

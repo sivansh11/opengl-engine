@@ -6,7 +6,7 @@ in fData {
 
 out vec4 outColor;
 
-uniform int voxelDim;
+uniform int voxelDimensions;
 uniform float voxelGridSize;
 uniform sampler3D voxels;
 
@@ -35,7 +35,7 @@ vec4 get_view_position_from_depth(vec2 uv, float depth) {
 }
 
 void main() {
-    perVoxelSize = voxelGridSize / voxelDim;
+    perVoxelSize = voxelGridSize / voxelDimensions;
 	vec3 worldPosition = vec3(invView * get_view_position_from_depth(frag.uv, texture(texDepth, frag.uv).r));
 	vec3 dir = normalize(worldPosition - viewPos);
 	vec3 startPos = viewPos + dir * perVoxelSize;
@@ -82,7 +82,7 @@ vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occl
 }
 
 vec4 sampleVoxel(vec3 worldPosition, float lod) {
-    const vec3 offset = vec3(1.0 / voxelDim, 1.0 / voxelDim, 0);
+    const vec3 offset = vec3(1.0 / voxelDimensions, 1.0 / voxelDimensions, 0);
     vec3 voxelTextureUV = worldPosition / (voxelGridSize * 0.5);
     voxelTextureUV = voxelTextureUV * 0.5 + 0.5 + offset;
     return textureLod(voxels, voxelTextureUV, lod);

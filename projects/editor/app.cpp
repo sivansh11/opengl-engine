@@ -14,6 +14,8 @@
 #include "renderer/renderpass/voxelize_pass.hpp"
 #include "renderer/renderpass/vxgi_pass.hpp"
 #include "renderer/pipeline/voxel_pipeline.hpp"
+#include "renderer/renderpass/vxgi_mip_map_pass.hpp"
+#include "renderer/renderpass/vxgi_clear.hpp"
 #include "renderer/pipeline/visualization_pipeline.hpp"
 #include "renderer/renderpass/visualize_voxels_pass.hpp"
 #include "renderer/renderpass/vxgi_composite_pass.hpp"
@@ -72,10 +74,14 @@ void App::run() {
     renderer::SSAOPipeline ssaoPipeline{dispatcher};
     ssaoPipeline.addRenderPass(ssaoPass);
 
+    std::shared_ptr<renderer::RenderPass> clearPass = std::make_shared<renderer::ClearPass>(dispatcher);
     std::shared_ptr<renderer::RenderPass> voxelizePass = std::make_shared<renderer::VoxelizationPass>(dispatcher);
+    std::shared_ptr<renderer::RenderPass> voxelMipMapPass = std::make_shared<renderer::MipMapPass>(dispatcher);
     std::shared_ptr<renderer::RenderPass> vxgiPass = std::make_shared<renderer::VXGICompositePass>(dispatcher);
     renderer::VoxelPipeline voxelPipeline{dispatcher};
+    voxelPipeline.addRenderPass(clearPass);
     voxelPipeline.addRenderPass(voxelizePass);
+    voxelPipeline.addRenderPass(voxelMipMapPass);
     voxelPipeline.addRenderPass(vxgiPass);
 
     std::shared_ptr<renderer::RenderPass> visualizePass = std::make_shared<renderer::VisualizePass>(dispatcher);
@@ -125,9 +131,7 @@ void App::run() {
 
     double lastTime = glfwGetTime();
 
-    float targetFPS = 60.f;
-
-    gfx::AsyncTimerQuery timer{5};
+    float targetFPS = 30.f;
 
     while (!window.shouldClose()) {
         window.pollEvents();
@@ -145,7 +149,7 @@ void App::run() {
         if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
             targetFPS = 500;
         } else {
-            targetFPS = 60;
+            targetFPS = 30;
         }
         
 
@@ -162,20 +166,12 @@ void App::run() {
         renderContext.at("viewDir") = camera.getDir();
         renderContext.at("showing") = viewPanel.selectedImage;
 
-        timer.begin();
-
         shadowPipeline.render(registry, renderContext);
         deferredPipeline.render(registry, renderContext);
         voxelPipeline.render(registry, renderContext);
         // ssaoPipeline.render(registry, renderContext);
         visualizationPipeline.render(registry, renderContext);
         // forwardPipeline.render(registry, renderContext);
-
-        timer.end();
-
-        if (auto time = timer.popTimeStamp()) {
-            std::cout << time.value() / 1000000.0 << "ms" << '\n';
-        }
 
         core::startFrameImgui();
 

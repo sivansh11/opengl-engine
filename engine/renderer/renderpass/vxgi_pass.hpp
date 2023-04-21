@@ -72,7 +72,7 @@ public:
         shader.vec3f("directionalLight.term", glm::value_ptr(dlc.term));
         
         renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>()->bind("voxels", 7, shader);
-        shader.veci("voxelDim", renderContext->at("voxelDim").as<int>());
+        shader.veci("voxelDimensions", renderContext->at("voxelDimensions").as<int>());
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
         shader.veci("samples", samples);
         shader.vecf("MAX_DIST", maxDist);

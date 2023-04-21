@@ -69,13 +69,14 @@ public:
         shader.vec3f("directionalLight.ambience", glm::value_ptr(dlc.ambience));
         shader.vec3f("directionalLight.term", glm::value_ptr(dlc.term));
         
-        shader.veci("voxelDim", renderContext->at("voxelDim").as<int>());
+        shader.veci("voxelDimensions", renderContext->at("voxelDimensions").as<int>());
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
         shader.veci("samples", samples);
         shader.vecf("MAX_DIST", maxDist);
         shader.vecf("ALPHA_THRESH", alphaThresh);
         shader.veci("MAX_COUNT", maxCount);
         shader.vecf("tanHalfAngle", tanHalfAngles);
+        shader.vecf("tanHalfAngleForOcclusion", tanHalfAngleForOcclusion);
         
         renderContext->at("texAlbedoSpec").as<std::shared_ptr<gfx::Texture>>()->bind("texAlbedoSpec", 0, shader);
         renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 1, shader);
@@ -109,6 +110,7 @@ public:
         ImGui::DragInt("samples", &samples, 1, 1, 15);
         ImGui::DragInt("maxCount", &maxCount, 1, 1, 30);
         ImGui::DragFloat("tanHalfAngles", &tanHalfAngles, 0.01, 0, 100);
+        ImGui::DragFloat("tanHalfAngleForOcclusion", &tanHalfAngleForOcclusion, 0.01, 0, 100);
         ImGui::DragInt("outColor", &outColor, 1, 0, 5);
 
     }
@@ -118,7 +120,8 @@ private:
     float maxDist = 1000;
     int samples = 1;
     int maxCount = 25;
-    float tanHalfAngles = .577;
+    float tanHalfAngles = 1;
+    float tanHalfAngleForOcclusion = 1;
     // std::shared_ptr<gfx::Texture> texNoise;
     gfx::Buffer pointLigthBuffer;
     gfx::VertexAttribute vao;
