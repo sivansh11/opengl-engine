@@ -191,7 +191,7 @@ void Texture::genMipMaps() {
 void Texture::loadImage(std::filesystem::path path) {
     int width, height, nChannels;
     stbi_set_flip_vertically_on_load(true);
-    uint8_t *bytes = stbi_load(path.c_str(), &width, &height, &nChannels, 0);
+    uint8_t *bytes = stbi_load(path.string().c_str(), &width, &height, &nChannels, 0);
 
     if (!bytes) {
         throw std::runtime_error(stbi_failure_reason());
