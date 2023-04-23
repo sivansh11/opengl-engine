@@ -11,6 +11,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "../../core/events.hpp"
+
 namespace renderer {
 
 class VisualizePass : public RenderPass {
@@ -26,6 +28,10 @@ public:
         vao.attributeLocation(0, 2, offsetof(gfx::FrameBufferVertex, pos));
         vao.attributeLocation(1, 2, offsetof(gfx::FrameBufferVertex, uv));
         vao.bindVertexBuffer<gfx::FrameBufferVertex>(vertexBuffer);
+
+        dispatcher.subscribe<core::ReloadShaderEvent>([this](const event::Event& e) {
+            this->shader.reload();
+        });
     }
 
     ~VisualizePass() override {
@@ -41,7 +47,11 @@ public:
 
         shader.veci("voxelDimensions", renderContext->at("voxelDimensions").as<int>());
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
-        renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>()->bind("voxels", 7, shader);
+        auto voxels = renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>();
+        voxels->changeMinFilter(gfx::Texture::MinFilter::eNEAREST_MIPMAP_NEAREST);
+        voxels->changeMagFilter(gfx::Texture::MagFilter::eNEAREST);
+
+        voxels->bind("voxels", 7, shader);
         shader.mat4f("invView", glm::value_ptr(renderContext->at("invView").as<glm::mat4>()));
         shader.mat4f("invProjection", glm::value_ptr(renderContext->at("invProjection").as<glm::mat4>()));
         shader.veci("MAX_COUNT", renderContext->at("maxCount").as<int>());
@@ -55,6 +65,9 @@ public:
 
         vao.bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        voxels->changeMinFilter(gfx::Texture::MinFilter::eLINEAR_MIPMAP_LINEAR);
+        voxels->changeMagFilter(gfx::Texture::MagFilter::eLINEAR);
     }
 
     void UI() override {

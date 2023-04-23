@@ -30,19 +30,53 @@ uniform float tanHalfAngle;
 uniform float tanHalfAngleForOcclusion;
 uniform float ALPHA_THRESH;
 uniform float MAX_DIST;
+uniform float giBoost;
 uniform int voxelDimensions;
 uniform int samples;
-uniform int numLights;
+uniform int numPointLights;
 uniform int MAX_COUNT;
+uniform int outputType;
+uniform bool cone;
+uniform bool useSSAO;
 uniform sampler2D texAlbedoSpec;
 uniform sampler2D texDepth;
 uniform sampler2D texNormal;
+uniform sampler2D texTangent;
+uniform sampler2D texSSAO;
 uniform sampler3D voxels;
-uniform int outputType;
 
 layout (std430, binding = 0) buffer PointLiDirectionalLightghtBuffer {
     PointLight pointLightBuffer[];
 };
+
+// // 6 60 degree cones
+
+// const int NUM_CONES = 6;
+// float coneHalfTan = 0.577;
+// vec3 coneDirections[6] = vec3[]
+// (                            vec3(0, 1, 0),
+//                             vec3(0, 0.5, 0.866025),
+//                             vec3(0.823639, 0.5, 0.267617),
+//                             vec3(0.509037, 0.5, -0.700629),
+//                             vec3(-0.509037, 0.5, -0.700629),
+//                             vec3(-0.823639, 0.5, 0.267617)
+//                             );
+// float coneWeights[6] = float[](0.25, 0.15, 0.15, 0.15, 0.15, 0.15);
+
+// // 5 90 degree cones
+
+const int NUM_CONES = 5;
+float coneHalfTan = 1;
+
+vec3 coneDirections[5] = vec3[]
+(                            vec3(0, 1, 0),
+                            vec3(0, 0.707, 0.707),
+                            vec3(0, 0.707, -0.707),
+                            vec3(0.707, 0.707, 0),
+                            vec3(-0.707, 0.707, 0)
+                            );
+float coneWeights[5] = float[](0.28, 0.18, 0.18, 0.18, 0.18);
+
 
 vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occlusion);
 vec4 sampleVoxel(vec3 worldPosition, float lod);
@@ -65,11 +99,18 @@ vec4 lightSpacePosition;
 float perVoxelSize;
 vec3 diffuseColor;
 vec3 normal;
+vec3 tangent;
+vec3 biTangent;
+mat3 TBN;
 float specular;
 float visibility;
+vec3 up;
+vec3 forward;
 vec3 startPos;
+vec3 viewDir;
 
 void main() {
+    up = vec3(0, 1, 0);
     viewPosition = get_view_position_from_depth(frag.uv, texture(texDepth, frag.uv).r);
     worldPosition = invView * viewPosition;
     lightSpacePosition = lightSpace * worldPosition;
@@ -78,7 +119,19 @@ void main() {
     visibility = texture(shadowMap, vec3(lightSpacePosition.xy * .5 + .5, lightSpacePosition.z * .5 + .5 - 0.001 / lightSpacePosition.w));
     diffuseColor = texture(texAlbedoSpec, frag.uv).rgb;
     specular = texture(texAlbedoSpec, frag.uv).a;
-    startPos = worldPosition.rgb + normal * perVoxelSize;
+    startPos = worldPosition.rgb + normal * perVoxelSize * 1;
+    viewDir = normalize(viewPos - worldPosition.rgb);
+    // forward = normalize(viewPos - worldPosition.rgb);
+    // vec3 t1, t2;
+    // t1 = cross(normal, forward);
+    // t2 = cross(normal, up);
+    // if (length(t1) > length(t2)) {
+    //     tangent = t1;
+    // } else {
+    //     tangent = t2;
+    // }
+    vec3 tangent = texture(texTangent, frag.uv).rgb;
+    TBN = inverse(transpose(mat3(tangent, normal, cross(normal, tangent))));
 
     uint pixel_index = uint(gl_FragCoord.x + gl_FragCoord.y * 10000);
     uint seed = pcg_hash(pixel_index);
@@ -92,7 +145,6 @@ void main() {
         vec3 lightDir = normalize(directionalLight.position - worldPosition.rgb);
         vec3 diffuseComponent = directionalLight.color * max(dot(normal, lightDir), 0);
 
-        vec3 viewDir = normalize(viewPos - worldPosition.rgb);
         vec3 reflectDir = reflect(-lightDir, normal);
         vec3 specularComponent = directionalLight.color * pow(max(dot(viewDir, reflectDir), 0), 32) * specular; 
 
@@ -103,44 +155,60 @@ void main() {
         
         directLight = specularComponent * attenuation + diffuseComponent * attenuation;
 
-        for (int i = 0; i < numLights; i++) {
+        for (int i = 0; i < numPointLights; i++) {
             directLight += calculateLight(i);
         }
     }
 
     // indirect light 
-    {
-        if (samples == 1) {
-            indirectLight += coneTrace(startPos, normal, tanHalfAngle, occlusion).rgb;
-        } else {
-            for (int i = 0; i < samples; i++) {
-                vec3 r = random_in_unit_sphere(seed);
-                r /= 5;
-                float tempOcclusion = 0;
-                indirectLight += coneTrace(startPos, normalize(normal + r), tanHalfAngle, tempOcclusion).rgb;
-                occlusion += tempOcclusion / samples;
-            }
+    if (cone) {
+        for (int i = 0; i < NUM_CONES; i++) {
+            float oc = 0;
+            indirectLight += coneWeights[i] * coneTrace(startPos, TBN * coneDirections[i], coneHalfTan, oc).rgb;
+            occlusion += oc * coneWeights[i];
+        }
+    } else {
+        for (int i = 0; i < samples; i++) {
+            vec3 r = random_in_unit_sphere(seed);
+            if (dot(r, normal) < 0) r = -r;
+            r /= 10;
+            float tempOcclusion = 0;
+            indirectLight += coneTrace(startPos, normal + r, tanHalfAngle, tempOcclusion).rgb / float(samples);
+            // occlusion += tempOcclusion / float(samples);
         }
 
-        indirectLight /= samples;
+        float tempOcclusion = 0;
+        coneTrace(startPos, normal, tanHalfAngleForOcclusion, tempOcclusion);
+        occlusion += tempOcclusion;
     }
 
-    occlusion = 0;
-    coneTrace(startPos, normal, tanHalfAngleForOcclusion, occlusion);
+    indirectLight *= giBoost;  
+    
+    // float oc = 0;
+    // indirectLight = coneTrace(startPos, reflect(worldPosition.rgb - viewPos, normal), 0, oc).rgb;
+
     occlusion = 1 - occlusion;
 
+    if (useSSAO) {
+        occlusion = texture(texSSAO, frag.uv).r;
+    }
+
+    // occlusion = min(1, 1.5 * occlusion);
+
     if (outputType == 0)
-        outColor = vec4((directLight * visibility + indirectLight * occlusion + directionalLight.ambience * occlusion) * diffuseColor.rgb, 1);
+        outColor = vec4((directLight * visibility + indirectLight + directionalLight.ambience) * occlusion * diffuseColor.rgb, 1);
     if (outputType == 1)
-        outColor = vec4(indirectLight * diffuseColor.rgb, 1);
+        outColor = vec4((indirectLight) * occlusion * diffuseColor.rgb, 1);
     if (outputType == 2)
-        outColor = vec4(indirectLight * occlusion * diffuseColor.rgb, 1);
+        outColor = vec4((directLight * visibility + directionalLight.ambience) * occlusion * diffuseColor.rgb, 1);
     if (outputType == 3) 
-        outColor = vec4(directLight * visibility * diffuseColor.rgb, 1);
+        outColor = vec4((directLight * visibility + directionalLight.ambience) * diffuseColor.rgb, 1);
     if (outputType == 4)
         outColor = vec4(occlusion, occlusion, occlusion, 1);
     if (outputType == 5) 
-        outColor = vec4((directLight * visibility + directionalLight.ambience * occlusion) * diffuseColor.rgb, 1);
+        outColor = vec4(TBN * coneDirections[0], 1);
+    if (outputType == 6)
+        outColor = vec4(indirectLight * diffuseColor.rgb, 1);
 }
 
 vec3 calculateLight(int index) {
@@ -194,7 +262,6 @@ vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occl
 
         occlusion += (a * voxelColor.a) / (1 + .03 * diameter);
         dist += diameter * .5;
-        
         count += 1;
     }
 

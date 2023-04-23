@@ -40,7 +40,7 @@ public:
 
     void pipelineUI() override {
         if (renderContext->contains("finalImage")) {
-            // ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("finalImage").as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+            ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("finalImage").as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
         }
     }
 

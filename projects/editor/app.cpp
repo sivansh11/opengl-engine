@@ -90,9 +90,9 @@ void App::run() {
 
     std::vector<core::BasePanel *> pipelines;
     pipelines.push_back(&deferredPipeline);
-    // pipelines.push_back(&forwardPipeline);
     pipelines.push_back(&shadowPipeline);
-    // pipelines.push_back(&ssaoPipeline);
+    pipelines.push_back(&ssaoPipeline);
+    pipelines.push_back(&forwardPipeline);
     pipelines.push_back(&voxelPipeline);
     pipelines.push_back(&visualizationPipeline);
     
@@ -105,26 +105,48 @@ void App::run() {
 
     {
         auto ent = registry.create();
-        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
         // registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/ABeautifulGame/glTF/ABeautifulGame.gltf");
+        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
         auto& t = registry.emplace<core::TransformComponent>(ent);
         t.scale = {1, 1, 1};
     }
 
-    // {
-    //     auto ent = registry.create();
-    //     auto& pl = registry.emplace<core::PointLightComponent>(ent);
-    //     pl.position = {6, 1, 0};
-    //     pl.color = {2, 2, 2};
-    //     pl.term = {.3, .3, .1};
-    // }
-
     {
         auto ent = registry.create();
-        auto& dl = registry.emplace<core::DirectionalLightComponent>(ent);
+        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Suzanne/glTF/Suzanne.gltf");
+        auto& t = registry.emplace<core::TransformComponent>(ent);
+        t.scale = {1, 1, 1};
+        t.translation = {0, 1.5, 0};
+        t.rotation = {0, -glm::half_pi<float>(), 0};
     }
 
+    auto ent = registry.create();
+    auto& pl = registry.emplace<core::PointLightComponent>(ent);
+    pl.position = {6, 1, 0};
+    pl.color = {0, 0, 0};
+    pl.term = {.3, .3, .1};
+
+
+    ent = registry.create();
+    auto& dlc = registry.emplace<core::DirectionalLightComponent>(ent);
+    dlc.position = {.01, 12, 6};
+    dlc.color = {500, 500, 500};
+    dlc.ambience = {0, 0, 0};
+    dlc.term = {.3, .3, .1};
+    dlc.multiplier = 2;
+    dlc.orthoProj = 15;
+    dlc.far = 43;
+    dlc.near = 0.1;
+    
     ViewPanel viewPanel;
+    viewPanel.addItem("vxgiFinalImage");
+    viewPanel.addItem("voxelVisual");
+    viewPanel.addItem("ssaoImage");
+    viewPanel.addItem("depthMap");
+    viewPanel.addItem("finalImage");
+    viewPanel.addItem("texAlbedoSpec");
+    viewPanel.addItem("texNormal");
+    viewPanel.addItem("texDepth");
 
     std::vector<core::BasePanel *> panels;
     panels.push_back(&viewPanel);
@@ -164,14 +186,14 @@ void App::run() {
         renderContext.at("invProjection") = glm::inverse(camera.getProjection());
         renderContext.at("viewPos") = camera.getPos();
         renderContext.at("viewDir") = camera.getDir();
-        renderContext.at("showing") = viewPanel.selectedImage;
+        renderContext.at("showing") = viewPanel.getCurrentImage();
 
         shadowPipeline.render(registry, renderContext);
         deferredPipeline.render(registry, renderContext);
+        ssaoPipeline.render(registry, renderContext);
         voxelPipeline.render(registry, renderContext);
-        // ssaoPipeline.render(registry, renderContext);
         visualizationPipeline.render(registry, renderContext);
-        // forwardPipeline.render(registry, renderContext);
+        forwardPipeline.render(registry, renderContext);
 
         core::startFrameImgui();
 
@@ -229,7 +251,7 @@ void App::run() {
         width = vp.x;
         height = vp.y;
         camera.onUpdate(dt);
-        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext.at(viewPanel.selectedImage).as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext.at(viewPanel.getCurrentImage()).as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
     
         ImGui::End();
         ImGui::PopStyleVar(2);
@@ -241,6 +263,21 @@ void App::run() {
         for (auto panel : panels) {
             panel->uiPanel();
         }
+
+        ImGui::Begin("Temp");
+        ImGui::DragFloat3("point light position", reinterpret_cast<float *>(&(pl.position)));
+        ImGui::DragFloat3("point light color", reinterpret_cast<float *>(&(pl.color)));
+        ImGui::DragFloat3("point light term", reinterpret_cast<float *>(&(pl.term)));
+        ImGui::Separator();
+        ImGui::DragFloat3("directional light position", reinterpret_cast<float *>(&(dlc.position)), 0.01);
+        ImGui::DragFloat3("directional light color", reinterpret_cast<float *>(&(dlc.color)));
+        ImGui::DragFloat3("directional light ambience", reinterpret_cast<float *>(&(dlc.ambience)));
+        ImGui::DragFloat3("directional light term", reinterpret_cast<float *>(&(dlc.term)));
+        ImGui::DragFloat("directional light multiplier", &dlc.multiplier);
+        ImGui::DragFloat("directional light orthoProj", &dlc.orthoProj);
+        ImGui::DragFloat("directional light far", &dlc.far);
+        ImGui::DragFloat("directional light near", &dlc.near);
+        ImGui::End();
 
         ImGui::Begin("Debug");
         ImGui::Text("%f", ImGui::GetIO().Framerate);

@@ -12,6 +12,7 @@ namespace renderer {
 
 void BasePipeline::addRenderPass(std::shared_ptr<RenderPass> renderPass) {
     m_renderPasses.push_back(renderPass);
+    m_timers.emplace_back(2);
 }
 
 void BasePipeline::render(entt::registry& registry, RenderContext& renderContext) {
@@ -21,12 +22,12 @@ void BasePipeline::render(entt::registry& registry, RenderContext& renderContext
     for (int i = 0; i < m_renderPasses.size(); i++) {
         auto& renderPass = m_renderPasses[i];
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderPass->m_name.c_str());
-        timer.begin();
+        m_timers[i].begin();
         renderPass->shader.bind();
         renderPass->renderContext = &renderContext;
         renderPass->render(registry);
-        timer.end();
-        if (auto time = timer.popTimeStamp()) {
+        m_timers[i].end();
+        if (auto time = m_timers[i].popTimeStamp()) {
             stats[renderPass->m_name] = time.value() / 1000000.f;
         } else {
             stats[renderPass->m_name] = 0;

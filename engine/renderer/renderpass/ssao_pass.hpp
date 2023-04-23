@@ -93,6 +93,7 @@ public:
     } 
 
     void render(entt::registry& registry) override {
+        if (renderContext->at("showing").as<std::string>() != "finalImage" && renderContext->at("showing").as<std::string>() != "ssaoImage" && renderContext->at("showing").as<std::string>() != "vxgiFinalImage") return;
         // renderContext->at("texPosition").as<std::shared_ptr<gfx::Texture>>()->bind("texPosition", 1, shader);
         renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 1, shader);
         renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 2, shader);

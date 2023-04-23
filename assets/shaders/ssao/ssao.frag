@@ -51,7 +51,6 @@ void main() {
         offset.xy /= offset.w;
         offset.xy = offset.xy * 0.5 + 0.5;
 
-        // float sampleDepth = (view * vec4(texture(texPosition, offset.xy).xyz, 1)).z;
         float sampleDepth = get_view_position_from_depth(offset.xy, texture(texDepth, offset.xy).r).z;
 
         float rangeCheck = smoothstep(0, 1, radius / abs(fragPos.z - sampleDepth));

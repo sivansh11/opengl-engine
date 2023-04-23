@@ -93,6 +93,8 @@ private:
 
 class RenderContext {
 public:
+    RenderContext() = default;
+
     // inserts if key does not exist
     any& at(const std::string& key) {
         return m_data[key];
@@ -123,12 +125,13 @@ public:
 
 protected:
     event::Dispatcher& m_dispatcher;
-    RenderContext *renderContext;
-    gfx::AsyncTimerQuery timer{10};
+    RenderContext *renderContext = nullptr;
+    // gfx::AsyncTimerQuery timer{10};
     std::map<std::string, float> stats;
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;
+    std::vector<gfx::AsyncTimerQuery> m_timers;
 };
 
 } // namespace renderer

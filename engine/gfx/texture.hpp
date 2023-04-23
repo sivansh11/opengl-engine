@@ -124,6 +124,7 @@ public:
         Builder& setSwizzleA(Swizzle swizzle);
         Builder& setCompareFunc(CompareFunc compareFunc);
         Builder& setCompareMode(CompareMode compareMode);
+
         // If the texture contains depth components, the first component of GL_TEXTURE_BORDER_COLOR is interpreted as a depth value. The initial value is (0.0,0.0,0.0,0.0).
         Builder& setBorderColor(float r, float g, float b, float a);
         Builder& setBorderColor(float d);
@@ -172,6 +173,19 @@ public:
 
     void bind(const std::string& name, uint32_t unit, ShaderProgram& shader) const;
     void bindImage(const std::string& name, uint32_t unit, uint32_t level, ShaderProgram& shader) const;
+
+    void changeMinFilter(MinFilter minFilter);
+    void changeMagFilter(MagFilter magFilter);
+    void changeWrapS(Wrap warp);
+    void changeWrapT(Wrap warp);
+    void changeWrapR(Wrap warp);
+    // todo add these vvv
+    // void changeSwizzleR(Swizzle swizzle);
+    // void changeSwizzleG(Swizzle swizzle);
+    // void changeSwizzleB(Swizzle swizzle);
+    // void changeSwizzleA(Swizzle swizzle);
+    // void changeCompareFunc(CompareFunc compareFunc);
+    // void changeCompareMode(CompareMode compareMode);
 
     // loses pointer to data 
     void resize(CreateInfo& info);

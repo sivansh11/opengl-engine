@@ -3,6 +3,7 @@
 #include "../core/components.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
+#include <algorithm>
 
 namespace renderer {
 
@@ -226,7 +227,9 @@ std::shared_ptr<gfx::Texture> Model::loadMaterialTexture(aiMaterial *mat, aiText
             return m_texturesLoaded.at(str.C_Str());
         }
         tex = builder.build(gfx::Texture::Type::e2D);
-        tex->loadImage((m_directory + '/' + str.C_Str()).c_str());
+        std::string filePath = m_directory + '/' + str.C_Str();
+        std::replace(filePath.begin(), filePath.end(), '\\', '/');
+        tex->loadImage(filePath);
         // tex = std::make_shared<gfx::Texture>((m_directory + '/' + str.C_Str()).c_str());
         m_texturesLoaded[str.C_Str()] = tex;
     }

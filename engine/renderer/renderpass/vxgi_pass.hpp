@@ -74,7 +74,7 @@ public:
         renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>()->bind("voxels", 7, shader);
         shader.veci("voxelDimensions", renderContext->at("voxelDimensions").as<int>());
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
-        shader.veci("samples", samples);
+        // shader.veci("samples", samples);
         shader.vecf("MAX_DIST", maxDist);
         shader.vecf("ALPHA_THRESH", alphaThresh);
         shader.veci("MAX_COUNT", maxCount);
@@ -112,7 +112,7 @@ public:
     void UI() override {
         ImGui::DragFloat("AlphaThresh", &alphaThresh, .001, .01, .99);
         ImGui::DragFloat("MaxDist", &maxDist, 1, 0, 5000);
-        ImGui::DragInt("samples", &samples, 1, 1, 15);
+        // ImGui::DragInt("samples", &samples, 1, 1, 15);
         ImGui::DragInt("maxCount", &maxCount, 1, 1, 30);
         ImGui::DragFloat("tanHalfAngles", &tanHalfAngles, 0.01, 0, 100);
         ImGui::DragInt("outColor", &outColor, 1, 0, 5);

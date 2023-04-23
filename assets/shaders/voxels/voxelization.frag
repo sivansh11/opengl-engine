@@ -75,7 +75,10 @@ void main() {
 
     vec3 color = vec3(0);
     
-    color = matColor.rgb * (visibility * directionalLight.color + directionalLight.ambience);
+    float distance = length(directionalLight.position - frag.worldPosition);
+    float attenuation = 1.0f / (directionalLight.term.r + directionalLight.term.g * distance + directionalLight.term.b * distance * distance);
+
+    color = matColor.rgb * (visibility * directionalLight.color * attenuation + directionalLight.ambience);
 
     for (int i = 0; i < numLights; i++) {
         color += calculateLight(i);

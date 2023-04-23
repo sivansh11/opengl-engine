@@ -35,7 +35,7 @@ uniform mat4 invView;
 uniform mat4 invProjection;
 
 uniform vec3 viewPos;
-uniform int numLights;
+uniform int numPointLights;
 
 layout (std430, binding = 0) buffer PointLiDirectionalLightghtBuffer {
     PointLight pointLightBuffer[];
@@ -67,7 +67,7 @@ void main() {
     specular = texture(texAlbedoSpec, uv).a;
 
     vec3 finalColor = vec3(0, 0, 0);
-    for (int i = 0; i < numLights; i++) {
+    for (int i = 0; i < numPointLights; i++) {
         finalColor += calculateLight(i);
     }
 

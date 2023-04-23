@@ -42,6 +42,7 @@ public:
         assert(renderContext->contains("invView"));
         assert(renderContext->contains("invProjection"));
 
+        if (renderContext->at("showing").as<std::string>() != "finalImage") return;
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);

@@ -20,7 +20,7 @@ uniform struct Material {
 } material;
 
 uniform vec3 viewPos;
-uniform int numLights;
+uniform int numPointLights;
 
 layout (std430, binding = 0) buffer PointLightBuffer {
     PointLight pointLightBuffer[];
@@ -34,7 +34,7 @@ void main() {
     }
     vec3 color = vec3(0, 0, 0);
 
-    for (int i = 0; i < numLights; i++) {
+    for (int i = 0; i < numPointLights; i++) {
         color += calculateLight(i);
     }
 

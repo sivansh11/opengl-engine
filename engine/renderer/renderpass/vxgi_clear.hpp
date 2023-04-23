@@ -25,8 +25,21 @@ public:
     } 
 
     void render(entt::registry& registry) override {
+        // common
+
+        // effective final image
+        if (renderContext->at("showing").as<std::string>() != "vxgiFinalImage" && renderContext->at("showing").as<std::string>() != "voxelVisual") return;
+
+        // turn off renderpass
+        if (!renderContext->at("voxelizeEveryFrame").as<bool>()) return;
+
         auto voxels = renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>();
+        // non settings data
         voxels->bindImage("voxels", 0, 0, shader);
+
+        // renderpass and pipeline settings data
+
+        // draw
         auto& voxelsInfo = voxels->getInfo();  
         shader.dispatchCompute((voxelsInfo.width + 4 - 1) / 4, (voxelsInfo.height + 4 - 1) / 4, (voxelsInfo.depth + 4 - 1) / 4);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);

@@ -73,6 +73,15 @@ struct PointLightComponent {
     alignas(16) glm::vec3 term{.1, .1, .1};
 };
 
+struct SpotLightComponent {
+    alignas(16) glm::vec3 position;
+    alignas(16) glm::vec3 color{1, 1, 1};
+    alignas(16) glm::vec3 term{.1, .1, .1};
+    alignas(16) glm::vec3 direction;
+    float innerCutoff;
+    float outerCutOff;
+};
+
 struct DirectionalLightComponent {
     glm::vec3 position;
     glm::vec3 color;

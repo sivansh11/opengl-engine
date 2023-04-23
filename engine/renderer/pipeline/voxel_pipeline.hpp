@@ -16,7 +16,6 @@ public:
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA8, gfx::FrameBuffer::Attachment::eCOLOR0)
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eDEPTH_COMPONENT32, gfx::FrameBuffer::Attachment::eDEPTH)
             .build();
-        frameBuffer.setClearColor(0, 0, 0, 0);
 
         voxels = gfx::Texture::Builder{}
             .setMinFilter(gfx::Texture::MinFilter::eLINEAR_MIPMAP_LINEAR)
@@ -57,6 +56,8 @@ public:
         renderContext->at("voxels") = voxels;
         renderContext->at("voxelDimensions") = voxelDimensions;
         renderContext->at("voxelGridSize") = voxelGridSize;
+
+        renderContext->at("voxelizeEveryFrame") = voxelizeEveryFrame;
     }
 
     void postRender(entt::registry& registry) override {
@@ -68,14 +69,21 @@ public:
         ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("vxgiFinalImage").as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
         if (ImGui::DragInt("Voxel Dims", &voxelDimensions, 1, 1, 512)) { resize = true; }
         ImGui::DragFloat("voxel grid size", &voxelGridSize, 1, 1, 1000);
+
+        ImGui::Checkbox("Voxelize every frame", &voxelizeEveryFrame);
+
+        // if (renderContext->contains("vxgiFinalImage")) {
+        //     std::cout << "Yes!";
+        // }
     }
 
 private:
     gfx::FrameBuffer frameBuffer;
     float voxelGridSize = 30.f;
-    int voxelDimensions = 256;
+    int voxelDimensions = 128;
     std::shared_ptr<gfx::Texture> voxels;
     bool resize = false;
+    bool voxelizeEveryFrame = true;
 
 };
 

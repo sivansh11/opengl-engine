@@ -3,21 +3,28 @@
 
 #include "core/panel.hpp"
 
+#include <vector>
+#include <string>
+
 class ViewPanel : public core::BasePanel {
 public:
     ViewPanel() : BasePanel("View Panel") {}
 
-    void UI() override {
-        static int currentItem = 1;
-        const char *items[] = {
-            // "finalImage",
-            "vxgiFinalImage",
-            "voxelVisual",
-        };
-        ImGui::ListBox("Views", &currentItem, items, 2);
-        selectedImage = items[currentItem];
+    void addItem(const std::string& item) {
+        items.push_back(item);
     }
-    std::string selectedImage = "vxgiFinalImage";
+
+    void UI() override {
+        std::vector<const char *> actualItems;
+        actualItems.reserve(items.size());
+        for (auto& item : items) actualItems.push_back(item.data());
+        ImGui::ListBox("Views", &currentItem, actualItems.data(), items.size());
+    }
+
+    std::string getCurrentImage() { return items[currentItem]; }
+
+    int currentItem = 0;
+    std::vector<std::string> items;
 
 private:
 

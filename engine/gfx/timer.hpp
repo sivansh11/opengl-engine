@@ -14,6 +14,9 @@ public:
     AsyncTimerQuery(const uint32_t capacity);
     ~AsyncTimerQuery();
 
+    AsyncTimerQuery(AsyncTimerQuery&& asyncTimerQuery);
+    AsyncTimerQuery& operator=(AsyncTimerQuery&& asyncTimerQuery);
+
     void begin();
     void end();
 
@@ -25,6 +28,16 @@ private:
     uint32_t m_start{0};
     uint32_t m_count{0};
 };
+
+// class AsyncStackTimerQuery {
+// public:
+//     AsyncStackTimerQuery(const uint32_t capacity);
+//     ~AsyncStackTimerQuery();
+
+
+// private:
+
+// };
 
 } // namespace gfx
 

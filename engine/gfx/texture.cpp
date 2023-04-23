@@ -132,6 +132,51 @@ Texture::~Texture() {
     glDeleteTextures(1, &id);
 }
 
+void Texture::changeMinFilter(MinFilter minFilter) {
+    glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, minFilter);
+}
+
+void Texture::changeMagFilter(MagFilter magFilter) {
+    glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, magFilter);
+}
+
+void Texture::changeWrapS(Wrap wrap) {
+    glTextureParameteri(id, GL_TEXTURE_WRAP_S, static_cast<GLenum>(wrap));
+}
+
+void Texture::changeWrapT(Wrap wrap) {
+    glTextureParameteri(id, GL_TEXTURE_WRAP_T, static_cast<GLenum>(wrap));
+}
+
+void Texture::changeWrapR(Wrap wrap) {
+    glTextureParameteri(id, GL_TEXTURE_WRAP_R, static_cast<GLenum>(wrap));
+}
+
+// void Texture::changeSwizzleR(Swizzle swizzle) {
+
+// }
+
+// void Texture::changeSwizzleG(Swizzle swizzle) {
+
+// }
+
+// void Texture::changeSwizzleB(Swizzle swizzle) {
+
+// }
+
+// void Texture::changeSwizzleA(Swizzle swizzle) {
+
+// }
+
+// void Texture::changeCompareFunc(CompareFunc compareFunc) {
+
+// }
+
+// void Texture::changeCompareMode(CompareMode compareMode) {
+
+// }
+
+
 void Texture::bind(const std::string& name, uint32_t unit, ShaderProgram& shader) const {
     glBindTextureUnit(unit, id);
     shader.veci(name, unit);
@@ -194,6 +239,7 @@ void Texture::loadImage(std::filesystem::path path) {
     uint8_t *bytes = stbi_load(path.string().c_str(), &width, &height, &nChannels, 0);
 
     if (!bytes) {
+
         throw std::runtime_error(stbi_failure_reason());
     }
 

@@ -35,7 +35,7 @@ uniform DirectionalLight directionalLight;
 uniform bool hasDirectionalLight;
 
 uniform vec3 viewPos;
-uniform int numLights;
+uniform int numPointLights;
 
 uniform int voxelDimensions;
 uniform float voxelGridSize;

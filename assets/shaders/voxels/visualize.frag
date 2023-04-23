@@ -20,7 +20,6 @@ vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occl
 vec3 getWorldSpaceDirection(mat4 inverseProj, mat4 inverseView, vec2 normalizedDeviceCoords);
 
 uniform sampler2D texDepth;
-uniform float tanHalfAngle;
 
 float perVoxelSize;
 
@@ -40,7 +39,7 @@ void main() {
 	vec3 dir = normalize(worldPosition - viewPos);
 	vec3 startPos = viewPos + dir * perVoxelSize;
 	float oc;
-	vec3 color = coneTrace(startPos, dir, tanHalfAngle, oc).rgb;
+	vec3 color = coneTrace(startPos, dir, 0, oc).rgb;
 	outColor = vec4(color, 1);
 }
 

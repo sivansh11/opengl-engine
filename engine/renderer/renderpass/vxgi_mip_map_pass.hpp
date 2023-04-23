@@ -25,6 +25,9 @@ public:
     } 
 
     void render(entt::registry& registry) override {
+        if (renderContext->at("showing").as<std::string>() != "vxgiFinalImage" && renderContext->at("showing").as<std::string>() != "voxelVisual") return;
+
+        if (!renderContext->at("voxelizeEveryFrame").as<bool>()) return;
         auto voxels = renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>();
         voxels->bind("voxelsDownSample", 0, shader);
         auto& voxelsInfo = voxels->getInfo();  

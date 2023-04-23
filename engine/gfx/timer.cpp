@@ -11,8 +11,36 @@ AsyncTimerQuery::AsyncTimerQuery(const uint32_t capacity) : m_capacity(capacity)
 }
 
 AsyncTimerQuery::~AsyncTimerQuery() {
-    glDeleteQueries(m_capacity * 2, m_queries);
-    delete[] m_queries; 
+    if (m_queries) {
+        glDeleteQueries(m_capacity * 2, m_queries);
+        delete[] m_queries; 
+    }
+}
+
+AsyncTimerQuery::AsyncTimerQuery(AsyncTimerQuery&& asyncTimerQuery) {
+    m_capacity = asyncTimerQuery.m_capacity;
+    m_start = asyncTimerQuery.m_start;
+    m_count = asyncTimerQuery.m_count;
+    m_queries = asyncTimerQuery.m_queries;
+
+    asyncTimerQuery.m_capacity = 0;
+    asyncTimerQuery.m_start = 0;
+    asyncTimerQuery.m_count = 0;
+    asyncTimerQuery.m_queries = 0;
+}
+
+AsyncTimerQuery& AsyncTimerQuery::operator=(AsyncTimerQuery&& asyncTimerQuery) {
+    m_capacity = asyncTimerQuery.m_capacity;
+    m_start = asyncTimerQuery.m_start;
+    m_count = asyncTimerQuery.m_count;
+    m_queries = asyncTimerQuery.m_queries;
+
+    asyncTimerQuery.m_capacity = 0;
+    asyncTimerQuery.m_start = 0;
+    asyncTimerQuery.m_count = 0;
+    asyncTimerQuery.m_queries = 0;
+
+    return *this;
 }
 
 void AsyncTimerQuery::begin() {

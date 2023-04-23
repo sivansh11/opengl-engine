@@ -21,6 +21,10 @@ public:
         shader.link();
 
         pointLigthBuffer = gfx::Buffer{gfx::Buffer::Useage::eDYNAMIC_DRAW}; 
+
+        dispatcher.subscribe<core::ReloadShaderEvent>([this](const event::Event& e) {
+            this->shader.reload();
+        });
     }
 
     ~VoxelizationPass() override {
@@ -28,6 +32,7 @@ public:
     } 
 
     void render(entt::registry& registry) override {
+        if (!renderContext->at("voxelizeEveryFrame").as<bool>()) return;
         core::DirectionalLightComponent dlc;
         for (auto [ent, dl] : registry.view<core::DirectionalLightComponent>().each()) {
             dlc = dl;
