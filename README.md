@@ -1,3 +1,3 @@
 # opengl
 
-special thanks to @BoyBaykiller
+special thanks to [@BoyBaykiller](https://github.com/BoyBaykiller)
