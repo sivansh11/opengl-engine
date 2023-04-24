@@ -113,9 +113,9 @@ GLuint Texture::Builder::getNewID(Type type) const{
     glCreateTextures(static_cast<GLenum>(type), 1, &id);
     glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, minFilter_);
     glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, magFilter_);
+    glTextureParameteri(id, GL_TEXTURE_WRAP_R, static_cast<GLenum>(wrapR));
     glTextureParameteri(id, GL_TEXTURE_WRAP_S, static_cast<GLenum>(wrapS));
     glTextureParameteri(id, GL_TEXTURE_WRAP_T, static_cast<GLenum>(wrapT));
-    glTextureParameteri(id, GL_TEXTURE_WRAP_R, static_cast<GLenum>(wrapR));
     glTextureParameteri(id, GL_TEXTURE_COMPARE_FUNC, static_cast<GLint>(compareFunc));
     glTextureParameteri(id, GL_TEXTURE_COMPARE_MODE, static_cast<GLint>(compareMode));
 

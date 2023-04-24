@@ -1,5 +1,5 @@
-#ifndef RENDERER_GEOMETRY_HPP
-#define RENDERER_GEOMETRY_HPP
+#ifndef RENDERER_GEOMETRY_PASS_HPP
+#define RENDERER_GEOMETRY_PASS_HPP
 
 #include "../renderpass.hpp"
 #include "../model.hpp"
@@ -9,6 +9,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "../../core/events.hpp"
+
 namespace renderer {
 
 class GeometryPass : public RenderPass {
@@ -17,24 +19,28 @@ public:
         shader.addShader("../../../assets/shaders/geometry/geometry.vert");
         shader.addShader("../../../assets/shaders/geometry/geometry.frag");
         shader.link();
+
+        dispatcher.subscribe<core::ReloadShaderEvent>([this](const event::Event& e) {
+            this->shader.reload();
+        });
     }
 
-    ~GeometryPass() override {
-
-    } 
+    ~GeometryPass() override {}
 
     void render(entt::registry& registry) override {
         assert(renderContext->contains("view"));
         assert(renderContext->contains("projection"));
-
+        
         glEnable(GL_DEPTH_TEST);
         shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
         shader.mat4f("projection", glm::value_ptr(renderContext->at("projection").as<glm::mat4>()));
-        auto view = registry.view<Model, core::TransformComponent>();
-        for (auto ent : view) {
-            auto [model, transform] = registry.get<Model, core::TransformComponent>(ent);
+        for (auto [ent, model, transform] : registry.view<Model, core::TransformComponent>().each()) {
             model.draw(shader, transform);
         }
+    }
+
+    void UI() override {
+
     }
 
 private:

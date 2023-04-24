@@ -21,12 +21,6 @@ public:
         shader.addShader("../../../assets/shaders/ssao/ssao.frag");
         shader.link();
 
-        vertexBuffer = gfx::Buffer{static_cast<uint32_t>(gfx::frameBufferQuadVertices.size() * sizeof(gfx::frameBufferQuadVertices[0]))};
-        vertexBuffer.push(gfx::frameBufferQuadVertices.data());
-        vao.attributeLocation(0, 2, offsetof(gfx::FrameBufferVertex, pos));
-        vao.attributeLocation(1, 2, offsetof(gfx::FrameBufferVertex, uv));
-        vao.bindVertexBuffer<gfx::FrameBufferVertex>(vertexBuffer);
-    
         std::vector<glm::vec4> ssaoKernel;
         std::uniform_real_distribution<float> rn(0.0, 1.0); // random floats between [0.0, 1.0]
         std::default_random_engine g{0};
@@ -58,34 +52,8 @@ public:
             .setMagFilter(gfx::Texture::MagFilter::eNEAREST)
             .setWrapS(gfx::Texture::Wrap::eREPEAT)
             .setWrapT(gfx::Texture::Wrap::eREPEAT)
-            .build(gfx::Texture::Type::e2D, "Noise Texture");
+            .build(gfx::Texture::Type::e2D, "texNoise");
         noiseTexture->loadImage("../../../assets/texture/noise.jpg");
-
-        // std::vector<glm::vec4> ssaoNoise;
-        // int noiseWidth = 100;
-        // int noiseHeight = 100;
-        // for (int i = 0; i < noiseWidth; i++) for (int j = 0; j < noiseHeight; j++) {
-        //     glm::vec4 noise = {
-        //         rn(g) * 2.0f - 1.0f,
-        //         rn(g) * 2.0f - 1.0f,
-        //         0.f,
-        //         0.f
-        //     };
-        //     ssaoNoise.push_back(noise);
-        // }
-
-        // gfx::Texture::CreateInfo createInfo{};
-        // createInfo.width = noiseWidth;
-        // createInfo.height = noiseHeight;
-        // createInfo.internalFormat = gfx::Texture::InternalFormat::eRGBA16F;
-        // createInfo.genMipMap = true;
-        // noiseTexture->create(createInfo);
-
-        // gfx::Texture::UploadInfo uploadInfo{};
-        // uploadInfo.data = ssaoNoise.data();
-        // uploadInfo.dataType = gfx::Texture::DataType::eFLOAT;
-        // uploadInfo.format = gfx::Texture::Format::eRGBA;
-        // noiseTexture->upload(uploadInfo);
     }
 
     ~SSAOPass() override {
@@ -93,10 +61,10 @@ public:
     } 
 
     void render(entt::registry& registry) override {
-        if (renderContext->at("showing").as<std::string>() != "finalImage" && renderContext->at("showing").as<std::string>() != "ssaoImage" && renderContext->at("showing").as<std::string>() != "vxgiFinalImage") return;
-        // renderContext->at("texPosition").as<std::shared_ptr<gfx::Texture>>()->bind("texPosition", 1, shader);
-        renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 1, shader);
-        renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 2, shader);
+        renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 1, shader);
+        renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 5, shader);
+        noiseTexture->bind("texNoise", 6, shader);
+        
         shader.vecf("radius", radius);
         shader.vecf("bias", bias);
         shader.veci("numSamples", numSamples);
@@ -104,9 +72,9 @@ public:
         shader.mat4f("invProjection", glm::value_ptr(renderContext->at("invProjection").as<glm::mat4>()));
         shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
         shader.mat4f("invView", glm::value_ptr(renderContext->at("invView").as<glm::mat4>()));
-        ssaoKernelBuffer.bind(0);
-        noiseTexture->bind("texNoise", 3, shader);
-        vao.bind();
+        ssaoKernelBuffer.bind(1);
+
+        renderContext->at("frameBufferQuadVertexAttribute").as<std::shared_ptr<gfx::VertexAttribute>>()->bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
@@ -142,9 +110,7 @@ public:
     }
 
 private:
-    gfx::VertexAttribute vao;
     std::shared_ptr<gfx::Texture> noiseTexture;
-    gfx::Buffer vertexBuffer;
     gfx::Buffer ssaoKernelBuffer;
     float radius = 0.5f;
     float bias = 0.025;

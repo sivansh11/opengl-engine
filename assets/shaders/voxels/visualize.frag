@@ -9,9 +9,7 @@ out vec4 outColor;
 uniform int voxelDimensions;
 uniform float voxelGridSize;
 uniform sampler3D voxels;
-
-uniform vec3 viewPos; 
-
+uniform vec3 cameraPosition; 
 uniform mat4 invView;
 uniform mat4 invProjection;
 
@@ -23,7 +21,19 @@ uniform sampler2D texDepth;
 
 float perVoxelSize;
 
-vec4 get_view_position_from_depth(vec2 uv, float depth) {
+vec4 getViewPositionFromDepth(vec2 uv, float depth);
+
+void main() {
+    perVoxelSize = voxelGridSize / voxelDimensions;
+	vec3 worldPosition = vec3(invView * getViewPositionFromDepth(frag.uv, texture(texDepth, frag.uv).r));
+	vec3 dir = normalize(worldPosition - cameraPosition);
+	vec3 startPos = cameraPosition + dir * perVoxelSize;
+	float oc;
+	vec3 color = coneTrace(startPos, dir, 0, oc).rgb;
+	outColor = vec4(color, 1);
+}
+
+vec4 getViewPositionFromDepth(vec2 uv, float depth) {
     float z = depth * 2 - 1;
     vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, z, 1.0);
     vec4 viewSpacePosition = invProjection * clipSpacePosition;
@@ -33,25 +43,11 @@ vec4 get_view_position_from_depth(vec2 uv, float depth) {
     return viewSpacePosition.xyzw;
 }
 
-void main() {
-    perVoxelSize = voxelGridSize / voxelDimensions;
-	vec3 worldPosition = vec3(invView * get_view_position_from_depth(frag.uv, texture(texDepth, frag.uv).r));
-	vec3 dir = normalize(worldPosition - viewPos);
-	vec3 startPos = viewPos + dir * perVoxelSize;
-	float oc;
-	vec3 color = coneTrace(startPos, dir, 0, oc).rgb;
-	outColor = vec4(color, 1);
-}
-
 vec3 getWorldSpaceDirection(mat4 inverseProj, mat4 inverseView, vec2 normalizedDeviceCoords) {
     vec4 rayEye = inverseProj * vec4(normalizedDeviceCoords, -1.0, 0.0);
     rayEye.zw = vec2(-1.0, 0.0);
     return normalize((inverseView * rayEye).xyz);
 }
-
-uniform float ALPHA_THRESH;
-uniform float MAX_DIST;
-uniform int MAX_COUNT;
 
 vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occlusion) {
     float lod = 0;
@@ -63,7 +59,7 @@ vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occl
 
     int count = 0;
 
-    while (dist < MAX_DIST && alpha < ALPHA_THRESH && count < MAX_COUNT) {
+    while (dist < 1000 && alpha < .99 && count < 1000) {
         float diameter = max(perVoxelSize, 2 * tanHalfAngle * dist);
         float lodLevel = log2(diameter / perVoxelSize);
         vec4 voxelColor = sampleVoxel(startPos + dist * direction, lodLevel);
