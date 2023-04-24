@@ -143,7 +143,7 @@ private:
     gfx::VertexAttribute vao;
     gfx::Buffer vertexBuffer;
     int outColor = 0;
-    bool cone = true;
+    bool cone = false;
     bool useSSAO = false;
 };
 
