@@ -1,9 +1,9 @@
 #version 460 core
 // #extension GL_ARB_shader_image_load_store : enable
-#extension GL_NV_shader_atomic_fp16_vector : enable
-#if defined GL_NV_shader_atomic_fp16_vector
-#extension GL_NV_gpu_shader5 : require
-#endif
+// #extension GL_NV_shader_atomic_fp16_vector : enable
+// #if defined GL_NV_shader_atomic_fp16_vector
+// #extension GL_NV_gpu_shader5 : require
+// #endif
 
 struct DirectionalLight {
     vec3 position;
@@ -18,7 +18,7 @@ struct PointLight {
     vec3 term;
 };
 
-uniform int numLights;
+uniform int numPointLights;
 layout (std430, binding = 0) buffer PointLiDirectionalLightghtBuffer {
     PointLight pointLightBuffer[];
 };
@@ -42,7 +42,7 @@ uniform struct Material {
     sampler2D normalMap;
 } material;
 
-uniform sampler2DShadow depthMap;
+uniform sampler2DShadow texShadow;
 uniform DirectionalLight directionalLight;
 
 uniform int voxelDimensions;
@@ -58,7 +58,7 @@ void main() {
 
     TBN = mat3(frag.T, frag.B, frag.N);
 
-    float visibility = texture(depthMap, vec3(frag.lightSpacePosition.xy, (frag.lightSpacePosition.z - 0.001) / frag.lightSpacePosition.w));
+    float visibility = texture(texShadow, vec3(frag.lightSpacePosition.xy, (frag.lightSpacePosition.z - 0.001) / frag.lightSpacePosition.w));
 
     ivec3 camPos = ivec3(gl_FragCoord.x, gl_FragCoord.y, voxelDimensions * gl_FragCoord.z);
     ivec3 texPos;
@@ -84,12 +84,12 @@ void main() {
 
     color = matColor.rgb * (visibility * directionalLight.color * attenuation + directionalLight.ambience);
 
-    for (int i = 0; i < numLights; i++) {
+    for (int i = 0; i < numPointLights; i++) {
         color += calculateLight(i);
     }
 
-    // imageStore(voxels, texPos, vec4(color, 1));
-    imageAtomicMax(voxels, texPos, f16vec4(color, 1));
+    imageStore(voxels, texPos, vec4(color, 1));
+    // imageAtomicMax(voxels, texPos, f16vec4(color, 1));
 }
 
 vec3 calculateLight(int index) {

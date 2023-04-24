@@ -13,107 +13,86 @@ struct DirectionalLight {
     vec3 term;
 };
 
-layout (location = 0) in vec2 uv;
 
-out vec4 frag;
+in fData {
+    vec2 uv;
+} frag;
 
-uniform sampler2D texAlbedoSpec;
-uniform sampler2D texDepth;
-uniform sampler2D texNormal;
+out vec4 outColor;
 
-uniform bool useSSAO;
-uniform sampler2D texSSAO;
-
-// uniform sampler2DShadow depthMap;
-uniform sampler2D depthMap;
 uniform DirectionalLight directionalLight;
-uniform bool hasDirectionalLight;
-
-uniform mat4 lightSpace;
-
-uniform mat4 invView;
+uniform sampler2D texAlbedoSpec;
+uniform sampler2D texNormal;
+uniform sampler2D texDepth;
+uniform sampler2D texShadow;
+uniform sampler2D texAmbientOcclusion;  // could be ssao, vxao, doesnt matter
+uniform sampler2D texIndirectLight;  
 uniform mat4 invProjection;
-
-uniform vec3 viewPos;
+uniform mat4 invView;
+uniform mat4 lightSpace;
+uniform vec3 cameraPosition;
 uniform int numPointLights;
 
 layout (std430, binding = 0) buffer PointLiDirectionalLightghtBuffer {
     PointLight pointLightBuffer[];
 };
 
-vec3 calculateDirectionalLight();
+vec4 getViewPositionFromDepth(vec2 uv, float depth);
+vec3 getDirectionalLight();
+vec3 getPointLight();
 float shadowCalculation();
-vec3 calculateLight(int index);
 
-vec3 worldPosition;
+vec4 worldPosition;
+vec4 viewPosition;
 vec3 normal;
+vec4 albedoSpec;
 vec3 color;
 float specular;
+float ao;
 
-vec4 get_view_position_from_depth(vec2 uv, float depth) {
+void main() {
+    viewPosition = getViewPositionFromDepth(frag.uv, texture(texDepth, frag.uv).r);
+    worldPosition = invView * viewPosition;
+    normal = texture(texNormal, frag.uv).rgb;
+    albedoSpec = texture(texAlbedoSpec, frag.uv);
+    color = albedoSpec.rgb;
+    specular = albedoSpec.a;
+    ao = texture(texAmbientOcclusion, frag.uv).r;
+
+    vec3 directLight = vec3(0);
+
+    directLight += (getDirectionalLight() + directionalLight.ambience * ao);
+    directLight += getPointLight();
+
+    vec3 indirectLight = texture(texIndirectLight, frag.uv).rgb;
+
+    outColor = vec4((directLight + indirectLight) * color, 1);
+}
+
+vec4 getViewPositionFromDepth(vec2 uv, float depth) {
     float z = depth * 2 - 1;
     vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, z, 1.0);
     vec4 viewSpacePosition = invProjection * clipSpacePosition;
-
     viewSpacePosition /= viewSpacePosition.w;
-
     return viewSpacePosition.xyzw;
 }
 
-void main() {
-    worldPosition = vec3(invView * get_view_position_from_depth(uv, texture(texDepth, uv).r));
-    normal = normalize(texture(texNormal, uv).rgb);
-    color = texture(texAlbedoSpec, uv).rgb;
-    specular = texture(texAlbedoSpec, uv).a;
-
-    vec3 finalColor = vec3(0, 0, 0);
-    for (int i = 0; i < numPointLights; i++) {
-        finalColor += calculateLight(i);
-    }
-
-    if (hasDirectionalLight) {
-        finalColor += calculateDirectionalLight();
-    }
-
-    frag = vec4(finalColor, 1);
-}
-
-vec3 calculateLight(int index) {
-    PointLight pointLight = pointLightBuffer[index];
-
-    vec3 norm = normal;
-
-    vec3 lightDir = normalize(pointLight.position - worldPosition);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = pointLight.color * diff * color;
-    
-    vec3 viewDir = normalize(viewPos - worldPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0), 32);
-    vec3 specular = pointLight.color * spec * specular;
-
-    float distance = length(pointLight.position - worldPosition);
-    float attenuation = 1.0f / (pointLight.term.r + pointLight.term.g * distance + pointLight.term.b * distance * distance);
-
-    return diffuse * attenuation + specular * attenuation;
-}
-
 float shadowCalculation() {
-    vec4 fragPosLightSpace = lightSpace * vec4(worldPosition, 1);   
-    // return 1 - texture(depthMap, vec3(fragPosLightSpace.xy, (fragPosLightSpace.z - 0.001) / fragPosLightSpace.w));
+    vec4 fragPosLightSpace = lightSpace * worldPosition;   
+    // return 1 - texture(texShadow, vec3(fragPosLightSpace.xy, (fragPosLightSpace.z - 0.001) / fragPosLightSpace.w));
 
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
-    float closestDepth = texture(depthMap, projCoords.xy).r; 
+    float closestDepth = texture(texShadow, projCoords.xy).r; 
     float currentDepth = projCoords.z;
-    vec3 lightDir = normalize(directionalLight.position - worldPosition);
+    vec3 lightDir = normalize(directionalLight.position - worldPosition.xyz);
     float bias = max(0.0005 * (1.0 - dot(normal, lightDir)), 0.0005);
     float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(depthMap, 0);
+    vec2 texelSize = 1.0 / textureSize(texShadow, 0);
     for(int x = -1; x <= 1; ++x) {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(depthMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            float pcfDepth = texture(texShadow, projCoords.xy + vec2(x, y) * texelSize).r; 
             shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
         }    
     }
@@ -123,27 +102,39 @@ float shadowCalculation() {
     return 1 - shadow;
 }
 
-vec3 calculateDirectionalLight() {
+vec3 getDirectionalLight() {
     float shadow = shadowCalculation();
 
-    vec3 norm = normal;
-
-    vec3 lightDir = normalize(directionalLight.position - worldPosition);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = directionalLight.color * diff * color;
+    vec3 lightDir = normalize(directionalLight.position - worldPosition.xyz);
+    vec3 diffuseComponent = directionalLight.color * max(dot(normal, lightDir), 0.0);
     
-    vec3 viewDir = normalize(viewPos - worldPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0), 32);
-    vec3 specular = directionalLight.color * spec * specular;
+    vec3 viewDir = normalize(cameraPosition - worldPosition.xyz);
+    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 specularComponent = directionalLight.color * pow(max(dot(viewDir, reflectDir), 0), 32) * specular;
 
-    float distance = length(directionalLight.position - worldPosition);
+    float distance = length(directionalLight.position - worldPosition.xyz);
     float attenuation = 1.0f / (directionalLight.term.r + directionalLight.term.g * distance + directionalLight.term.b * distance * distance);
     
-    if (useSSAO) {
-        return (directionalLight.ambience * color * texture(texSSAO, uv).r) + ((diffuse * attenuation + specular * attenuation) * (shadow));
-    } else {
-        return (directionalLight.ambience * color) + ((diffuse * attenuation + specular * attenuation) * (shadow));
-    }
+    return (diffuseComponent * attenuation + specularComponent * attenuation) * shadow;
+}
+
+vec3 getPointLight() {
+    vec3 accumulator = vec3(0);
+    for (int i = 0; i < numPointLights; i++) {
+        vec3 lightDir = normalize(pointLightBuffer[i].position - worldPosition.xyz);
+        vec3 diffuseComponent = pointLightBuffer[i].color * max(dot(normal, lightDir), 0.0);
+
+        vec3 viewDir = normalize(cameraPosition - worldPosition.xyz);
+        vec3 reflectDir = reflect(-lightDir, normal);
+        vec3 specularComponent = pointLightBuffer[i].color * pow(max(dot(viewDir, reflectDir), 0), 32) * specular;
+
+        float distance = length(pointLightBuffer[i].position - worldPosition.xyz);
+        float attenuation = 1.0f / (pointLightBuffer[i].term.r + pointLightBuffer[i].term.g * distance + directionalLight.term.b * distance * distance);
+
+        accumulator += diffuseComponent * attenuation + specularComponent * attenuation;
+    }   
+
+    
+    return accumulator;
 }
 

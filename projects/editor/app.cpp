@@ -2,24 +2,21 @@
 
 #include "core/imgui_utils.hpp"
 
-#include "renderer/renderpass/test.hpp"
-#include "renderer/pipeline/forward_pipeline.hpp"
 #include "renderer/pipeline/deferred_pipeline.hpp"
-#include "renderer/renderpass/geomtery_pass.hpp"
-#include "renderer/renderpass/composite_pass.hpp"
-#include "renderer/renderpass/shadowmap_pass.hpp"
+#include "renderer/renderpass/geometry_pass.hpp"
 #include "renderer/pipeline/shadow_pipeline.hpp"
-#include "renderer/pipeline/ssao_pipeline.hpp"
+#include "renderer/renderpass/shadow_pass.hpp"
+#include "renderer/pipeline/ambient_occlusion_pipeline.hpp"
 #include "renderer/renderpass/ssao_pass.hpp"
-#include "renderer/renderpass/voxelize_pass.hpp"
-#include "renderer/renderpass/vxgi_pass.hpp"
+#include "renderer/pipeline/composite_pipeline.hpp"
+#include "renderer/renderpass/composite_pass.hpp"
 #include "renderer/pipeline/voxel_pipeline.hpp"
-#include "renderer/renderpass/vxgi_mip_map_pass.hpp"
-#include "renderer/renderpass/vxgi_clear.hpp"
-#include "renderer/pipeline/visualization_pipeline.hpp"
-#include "renderer/renderpass/visualize_voxels_pass.hpp"
-#include "renderer/renderpass/vxgi_composite_pass.hpp"
-#include "renderer/model.hpp"
+#include "renderer/renderpass/voxel_clear.hpp"
+#include "renderer/renderpass/voxelize_pass.hpp"
+#include "renderer/renderpass/voxel_mipmap_pass.hpp"
+#include "renderer/renderpass/voxel_visualize_pass.hpp"
+#include "renderer/pipeline/indirect_lighing_pipeline.hpp"
+#include "renderer/renderpass/vxgi_indirect_lighting_pass.hpp"
 
 #include "testing_panel.hpp"
 
@@ -58,67 +55,62 @@ void App::run() {
     EditorCamera camera;
     uint32_t width = 100, height = 100;
 
-    std::shared_ptr<renderer::RenderPass> geometryPass = std::make_shared<renderer::GeometryPass>(dispatcher);
+    // pipeline and renderpasses
+
     renderer::DeferredPipeline deferredPipeline{dispatcher};
+    std::shared_ptr<renderer::RenderPass> geometryPass = std::make_shared<renderer::GeometryPass>(dispatcher);
     deferredPipeline.addRenderPass(geometryPass);
 
-    std::shared_ptr<renderer::RenderPass> compositePass = std::make_shared<renderer::CompositePass>(dispatcher);
-    renderer::ForwardPipeline forwardPipeline{dispatcher};
-    forwardPipeline.addRenderPass(compositePass);
-
-    std::shared_ptr<renderer::RenderPass> shadowMapPass = std::make_shared<renderer::ShadowMapPass>(dispatcher);
     renderer::ShadowPipeline shadowPipeline{dispatcher};
-    shadowPipeline.addRenderPass(shadowMapPass);
+    std::shared_ptr<renderer::RenderPass> shadowPass = std::make_shared<renderer::ShadowPass>(dispatcher);
+    shadowPipeline.addRenderPass(shadowPass);
 
-    std::shared_ptr<renderer::RenderPass> ssaoPass = std::make_shared<renderer::SSAOPass>(dispatcher);
-    renderer::SSAOPipeline ssaoPipeline{dispatcher};
-    ssaoPipeline.addRenderPass(ssaoPass);
-
-    std::shared_ptr<renderer::RenderPass> clearPass = std::make_shared<renderer::ClearPass>(dispatcher);
+    renderer::VoxelPipeline voxelPipeline{dispatcher};
+    std::shared_ptr<renderer::RenderPass> voxelClearPass = std::make_shared<renderer::ClearPass>(dispatcher);
     std::shared_ptr<renderer::RenderPass> voxelizePass = std::make_shared<renderer::VoxelizationPass>(dispatcher);
     std::shared_ptr<renderer::RenderPass> voxelMipMapPass = std::make_shared<renderer::MipMapPass>(dispatcher);
-    std::shared_ptr<renderer::RenderPass> vxgiPass = std::make_shared<renderer::VXGICompositePass>(dispatcher);
-    renderer::VoxelPipeline voxelPipeline{dispatcher};
-    voxelPipeline.addRenderPass(clearPass);
+    std::shared_ptr<renderer::RenderPass> voxelVisualizePass = std::make_shared<renderer::VisualizePass>(dispatcher);
+    voxelPipeline.addRenderPass(voxelClearPass);
     voxelPipeline.addRenderPass(voxelizePass);
     voxelPipeline.addRenderPass(voxelMipMapPass);
-    voxelPipeline.addRenderPass(vxgiPass);
+    voxelPipeline.addRenderPass(voxelVisualizePass);
 
-    std::shared_ptr<renderer::RenderPass> visualizePass = std::make_shared<renderer::VisualizePass>(dispatcher);
-    renderer::VisualizationPipeline visualizationPipeline{dispatcher};
-    visualizationPipeline.addRenderPass(visualizePass);
+    renderer::AmbientOcclusionPipeline ambientOcclusionPipeline{dispatcher};
+    std::shared_ptr<renderer::RenderPass> ssaoPass = std::make_shared<renderer::SSAOPass>(dispatcher);
+    ambientOcclusionPipeline.addRenderPass(ssaoPass);
 
+    renderer::IndirectLightPipeline indirectPipeline{dispatcher};
+    std::shared_ptr<renderer::RenderPass> vxgiPass = std::make_shared<renderer::VXGIIndirectLightPass>(dispatcher);
+    indirectPipeline.addRenderPass(vxgiPass);
+
+    renderer::CompositePipeline compositePipeline{dispatcher};
+    std::shared_ptr<renderer::RenderPass> compositePass = std::make_shared<renderer::CompositePass>(dispatcher);
+    compositePipeline.addRenderPass(compositePass);
+
+    // helper
     std::vector<core::BasePanel *> pipelines;
     pipelines.push_back(&deferredPipeline);
     pipelines.push_back(&shadowPipeline);
-    pipelines.push_back(&ssaoPipeline);
-    pipelines.push_back(&forwardPipeline);
     pipelines.push_back(&voxelPipeline);
-    pipelines.push_back(&visualizationPipeline);
-    
-    // for (auto pipeline : pipelines) {
-    //     pipeline->show = false;
-    // }
-
-    shadowPipeline.show = true;
-    voxelPipeline.show = true;
+    pipelines.push_back(&indirectPipeline);
+    pipelines.push_back(&ambientOcclusionPipeline);
+    pipelines.push_back(&compositePipeline);
 
     {
         auto ent = registry.create();
-        // registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/ABeautifulGame/glTF/ABeautifulGame.gltf");
         registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
         auto& t = registry.emplace<core::TransformComponent>(ent);
         t.scale = {1, 1, 1};
     }
 
-    {
-        auto ent = registry.create();
-        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Suzanne/glTF/Suzanne.gltf");
-        auto& t = registry.emplace<core::TransformComponent>(ent);
-        t.scale = {1, 1, 1};
-        t.translation = {0, 1.5, 0};
-        t.rotation = {0, -glm::half_pi<float>(), 0};
-    }
+    // {
+    //     auto ent = registry.create();
+    //     registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Suzanne/glTF/Suzanne.gltf");
+    //     auto& t = registry.emplace<core::TransformComponent>(ent);
+    //     t.scale = {1, 1, 1};
+    //     t.translation = {0, 1.5, 0};
+    //     t.rotation = {0, -glm::half_pi<float>(), 0};
+    // }
 
     auto ent = registry.create();
     auto& pl = registry.emplace<core::PointLightComponent>(ent);
@@ -130,8 +122,8 @@ void App::run() {
     ent = registry.create();
     auto& dlc = registry.emplace<core::DirectionalLightComponent>(ent);
     dlc.position = {.01, 12, 6};
-    dlc.color = {500, 500, 500};
-    dlc.ambience = {0, 0, 0};
+    dlc.color = {100, 100, 100};
+    dlc.ambience = {.0, .0, .0};
     dlc.term = {.3, .3, .1};
     dlc.multiplier = 2;
     dlc.orthoProj = 15;
@@ -139,20 +131,28 @@ void App::run() {
     dlc.near = 0.1;
     
     ViewPanel viewPanel;
-    viewPanel.addItem("vxgiFinalImage");
-    viewPanel.addItem("voxelVisual");
-    viewPanel.addItem("ssaoImage");
-    viewPanel.addItem("depthMap");
-    viewPanel.addItem("finalImage");
+    viewPanel.addItem("texComposite");
+    viewPanel.addItem("texIndirectLight");
+    viewPanel.addItem("texAmbientOcclusion");
+    viewPanel.addItem("texVisualizeVoxel");
     viewPanel.addItem("texAlbedoSpec");
     viewPanel.addItem("texNormal");
     viewPanel.addItem("texDepth");
+    viewPanel.addItem("texShadow");
 
     std::vector<core::BasePanel *> panels;
     panels.push_back(&viewPanel);
 
-    double lastTime = glfwGetTime();
+    std::shared_ptr<gfx::Buffer> pointLigthBuffer = std::make_shared<gfx::Buffer>(gfx::Buffer::Useage::eDYNAMIC_DRAW);
+    
+    std::shared_ptr<gfx::VertexAttribute> frameBufferQuadVertexAttribute = std::make_shared<gfx::VertexAttribute>();
+    gfx::Buffer vertexBuffer = gfx::Buffer{static_cast<uint32_t>(gfx::frameBufferQuadVertices.size() * sizeof(gfx::frameBufferQuadVertices[0])), gfx::Buffer::Useage::eDYNAMIC_DRAW, "PointLightBuffer"};
+    vertexBuffer.push(gfx::frameBufferQuadVertices.data());
+    frameBufferQuadVertexAttribute->attributeLocation(0, 2, offsetof(gfx::FrameBufferVertex, pos));
+    frameBufferQuadVertexAttribute->attributeLocation(1, 2, offsetof(gfx::FrameBufferVertex, uv));
+    frameBufferQuadVertexAttribute->bindVertexBuffer<gfx::FrameBufferVertex>(vertexBuffer);
 
+    double lastTime = glfwGetTime();
     float targetFPS = 30.f;
 
     while (!window.shouldClose()) {
@@ -174,26 +174,60 @@ void App::run() {
             targetFPS = 30;
         }
         
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         renderer::RenderContext renderContext;
-        renderContext.at("width") = width;
-        renderContext.at("height") = height;
-        renderContext.at("view") = camera.getView();
-        renderContext.at("invView") = glm::inverse(camera.getView());
-        renderContext.at("projection") = camera.getProjection();
-        renderContext.at("invProjection") = glm::inverse(camera.getProjection());
-        renderContext.at("viewPos") = camera.getPos();
-        renderContext.at("viewDir") = camera.getDir();
-        renderContext.at("showing") = viewPanel.getCurrentImage();
+        {
+            renderContext.at("width") = width;
+            renderContext.at("height") = height;
+            renderContext.at("view") = camera.getView();
+            renderContext.at("invView") = glm::inverse(camera.getView());
+            renderContext.at("projection") = camera.getProjection();
+            renderContext.at("invProjection") = glm::inverse(camera.getProjection());
+            renderContext.at("cameraPosition") = camera.getPos();
+            renderContext.at("cameraDirection") = camera.getDir();
+            renderContext.at("showing") = viewPanel.getCurrentImage();
 
-        shadowPipeline.render(registry, renderContext);
+            core::DirectionalLightComponent directionalLight;
+            bool found = false;
+            for (auto [ent, dl] : registry.view<core::DirectionalLightComponent>().each()) {
+                directionalLight = dl;
+                found = true;
+                break;
+            }
+            if (!found) {
+                throw std::runtime_error("Could not find a directional light!");
+            }
+            renderContext.at("directionalLight") = directionalLight;
+            glm::mat4 lightProjection = glm::ortho(-dlc.orthoProj, dlc.orthoProj, -dlc.orthoProj, dlc.orthoProj, dlc.near, dlc.far);  
+            glm::mat4 lightView = glm::lookAt(dlc.position * dlc.multiplier, 
+                                    glm::vec3( 0.0f, 0.0f,  0.0f), 
+                                    glm::vec3( 0.0f, 1.0f,  0.0f));  
+            glm::mat4 lightSpace = lightProjection * lightView;
+            renderContext.at("lightSpace") = lightSpace;
+
+            std::vector<core::PointLightComponent> pointLights;
+            auto pointLightEntities = registry.view<core::PointLightComponent>();
+            for (auto [ent, pointLight] : pointLightEntities.each()) {
+                pointLights.push_back(pointLight);
+            }
+            if (pointLights.size() > 0) {
+                pointLigthBuffer->resize(pointLights.size() * sizeof(pointLights[0]));
+                pointLigthBuffer->push(pointLights.data());
+            } 
+            renderContext.at("pointLightBuffer") = pointLigthBuffer;
+            renderContext.at("numPointLights") = int(pointLights.size());
+
+            renderContext.at("frameBufferQuadVertexAttribute") = frameBufferQuadVertexAttribute;
+        }
+
+        // pipeline
         deferredPipeline.render(registry, renderContext);
-        ssaoPipeline.render(registry, renderContext);
+        shadowPipeline.render(registry, renderContext);
         voxelPipeline.render(registry, renderContext);
-        visualizationPipeline.render(registry, renderContext);
-        forwardPipeline.render(registry, renderContext);
+        indirectPipeline.render(registry, renderContext);
+        ambientOcclusionPipeline.render(registry, renderContext);
+        compositePipeline.render(registry, renderContext);
 
         core::startFrameImgui();
 
@@ -264,7 +298,7 @@ void App::run() {
             panel->uiPanel();
         }
 
-        ImGui::Begin("Temp");
+        ImGui::Begin("Light Edit (temporary)");
         ImGui::DragFloat3("point light position", reinterpret_cast<float *>(&(pl.position)));
         ImGui::DragFloat3("point light color", reinterpret_cast<float *>(&(pl.color)));
         ImGui::DragFloat3("point light term", reinterpret_cast<float *>(&(pl.term)));

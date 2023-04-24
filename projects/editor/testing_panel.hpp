@@ -8,7 +8,7 @@
 
 class ViewPanel : public core::BasePanel {
 public:
-    ViewPanel() : BasePanel("View Panel") {}
+    ViewPanel() : BasePanel("Main View Panel") {}
 
     void addItem(const std::string& item) {
         items.push_back(item);
