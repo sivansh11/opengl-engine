@@ -1,5 +1,7 @@
 #version 460 core
 
+#define PI 3.14159265
+
 struct PointLight {
     vec3 position;
     vec3 color;
@@ -92,6 +94,8 @@ vec3 random_in_unit_sphere(inout uint seed);
 vec3 random_unit_vector(inout uint seed);
 vec4 get_view_position_from_depth(vec2 uv, float depth);
 vec3 calculateLight(int index);
+vec3 uniformSampleSphere(inout uint seed);
+vec3 cosineSampleHemiSphere(inout uint seed, vec3 normal);
 
 vec4 viewPosition;
 vec4 worldPosition;
@@ -173,13 +177,24 @@ void main() {
             if (dot(r, normal) < 0) r = -r;
             r /= 10;
             float tempOcclusion = 0;
-            indirectLight += coneTrace(startPos, normal + r, tanHalfAngle, tempOcclusion).rgb / float(samples);
+            indirectLight += coneTrace(startPos, cosineSampleHemiSphere(seed, normal), tanHalfAngle, tempOcclusion).rgb / float(samples);
+            // indirectLight += coneTrace(startPos, r, tanHalfAngle, tempOcclusion).rgb / float(samples);
+            // indirectLight += coneTrace(startPos, normal + r, tanHalfAngle, tempOcclusion).rgb / float(samples);
+            // indirectLight += coneTrace(startPos, normal, tanHalfAngle, tempOcclusion).rgb / float(samples);
+
             // occlusion += tempOcclusion / float(samples);
         }
 
-        float tempOcclusion = 0;
-        coneTrace(startPos, normal, tanHalfAngleForOcclusion, tempOcclusion);
-        occlusion += tempOcclusion;
+        // {
+        //     float tempOcclusion = 0;
+        //     indirectLight += coneTrace(startPos, normal, tanHalfAngle, tempOcclusion).rgb;
+        // }
+
+        {
+            float tempOcclusion = 0;
+            coneTrace(startPos, normal, tanHalfAngleForOcclusion, tempOcclusion);
+            occlusion += tempOcclusion;
+        }
     }
 
     indirectLight *= giBoost;  
@@ -209,6 +224,19 @@ void main() {
         outColor = vec4(TBN * coneDirections[0], 1);
     if (outputType == 6)
         outColor = vec4(indirectLight * diffuseColor.rgb, 1);
+}
+
+vec3 uniformSampleSphere(inout uint seed) {
+    float z = rand(seed) * 2 - 1;
+    float a = rand(seed) * 2 * PI;
+    float r = sqrt(1 - z * z);
+    float x = r * cos(a);
+    float y = r * sin(a);
+    return vec3(x, y, z);
+}
+
+vec3 cosineSampleHemiSphere(inout uint seed, vec3 normal) {
+    return normalize(normal + uniformSampleSphere(seed));
 }
 
 vec3 calculateLight(int index) {
