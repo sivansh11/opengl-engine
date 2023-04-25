@@ -25,6 +25,15 @@ public:
         dispatcher.subscribe<core::ReloadShaderEvent>([this](const event::Event& e) {
             this->shader.reload();
         });
+
+        texNoise = gfx::Texture::Builder{}
+            // .setSwizzleR(gfx::Texture::Swizzle::eR)
+            // .setSwizzleG(gfx::Texture::Swizzle::eR)
+            // .setSwizzleB(gfx::Texture::Swizzle::eR)
+            // .setSwizzleA(gfx::Texture::Swizzle::eONE)
+            .build(gfx::Texture::Type::e2D);
+        
+        texNoise->loadImage("../../../assets/texture/bluenoise.png");
     }
 
     ~VXGIIndirectLightPass() override {
@@ -41,6 +50,7 @@ public:
         shader.mat4f("invProjection", glm::value_ptr(renderContext->at("invProjection").as<glm::mat4>()));
         shader.mat4f("lightSpace", glm::value_ptr(renderContext->at("lightSpace").as<glm::mat4>()));
 
+        texNoise->bind("texNoise", 8, shader);
         renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 1, shader);
         renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 5, shader);
         renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>()->bind("voxels", 6, shader);
@@ -72,8 +82,10 @@ private:
     float alphaThresh = .99;
     float maxDist = 1000000000;
     int samples = 1;
-    int maxCount = 10000;
+    int maxCount = 1000;
     float tanHalfAngles = .32;
+    std::shared_ptr<gfx::Texture> texNoise;
+
 };
 
 } // namespace renderer

@@ -17,6 +17,8 @@
 #include "renderer/renderpass/voxel_visualize_pass.hpp"
 #include "renderer/pipeline/indirect_lighing_pipeline.hpp"
 #include "renderer/renderpass/vxgi_indirect_lighting_pass.hpp"
+#include "renderer/pipeline/denoiser_pipeline.hpp"
+#include "renderer/renderpass/atrous_denoiser.hpp"
 
 #include "testing_panel.hpp"
 
@@ -83,6 +85,10 @@ void App::run() {
     std::shared_ptr<renderer::RenderPass> vxgiPass = std::make_shared<renderer::VXGIIndirectLightPass>(dispatcher);
     indirectPipeline.addRenderPass(vxgiPass);
 
+    renderer::DenoiserPipeline denoiserPipeline{dispatcher};
+    std::shared_ptr<renderer::RenderPass> denoiserPass = std::make_shared<renderer::ATrousDenoiserPass>(dispatcher);
+    denoiserPipeline.addRenderPass(denoiserPass);
+
     renderer::CompositePipeline compositePipeline{dispatcher};
     std::shared_ptr<renderer::RenderPass> compositePass = std::make_shared<renderer::CompositePass>(dispatcher);
     compositePipeline.addRenderPass(compositePass);
@@ -93,6 +99,7 @@ void App::run() {
     pipelines.push_back(&shadowPipeline);
     pipelines.push_back(&voxelPipeline);
     pipelines.push_back(&indirectPipeline);
+    pipelines.push_back(&denoiserPipeline);
     pipelines.push_back(&ambientOcclusionPipeline);
     pipelines.push_back(&compositePipeline);
 
@@ -133,6 +140,7 @@ void App::run() {
     ViewPanel viewPanel;
     viewPanel.addItem("texComposite");
     viewPanel.addItem("texIndirectLight");
+    viewPanel.addItem("texDenoised");
     viewPanel.addItem("texAmbientOcclusion");
     viewPanel.addItem("texVisualizeVoxel");
     viewPanel.addItem("texAlbedoSpec");
@@ -226,6 +234,7 @@ void App::run() {
         shadowPipeline.render(registry, renderContext);
         voxelPipeline.render(registry, renderContext);
         indirectPipeline.render(registry, renderContext);
+        denoiserPipeline.render(registry, renderContext);
         ambientOcclusionPipeline.render(registry, renderContext);
         compositePipeline.render(registry, renderContext);
 

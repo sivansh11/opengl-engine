@@ -40,8 +40,8 @@ public:
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
 
         auto voxels = renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>();
-        voxels->changeMinFilter(gfx::Texture::MinFilter::eNEAREST_MIPMAP_NEAREST);
-        voxels->changeMagFilter(gfx::Texture::MagFilter::eNEAREST);
+        // voxels->changeMinFilter(gfx::Texture::MinFilter::eNEAREST_MIPMAP_NEAREST);
+        // voxels->changeMagFilter(gfx::Texture::MagFilter::eNEAREST);
 
         voxels->bind("voxels", 7, shader);
         shader.mat4f("invView", glm::value_ptr(renderContext->at("invView").as<glm::mat4>()));
@@ -53,8 +53,8 @@ public:
         renderContext->at("frameBufferQuadVertexAttribute").as<std::shared_ptr<gfx::VertexAttribute>>()->bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-        voxels->changeMinFilter(gfx::Texture::MinFilter::eLINEAR_MIPMAP_LINEAR);
-        voxels->changeMagFilter(gfx::Texture::MagFilter::eLINEAR);
+        // voxels->changeMinFilter(gfx::Texture::MinFilter::eLINEAR_MIPMAP_LINEAR);
+        // voxels->changeMagFilter(gfx::Texture::MagFilter::eLINEAR);
     }
 
     void UI() override {

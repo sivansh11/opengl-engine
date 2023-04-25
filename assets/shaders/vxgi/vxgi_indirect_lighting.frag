@@ -9,6 +9,7 @@ in fData {
 out vec4 outColor;
 
 uniform sampler2DShadow shadowMap;
+uniform sampler2D texNoise;
 uniform mat4 invProjection;
 uniform mat4 invView;
 uniform mat4 lightSpace;
@@ -62,22 +63,24 @@ void main() {
 
     uint pixel_index = uint(gl_FragCoord.x + gl_FragCoord.y * 10000);
     uint seed = pcg_hash(pixel_index);
+    // uint seed = uint(texture(texNoise, frag.uv).r);
 
     vec3 indirectLight = vec3(0);
-
     // indirect light 
     for (int i = 0; i < samples; i++) {
-        vec3 r = random_in_unit_sphere(seed);
-        if (dot(r, normal) < 0) r = -r;
-        r /= 10;
         float tempOcclusion = 0;
         indirectLight += coneTrace(startPos, cosineSampleHemiSphere(seed, normal), tanHalfAngle, tempOcclusion).rgb / float(samples);
+        // vec3 r = random_in_unit_sphere(seed);
+        // if (dot(r, normal) < 0) r = -r;
+        // r /= 10;
         // indirectLight += coneTrace(startPos, r, tanHalfAngle, tempOcclusion).rgb / float(samples);
         // indirectLight += coneTrace(startPos, normal + r, tanHalfAngle, tempOcclusion).rgb / float(samples);
         // indirectLight += coneTrace(startPos, normal, tanHalfAngle, tempOcclusion).rgb / float(samples);
     }
     
     outColor = vec4(indirectLight, 1);
+    // float random = rand(seed);
+    // outColor = vec4(random, random, random, 1);
 }
 
 vec3 uniformSampleSphere(inout uint seed) {

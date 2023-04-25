@@ -1,9 +1,9 @@
 #version 460 core
-// #extension GL_ARB_shader_image_load_store : enable
-// #extension GL_NV_shader_atomic_fp16_vector : enable
-// #if defined GL_NV_shader_atomic_fp16_vector
-// #extension GL_NV_gpu_shader5 : require
-// #endif
+#extension GL_ARB_shader_image_load_store : enable
+#extension GL_NV_shader_atomic_fp16_vector : enable
+#if defined GL_NV_shader_atomic_fp16_vector
+#extension GL_NV_gpu_shader5 : require
+#endif
 
 struct DirectionalLight {
     vec3 position;
@@ -88,8 +88,8 @@ void main() {
         color += calculateLight(i);
     }
 
-    imageStore(voxels, texPos, vec4(color, 1));
-    // imageAtomicMax(voxels, texPos, f16vec4(color, 1));
+    // imageStore(voxels, texPos, vec4(color, 1));
+    imageAtomicMax(voxels, texPos, f16vec4(color, 1));
 }
 
 vec3 calculateLight(int index) {
