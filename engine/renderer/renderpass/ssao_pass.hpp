@@ -61,6 +61,8 @@ public:
     } 
 
     void render(entt::registry& registry) override {
+        if (!enable) return; 
+
         renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 1, shader);
         renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 5, shader);
         noiseTexture->bind("texNoise", 6, shader);
@@ -79,6 +81,7 @@ public:
     }
 
     void UI() override {
+        ImGui::Checkbox("enable", &enable);
         ImGui::DragFloat("radius", &radius, 0.1, 0, 10000);
         ImGui::DragFloat("bias", &bias, 0.01, 0);
         if (ImGui::DragInt("numSamples)", &numSamples, 1, 1, 256)) {
@@ -115,6 +118,7 @@ private:
     float radius = 0.5f;
     float bias = 0.025;
     int numSamples = 32;
+    bool enable = true;
 };
 
 } // namespace renderer

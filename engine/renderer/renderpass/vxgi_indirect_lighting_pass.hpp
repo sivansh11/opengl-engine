@@ -41,6 +41,7 @@ public:
     } 
 
     void render(entt::registry& registry) override {
+        if (!enable) return; 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -76,6 +77,7 @@ public:
     }
 
     void UI() override {
+        ImGui::Checkbox("enable", &enable);
         ImGui::DragFloat("AlphaThresh", &alphaThresh, .001, .01, .99);
         ImGui::DragFloat("MaxDist", &maxDist, 1, 0, 5000);
         ImGui::DragFloat("diffuseTanHalfAngle", &diffuseTanHalfAngle, 0.01, 0, 100);
@@ -94,7 +96,7 @@ private:
     float specularTanHalfAngle = .07;
     std::shared_ptr<gfx::Texture> texNoise;
     bool specularCone = true;
-
+    bool enable = true;
 };
 
 } // namespace renderer
