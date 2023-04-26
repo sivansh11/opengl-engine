@@ -10,6 +10,8 @@ add_subdirectory(glad)
 add_subdirectory(glm)
 add_subdirectory(stb_image)
 add_subdirectory(imgui)
+
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(assimp)
 add_subdirectory(pybind11)
 add_subdirectory(yaml-cpp)
