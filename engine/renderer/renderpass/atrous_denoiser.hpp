@@ -51,26 +51,14 @@ public:
             shader.vecf("cPhi", cPhi0 * pow(2, -i));
             shader.vecf("nPhi", nPhi0 * pow(2, -i));
             shader.vecf("pPhi", pPhi0 * pow(2, -i));
-
             shader.veci("stepWidth", pow(2, i) + 1);
 
             renderContext->at("frameBufferQuadVertexAttribute").as<std::shared_ptr<gfx::VertexAttribute>>()->bind();
-            static gfx::AsyncTimerQuery timer1{20};
-            static gfx::AsyncTimerQuery timer2{20};
-            
-            timer1.begin();
+
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  // -> texDenoised
-            timer1.end();
-            if (auto time = timer1.popTimeStamp()) {
-                std::cout << "draw call took: " << *time / 1000000.f << '\n';
-            }
-            timer2.begin();
             glCopyImageSubData(renderContext->at("texDenoised").as<std::shared_ptr<gfx::Texture>>()->getID(), GL_TEXTURE_2D, 0, 0, 0, 0, 
                                renderContext->at("texIndirectLight").as<std::shared_ptr<gfx::Texture>>()->getID(), GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
-            timer2.end();
-            if (auto time = timer2.popTimeStamp()) {
-                std::cout << "copy took: " << *time / 1000000.f << '\n';
-            }
+
 
         }
     }
@@ -80,16 +68,14 @@ public:
         ImGui::DragFloat("cPhi0", &cPhi0);
         ImGui::DragFloat("nPhi0", &nPhi0);
         ImGui::DragFloat("pPhi0", &pPhi0);
-        ImGui::DragInt("step width", &stepWidth, 1, 1, 15);
-        ImGui::DragInt("num passes", &filter, 1, 1, 15);
+        ImGui::DragInt("Iterations", &filter, 1, 1, 15);
     }
 
 private:
-    int filter = 1;
+    int filter = 3;
     float cPhi0 = 20.4f;
     float nPhi0 = 1E-2f;
     float pPhi0 = 1E-1f;
-    int stepWidth = 1;
     bool disable = false;
 };
 

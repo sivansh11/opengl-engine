@@ -112,14 +112,14 @@ void App::run() {
         // t.scale = {5, 5, 5};
     }
 
-    // {
-    //     auto ent = registry.create();
-    //     registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Suzanne/glTF/Suzanne.gltf");
-    //     auto& t = registry.emplace<core::TransformComponent>(ent);
-    //     t.scale = {1, 1, 1};
-    //     t.translation = {0, 1.5, 0};
-    //     t.rotation = {0, -glm::half_pi<float>(), 0};
-    // }
+    {
+        auto ent = registry.create();
+        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Suzanne/glTF/Suzanne.gltf");
+        auto& t = registry.emplace<core::TransformComponent>(ent);
+        t.scale = {1, 1, 1};
+        t.translation = {0, 1.5, 0};
+        t.rotation = {0, -glm::half_pi<float>(), 0};
+    }
 
     auto ent = registry.create();
     auto& pl = registry.emplace<core::PointLightComponent>(ent);
@@ -282,7 +282,6 @@ void App::run() {
         }
         ImGui::End();
         ImGui::PopStyleVar(2);
-
         
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));

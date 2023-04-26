@@ -51,6 +51,7 @@ public:
         shader.mat4f("lightSpace", glm::value_ptr(renderContext->at("lightSpace").as<glm::mat4>()));
 
         texNoise->bind("texNoise", 8, shader);
+        renderContext->at("texAlbedoSpec").as<std::shared_ptr<gfx::Texture>>()->bind("texAlbedoSpec", 0, shader);
         renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 1, shader);
         renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 5, shader);
         renderContext->at("voxels").as<std::shared_ptr<gfx::Texture>>()->bind("voxels", 6, shader);
@@ -62,9 +63,13 @@ public:
         shader.vecf("MAX_DIST", maxDist);
         shader.vecf("ALPHA_THRESH", alphaThresh);
         shader.veci("MAX_COUNT", maxCount);
-        shader.vecf("tanHalfAngle", tanHalfAngles);
+        shader.vecf("diffuseTanHalfAngle", diffuseTanHalfAngle);
+        shader.vecf("specularTanHalfAngle", specularTanHalfAngle);
         shader.veci("voxelDimensions", renderContext->at("voxelDimensions").as<int>());
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
+        shader.vecf("randSeed", rand());
+
+        shader.veci("specularCone", specularCone);
 
         renderContext->at("frameBufferQuadVertexAttribute").as<std::shared_ptr<gfx::VertexAttribute>>()->bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -73,7 +78,9 @@ public:
     void UI() override {
         ImGui::DragFloat("AlphaThresh", &alphaThresh, .001, .01, .99);
         ImGui::DragFloat("MaxDist", &maxDist, 1, 0, 5000);
-        ImGui::DragFloat("tanHalfAngles", &tanHalfAngles, 0.01, 0, 100);
+        ImGui::DragFloat("diffuseTanHalfAngle", &diffuseTanHalfAngle, 0.01, 0, 100);
+        ImGui::Checkbox("specularCone", &specularCone);
+        ImGui::DragFloat("specularTanHalfAngle", &specularTanHalfAngle, 0.01, 0, 100);
         ImGui::DragInt("samples", &samples, 1, 1, 15);
         ImGui::DragInt("maxCount", &maxCount, 1, 1, 30);
     }
@@ -83,8 +90,10 @@ private:
     float maxDist = 1000000000;
     int samples = 1;
     int maxCount = 1000;
-    float tanHalfAngles = .32;
+    float diffuseTanHalfAngle = .32;
+    float specularTanHalfAngle = .07;
     std::shared_ptr<gfx::Texture> texNoise;
+    bool specularCone = true;
 
 };
 

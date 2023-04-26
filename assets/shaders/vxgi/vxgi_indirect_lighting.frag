@@ -14,16 +14,20 @@ uniform mat4 invProjection;
 uniform mat4 invView;
 uniform mat4 lightSpace;
 uniform float voxelGridSize;
-uniform float tanHalfAngle;
+uniform float diffuseTanHalfAngle;
+uniform float specularTanHalfAngle;
 uniform float ALPHA_THRESH;
 uniform float MAX_DIST;
 uniform int voxelDimensions;
 uniform int samples;
 uniform int MAX_COUNT;
+uniform sampler2D texAlbedoSpec;
 uniform sampler2D texDepth;
 uniform sampler2D texNormal;
 uniform sampler3D voxels;
 uniform vec3 cameraPosition;
+uniform float randSeed;
+uniform bool specularCone;
 
 vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occlusion);
 vec4 sampleVoxel(vec3 worldPosition, float lod);
@@ -61,15 +65,15 @@ void main() {
     normal = texture(texNormal, frag.uv).rgb;
     startPos = worldPosition.rgb + normal * perVoxelSize * 1;
 
-    uint pixel_index = uint(gl_FragCoord.x + gl_FragCoord.y * 10000);
+    uint pixel_index = uint(gl_FragCoord.x + gl_FragCoord.y * 10000) + floatBitsToUint(randSeed);
     uint seed = pcg_hash(pixel_index);
     // uint seed = uint(texture(texNoise, frag.uv).r);
 
+    float tempOcclusion = 0; 
     vec3 indirectLight = vec3(0);
     // indirect light 
     for (int i = 0; i < samples; i++) {
-        float tempOcclusion = 0; 
-        indirectLight += coneTrace(startPos, cosineSampleHemiSphere(seed, normal), tanHalfAngle, tempOcclusion).rgb / float(samples);
+        indirectLight += coneTrace(startPos, cosineSampleHemiSphere(seed, normal), diffuseTanHalfAngle, tempOcclusion).rgb / float(samples);
         // vec3 r = random_in_unit_sphere(seed);
         // if (dot(r, normal) < 0) r = -r;
         // r /= 10;
@@ -78,6 +82,11 @@ void main() {
         // indirectLight += coneTrace(startPos, normal, tanHalfAngle, tempOcclusion).rgb / float(samples);
     }
     
+    if (specularCone) {
+        indirectLight /= 2;
+        indirectLight += coneTrace(startPos, reflect(-normalize(cameraPosition - worldPosition.xyz), normal), mix(specularTanHalfAngle, diffuseTanHalfAngle, texture(texAlbedoSpec, frag.uv).a), tempOcclusion).rgb / 2;
+    }
+
     outColor = vec4(indirectLight, 1);
     // float random = rand(seed);
     // outColor = vec4(random, random, random, 1);
@@ -86,6 +95,8 @@ void main() {
 vec3 uniformSampleSphere(inout uint seed) {
     float z = rand(seed) * 2 - 1;
     float a = rand(seed) * 2 * PI;
+    // float z = texture(texNoise, frag.uv).r * 2 - 1;
+    // float a = texture(texNoise, frag.uv).g * 2 * PI;
     float r = sqrt(1 - z * z);
     float x = r * cos(a);
     float y = r * sin(a);
