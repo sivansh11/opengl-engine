@@ -68,7 +68,7 @@ void main() {
     vec3 indirectLight = vec3(0);
     // indirect light 
     for (int i = 0; i < samples; i++) {
-        float tempOcclusion = 0;
+        float tempOcclusion = 0; 
         indirectLight += coneTrace(startPos, cosineSampleHemiSphere(seed, normal), tanHalfAngle, tempOcclusion).rgb / float(samples);
         // vec3 r = random_in_unit_sphere(seed);
         // if (dot(r, normal) < 0) r = -r;

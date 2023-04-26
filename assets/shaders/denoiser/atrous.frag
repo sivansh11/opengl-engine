@@ -23,28 +23,28 @@ uniform int stepWidth;
 uniform int width;
 uniform int height;
 
-const float kernel[9] = float[](
-    // 1, 2, 3, 2, 1,
-    // 2, 3, 5, 3, 2,
-    // 3, 5, 7, 5, 3,
-    // 2, 3, 5, 3, 2,
-    // 1, 2, 3, 2, 1
+const float kernel[25] = float[](
+    1, 2, 3, 2, 1,
+    2, 3, 5, 3, 2,
+    3, 5, 7, 5, 3,
+    2, 3, 5, 3, 2,
+    1, 2, 3, 2, 1
 
-    1, 1, 1,
-    1, 1, 1,
-    1, 1, 1
+    // 1, 1, 1,
+    // 1, 1, 1,
+    // 1, 1, 1
 );
 
-const ivec2 offset[9] = ivec2[](
-    // ivec2(-2, -2), ivec2(-2, -1), ivec2(-2,  0), ivec2(-2, 1), ivec2(-2, 2),
-    // ivec2(-1, -2), ivec2(-1, -1), ivec2(-1,  0), ivec2(-1, 1), ivec2(-1, 2),
-    // ivec2( 0, -2), ivec2( 0, -1), ivec2( 0,  0), ivec2( 0, 1), ivec2( 0, 2),
-    // ivec2( 1, -2), ivec2( 1, -1), ivec2( 1,  0), ivec2( 1, 1), ivec2( 1, 2),
-    // ivec2( 2, -2), ivec2( 2, -1), ivec2( 2,  0), ivec2( 2, 1), ivec2( 2, 2)
+const ivec2 offset[25] = ivec2[](
+    ivec2(-2, -2), ivec2(-2, -1), ivec2(-2,  0), ivec2(-2, 1), ivec2(-2, 2),
+    ivec2(-1, -2), ivec2(-1, -1), ivec2(-1,  0), ivec2(-1, 1), ivec2(-1, 2),
+    ivec2( 0, -2), ivec2( 0, -1), ivec2( 0,  0), ivec2( 0, 1), ivec2( 0, 2),
+    ivec2( 1, -2), ivec2( 1, -1), ivec2( 1,  0), ivec2( 1, 1), ivec2( 1, 2),
+    ivec2( 2, -2), ivec2( 2, -1), ivec2( 2,  0), ivec2( 2, 1), ivec2( 2, 2)
 
-    ivec2(-1, -1), ivec2(-1,  0), ivec2(-1,  1),
-    ivec2( 0, -1), ivec2( 0,  0), ivec2( 0,  1),
-    ivec2( 1, -1), ivec2( 1,  0), ivec2( 1,  1)
+    // ivec2(-1, -1), ivec2(-1,  0), ivec2(-1,  1),
+    // ivec2( 0, -1), ivec2( 0,  0), ivec2( 0,  1),
+    // ivec2( 1, -1), ivec2( 1,  0), ivec2( 1,  1)
 );
 
 vec4 getViewPositionFromDepth(vec2 uv, float depth);
@@ -57,7 +57,7 @@ void main() {
     vec3 pVal = (invView * getViewPositionFromDepth(frag.uv, texture(texDepth, frag.uv).r)).rgb;
 
     float cumW = 0;
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 25; i++) {
         vec2 uv = frag.uv + offset[i] * stepWidth * step;
         vec4 cTmp = texture(texIndirectLight, uv);
         vec4 cT = cVal - cTmp;

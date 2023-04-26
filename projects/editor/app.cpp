@@ -105,9 +105,11 @@ void App::run() {
 
     {
         auto ent = registry.create();
-        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
         auto& t = registry.emplace<core::TransformComponent>(ent);
+        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Sponza/glTF/Sponza.gltf");
         t.scale = {1, 1, 1};
+        // registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/ABeautifulGame/glTF/ABeautifulGame.gltf");
+        // t.scale = {5, 5, 5};
     }
 
     // {

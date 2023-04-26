@@ -13,6 +13,8 @@
 
 #include "../../core/events.hpp"
 
+#include "../../gfx/timer.hpp"
+
 namespace renderer {
 
 class ATrousDenoiserPass : public RenderPass {
@@ -46,16 +48,29 @@ public:
         int height = texIndirectLight->getInfo().height;
 
         for (int i = 0; i < filter; i++) {
-            shader.vecf("cPhi", cPhi0 * (i + 1));
-            shader.vecf("nPhi", nPhi0 * (i + 1));
-            shader.vecf("pPhi", pPhi0 * (i + 1));
+            shader.vecf("cPhi", cPhi0 * pow(2, -i));
+            shader.vecf("nPhi", nPhi0 * pow(2, -i));
+            shader.vecf("pPhi", pPhi0 * pow(2, -i));
 
-            shader.veci("stepWidth", stepWidth);
+            shader.veci("stepWidth", pow(2, i) + 1);
 
             renderContext->at("frameBufferQuadVertexAttribute").as<std::shared_ptr<gfx::VertexAttribute>>()->bind();
+            static gfx::AsyncTimerQuery timer1{20};
+            static gfx::AsyncTimerQuery timer2{20};
+            
+            timer1.begin();
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  // -> texDenoised
+            timer1.end();
+            if (auto time = timer1.popTimeStamp()) {
+                std::cout << "draw call took: " << *time / 1000000.f << '\n';
+            }
+            timer2.begin();
             glCopyImageSubData(renderContext->at("texDenoised").as<std::shared_ptr<gfx::Texture>>()->getID(), GL_TEXTURE_2D, 0, 0, 0, 0, 
                                renderContext->at("texIndirectLight").as<std::shared_ptr<gfx::Texture>>()->getID(), GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
+            timer2.end();
+            if (auto time = timer2.popTimeStamp()) {
+                std::cout << "copy took: " << *time / 1000000.f << '\n';
+            }
 
         }
     }
