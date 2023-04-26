@@ -59,6 +59,8 @@ public:
         eR32F = GL_R32F,
         eRGBA8 = GL_RGBA8,
         eRGBA16F = GL_RGBA16F,
+        eRGBA16UI = GL_RGBA16UI,
+        eR16UI = GL_R16UI,
         eDEPTH_COMPONENT32 = GL_DEPTH_COMPONENT32,
         eDEPTH_COMPONENT32F = GL_DEPTH_COMPONENT32F,
     };

@@ -198,7 +198,7 @@ std::shared_ptr<gfx::Texture> Model::loadMaterialTexture(aiMaterial *mat, aiText
         return tex;
     }
     if (mat->GetTextureCount(type) == 0 && typeName == "specular") {
-        unsigned char data[1] = {std::numeric_limits<unsigned char>::max() / 2};
+        unsigned char data[1] = {std::numeric_limits<unsigned char>::max()};
         // std::shared_ptr<gfx::Texture> tex = std::make_shared<gfx::Texture>(data, GL_RED);
         std::shared_ptr<gfx::Texture> tex = gfx::Texture::Builder().build(gfx::Texture::Type::e2D);
         gfx::Texture::CreateInfo info{};

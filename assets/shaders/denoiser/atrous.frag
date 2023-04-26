@@ -25,7 +25,7 @@ uniform int height;
 
 const float kernel[9] = float[](
     1, 1, 1,
-    1, 1, 1,
+    1, 10, 1,
     1, 1, 1
 );
 

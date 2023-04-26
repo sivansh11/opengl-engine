@@ -70,7 +70,6 @@ public:
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
         shader.vecf("randSeed", rand());
 
-        shader.veci("specularCone", specularCone);
 
         renderContext->at("frameBufferQuadVertexAttribute").as<std::shared_ptr<gfx::VertexAttribute>>()->bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -81,7 +80,6 @@ public:
         ImGui::DragFloat("AlphaThresh", &alphaThresh, .001, .01, .99);
         ImGui::DragFloat("MaxDist", &maxDist, 1, 0, 5000);
         ImGui::DragFloat("diffuseTanHalfAngle", &diffuseTanHalfAngle, 0.01, 0, 100);
-        ImGui::Checkbox("specularCone", &specularCone);
         ImGui::DragFloat("specularTanHalfAngle", &specularTanHalfAngle, 0.01, 0, 100);
         ImGui::DragInt("samples", &samples, 1, 1, 15);
         ImGui::DragInt("maxCount", &maxCount, 1, 1, 30);
@@ -95,7 +93,6 @@ private:
     float diffuseTanHalfAngle = .32;
     float specularTanHalfAngle = .07;
     std::shared_ptr<gfx::Texture> texNoise;
-    bool specularCone = true;
     bool enable = true;
 };
 

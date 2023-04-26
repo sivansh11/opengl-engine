@@ -56,6 +56,8 @@ mat3 TBN;
 vec3 up;
 vec3 forward;
 vec3 startPos;
+vec4 albedoSpec;
+float specular;
 
 void main() {
     up = vec3(0, 1, 0);
@@ -64,6 +66,8 @@ void main() {
     perVoxelSize = voxelGridSize / voxelDimensions;
     normal = texture(texNormal, frag.uv).rgb;
     startPos = worldPosition.rgb + normal * perVoxelSize * 1;
+    albedoSpec = texture(texAlbedoSpec, frag.uv);
+    specular = albedoSpec.a;
 
     uint pixel_index = uint(gl_FragCoord.x + gl_FragCoord.y * 10000) + floatBitsToUint(randSeed);
     uint seed = pcg_hash(pixel_index);
@@ -73,18 +77,18 @@ void main() {
     vec3 indirectLight = vec3(0);
     // indirect light 
     for (int i = 0; i < samples; i++) {
-        indirectLight += coneTrace(startPos, cosineSampleHemiSphere(seed, normal), diffuseTanHalfAngle, tempOcclusion).rgb / float(samples);
+        if (specular > rand(seed)) {
+            indirectLight += coneTrace(startPos, reflect(-normalize(cameraPosition - worldPosition.xyz), normal), mix(specularTanHalfAngle, diffuseTanHalfAngle, specular), tempOcclusion).rgb / float(samples);
+        } else {
+
+            indirectLight += coneTrace(startPos, cosineSampleHemiSphere(seed, normal), diffuseTanHalfAngle, tempOcclusion).rgb / float(samples);
+        }
         // vec3 r = random_in_unit_sphere(seed);
         // if (dot(r, normal) < 0) r = -r;
         // r /= 10;
         // indirectLight += coneTrace(startPos, r, tanHalfAngle, tempOcclusion).rgb / float(samples);
         // indirectLight += coneTrace(startPos, normal + r, tanHalfAngle, tempOcclusion).rgb / float(samples);
         // indirectLight += coneTrace(startPos, normal, tanHalfAngle, tempOcclusion).rgb / float(samples);
-    }
-    
-    if (specularCone) {
-        indirectLight /= 2;
-        indirectLight += coneTrace(startPos, reflect(-normalize(cameraPosition - worldPosition.xyz), normal), mix(specularTanHalfAngle, diffuseTanHalfAngle, texture(texAlbedoSpec, frag.uv).a), tempOcclusion).rgb / 2;
     }
 
     outColor = vec4(indirectLight, 1);

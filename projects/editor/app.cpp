@@ -112,16 +112,23 @@ void App::run() {
         // t.scale = {5, 5, 5};
     }
 
-    {
-        auto ent = registry.create();
-        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Suzanne/glTF/Suzanne.gltf");
-        auto& t = registry.emplace<core::TransformComponent>(ent);
-        t.scale = {1, 1, 1};
-        t.translation = {0, 1.5, 0};
-        t.rotation = {0, -glm::half_pi<float>(), 0};
-    }
-
+    
     auto ent = registry.create();
+    auto& t = registry.emplace<core::TransformComponent>(ent);
+    registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/a/Project Name.gltf");
+    t.scale = {100, .01, 100};
+    
+
+    // {
+    //     auto ent = registry.create();
+    //     registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/models/2.0/Suzanne/glTF/Suzanne.gltf");
+    //     auto& t = registry.emplace<core::TransformComponent>(ent);
+    //     t.scale = {1, 1, 1};
+    //     t.translation = {0, 1.5, 0};
+    //     t.rotation = {0, -glm::half_pi<float>(), 0};
+    // }
+
+    ent = registry.create();
     auto& pl = registry.emplace<core::PointLightComponent>(ent);
     pl.position = {6, 1, 0};
     pl.color = {0, 0, 0};
@@ -321,6 +328,18 @@ void App::run() {
         ImGui::DragFloat("directional light orthoProj", &dlc.orthoProj);
         ImGui::DragFloat("directional light far", &dlc.far);
         ImGui::DragFloat("directional light near", &dlc.near);
+        ImGui::End();
+
+        ImGui::Begin("Cube (temporary)");
+        ImGui::DragFloat("Cube Scale x", &t.scale.x);
+        ImGui::DragFloat("Cube Scale y", &t.scale.y);
+        ImGui::DragFloat("Cube Scale z", &t.scale.z);
+        ImGui::DragFloat("Cube Rot x", &t.rotation.x);
+        ImGui::DragFloat("Cube Rot y", &t.rotation.y);
+        ImGui::DragFloat("Cube Rot z", &t.rotation.z);
+        ImGui::DragFloat("Cube translation x", &t.translation.x);
+        ImGui::DragFloat("Cube translation y", &t.translation.y);
+        ImGui::DragFloat("Cube translation z", &t.translation.z);
         ImGui::End();
 
         ImGui::Begin("Debug");

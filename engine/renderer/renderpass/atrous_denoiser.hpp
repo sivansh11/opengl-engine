@@ -32,7 +32,7 @@ public:
     ~ATrousDenoiserPass() override {} 
 
     void render(entt::registry& registry) override {
-        if (disable) return;
+        if (!enable) return;
         renderContext->at("texIndirectLight").as<std::shared_ptr<gfx::Texture>>()->bind("texIndirectLight", 7, shader);
         renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 1, shader);
         renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 5, shader);
@@ -58,25 +58,23 @@ public:
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  // -> texDenoised
             glCopyImageSubData(renderContext->at("texDenoised").as<std::shared_ptr<gfx::Texture>>()->getID(), GL_TEXTURE_2D, 0, 0, 0, 0, 
                                renderContext->at("texIndirectLight").as<std::shared_ptr<gfx::Texture>>()->getID(), GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
-
-
         }
     }
 
     void UI() override {
-        ImGui::Checkbox("Disable", &disable);
-        ImGui::DragFloat("cPhi0", &cPhi0);
-        ImGui::DragFloat("nPhi0", &nPhi0);
-        ImGui::DragFloat("pPhi0", &pPhi0);
+        ImGui::Checkbox("enable", &enable);
+        ImGui::DragFloat("cPhi0", &cPhi0, 0.001, 0.001, 1);
+        ImGui::DragFloat("nPhi0", &nPhi0, 0.001, 0.001, 10);
+        ImGui::DragFloat("pPhi0", &pPhi0, 0.001, 0.001, 10);
         ImGui::DragInt("Iterations", &filter, 1, 1, 15);
     }
 
 private:
     int filter = 3;
-    float cPhi0 = 20.4f;
-    float nPhi0 = 1E-2f;
-    float pPhi0 = 1E-1f;
-    bool disable = false;
+    float cPhi0 = 0.8f;
+    float nPhi0 = 3;
+    float pPhi0 = .7f;
+    bool enable = true;
 };
 
 } // namespace renderer
