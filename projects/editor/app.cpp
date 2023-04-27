@@ -13,6 +13,7 @@
 #include "renderer/pipeline/voxel_pipeline.hpp"
 #include "renderer/renderpass/voxel_clear.hpp"
 #include "renderer/renderpass/voxelize_pass.hpp"
+#include "renderer/renderpass/voxels_set_alpha_pass.hpp"
 #include "renderer/renderpass/voxel_mipmap_pass.hpp"
 #include "renderer/renderpass/voxel_visualize_pass.hpp"
 #include "renderer/pipeline/indirect_lighing_pipeline.hpp"
@@ -54,6 +55,11 @@ void App::run() {
     entt::registry registry;
     event::Dispatcher dispatcher;
 
+    // gfx::ShaderProgram shader;
+    // shader.addShader("../../../assets/shaders/test/test.vert");
+    // shader.addShader("../../../assets/shaders/test/test.frag");
+    // shader.link();
+
     EditorCamera camera;
     uint32_t width = 100, height = 100;
 
@@ -70,10 +76,12 @@ void App::run() {
     renderer::VoxelPipeline voxelPipeline{dispatcher};
     std::shared_ptr<renderer::RenderPass> voxelClearPass = std::make_shared<renderer::ClearPass>(dispatcher);
     std::shared_ptr<renderer::RenderPass> voxelizePass = std::make_shared<renderer::VoxelizationPass>(dispatcher);
+    std::shared_ptr<renderer::RenderPass> voxelSetAlphaPass = std::make_shared<renderer::SetAlphaPass>(dispatcher);
     std::shared_ptr<renderer::RenderPass> voxelMipMapPass = std::make_shared<renderer::MipMapPass>(dispatcher);
     std::shared_ptr<renderer::RenderPass> voxelVisualizePass = std::make_shared<renderer::VisualizePass>(dispatcher);
     voxelPipeline.addRenderPass(voxelClearPass);
     voxelPipeline.addRenderPass(voxelizePass);
+    voxelPipeline.addRenderPass(voxelSetAlphaPass);
     voxelPipeline.addRenderPass(voxelMipMapPass);
     voxelPipeline.addRenderPass(voxelVisualizePass);
 

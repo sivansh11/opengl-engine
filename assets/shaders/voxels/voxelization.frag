@@ -34,7 +34,7 @@ in fData {
     vec3 N;
 } frag;
 
-uniform layout(rgba16f) image3D voxels;
+uniform layout(rgba16f) image3D voxels;  // need to start using r32ui
 
 uniform struct Material {
     sampler2D diffuseMap;   
@@ -88,8 +88,11 @@ void main() {
         color += calculateLight(i);
     }
 
-    // imageStore(voxels, texPos, vec4(color, 1));
+    #if defined GL_NV_shader_atomic_fp16_vector
     imageAtomicMax(voxels, texPos, f16vec4(color, 1));
+    #else
+    imageStore(voxels, texPos, vec4(color, 1));
+    #endif
 }
 
 vec3 calculateLight(int index) {

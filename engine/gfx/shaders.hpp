@@ -26,6 +26,7 @@ enum UniformType : GLenum {
     eInt = GL_INT,
     eBool = GL_BOOL,
     eImage3D = GL_IMAGE_3D,
+    eUImage3D = GL_UNSIGNED_INT_IMAGE_3D,
 };
 
 class ShaderProgram {

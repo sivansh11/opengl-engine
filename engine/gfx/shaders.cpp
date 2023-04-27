@@ -142,6 +142,8 @@ void ShaderProgram::link() {
                 return "int";
             case GL_IMAGE_3D:
                 return "image3D";
+            case GL_UNSIGNED_INT_IMAGE_3D:
+                return "uimage3D";
 
             default:
                 throw std::runtime_error("Failed to identify uniform type, you pronbably need to add it");
