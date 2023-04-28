@@ -43,14 +43,15 @@ public:
 
     // static void componentPanel(Model& model, event::Dispatcher& dispatcher, ecs::EntityID ent);
 
+    std::vector<std::shared_ptr<Mesh>> m_meshes;
+
 private:
     void processNode(aiNode *node, const aiScene *scene, aiMatrix4x4& transform);
-    std::unique_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene, aiMatrix4x4& transform);
+    std::shared_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene, aiMatrix4x4& transform);
     std::unique_ptr<Material> processMaterial(aiMaterial *material);
     std::shared_ptr<gfx::Texture> loadMaterialTexture(aiMaterial *mat, aiTextureType type, std::string typeName);
 
 private:
-    std::vector<std::unique_ptr<Mesh>> m_meshes;
     std::string m_filePath, m_directory;
     std::unordered_map<std::string, std::shared_ptr<gfx::Texture>> m_texturesLoaded;
 };

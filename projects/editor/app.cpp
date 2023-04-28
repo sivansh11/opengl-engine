@@ -21,6 +21,9 @@
 #include "renderer/pipeline/denoiser_pipeline.hpp"
 #include "renderer/renderpass/atrous_denoiser.hpp"
 
+#include "mouse_picking_pipeline.hpp"
+#include "mouse_picking_pass.hpp"
+
 #include "testing_panel.hpp"
 
 #include "core/event.hpp"
@@ -95,8 +98,13 @@ void App::run() {
     std::shared_ptr<renderer::RenderPass> compositePass = std::make_shared<renderer::CompositePass>(dispatcher);
     compositePipeline.addRenderPass(compositePass);
 
+    MousePickingPipeline mousePickingPipeline{dispatcher};
+    std::shared_ptr<renderer::RenderPass> mousePickingPass = std::make_shared<MousePickingPass>(dispatcher);
+    mousePickingPipeline.addRenderPass(mousePickingPass);
+
     // helper
     std::vector<core::BasePanel *> pipelines;
+    pipelines.push_back(&mousePickingPipeline);
     pipelines.push_back(&deferredPipeline);
     pipelines.push_back(&shadowPipeline);
     pipelines.push_back(&voxelPipeline);
@@ -106,10 +114,12 @@ void App::run() {
     pipelines.push_back(&compositePipeline);
 
     {
-        auto ent = registry.create();
-        auto& t = registry.emplace<core::TransformComponent>(ent);
-        registry.emplace<renderer::Model>(ent).loadModelFromPath("../../../assets/Sponza/glTF/Sponza.gltf");
-        t.scale = {1, 1, 1};
+        renderer::Model model;
+        model.loadModelFromPath("../../../assets/Sponza/glTF/Sponza.gltf");
+        for (auto mesh : model.m_meshes) {
+            auto ent = registry.create();
+            registry.emplace<std::shared_ptr<renderer::Mesh>>(ent) = mesh;
+        }
     }
 
     auto ent = registry.create();
@@ -151,6 +161,8 @@ void App::run() {
     frameBufferQuadVertexAttribute->attributeLocation(0, 2, offsetof(gfx::FrameBufferVertex, pos));
     frameBufferQuadVertexAttribute->attributeLocation(1, 2, offsetof(gfx::FrameBufferVertex, uv));
     frameBufferQuadVertexAttribute->bindVertexBuffer<gfx::FrameBufferVertex>(vertexBuffer);
+
+    int selectedEntity = 0;
 
     double lastTime = glfwGetTime();
     float targetFPS = 30.f;
@@ -221,6 +233,8 @@ void App::run() {
             renderContext.at("frameBufferQuadVertexAttribute") = frameBufferQuadVertexAttribute;
         }
 
+        mousePickingPipeline.render(registry, renderContext);
+
         // pipeline
         deferredPipeline.render(registry, renderContext);
         shadowPipeline.render(registry, renderContext);
@@ -286,7 +300,19 @@ void App::run() {
         height = vp.y;
         camera.onUpdate(dt);
         ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext.at(viewPanel.getCurrentImage()).as<std::shared_ptr<gfx::Texture>>()->getID())), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
-    
+
+        if (ImGui::GetIO().KeysDown[ImGuiKey_E]) {
+            ImVec2 wp = ImGui::GetWindowPos();
+            ImVec2 mp = ImGui::GetMousePos();
+            glm::ivec2 mousePos{mp.x - wp.x, mp.y - wp.y};
+            auto tex = renderContext.at("texMousePicking").as<std::shared_ptr<gfx::Texture>>();
+            auto info = tex->getInfo();
+            mousePos.y = info.height - mousePos.y - 1;
+            if (mousePos.x < info.width && mousePos.y < info.height)
+                glGetTextureSubImage(renderContext.at("texMousePicking").as<std::shared_ptr<gfx::Texture>>()->getID(), 0, mousePos.x, mousePos.y, 0, 1, 1, 1, GL_RED_INTEGER, GL_INT, sizeof(int), &selectedEntity);
+            std::cout << selectedEntity << '\n';
+        } 
+
         ImGui::End();
         ImGui::PopStyleVar(2);
 
@@ -312,6 +338,18 @@ void App::run() {
         ImGui::DragFloat("directional light far", &dlc.far);
         ImGui::DragFloat("directional light near", &dlc.near);
         ImGui::End();
+
+        if (selectedEntity) {
+            auto mesh = registry.get<std::shared_ptr<renderer::Mesh>>(static_cast<entt::entity>(selectedEntity));
+            ImGui::Begin("Selected Mesh");
+            ImGui::DragFloat3("translation", reinterpret_cast<float *>(&(mesh->m_transform.translation)));
+            ImGui::DragFloat3("rotation", reinterpret_cast<float *>(&(mesh->m_transform.rotation)));
+            ImGui::DragFloat3("scale", reinterpret_cast<float *>(&(mesh->m_transform.scale)));
+            glm::vec3 val = std::any_cast<glm::vec3>(mesh->material->get("material.emmissive"));
+            ImGui::DragFloat3("emmissive", reinterpret_cast<float *>(&(val)));
+            mesh->material->assign("material.emmissive", val);
+            ImGui::End();
+        }
 
         ImGui::Begin("Debug");
         ImGui::Text("%f", ImGui::GetIO().Framerate);

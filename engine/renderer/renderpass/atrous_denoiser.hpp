@@ -71,7 +71,7 @@ public:
 
 private:
     int filter = 3;
-    float cPhi0 = 0.8f;
+    float cPhi0 = 4;
     float nPhi0 = 3;
     float pPhi0 = .7f;
     bool enable = true;

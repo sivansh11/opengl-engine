@@ -70,8 +70,8 @@ public:
         renderContext->at("pointLightBuffer").as<std::shared_ptr<gfx::Buffer>>()->bind(0);
         shader.veci("numPointLights", renderContext->at("numPointLights").as<int>());
 
-        for (auto [ent, model, transform] : registry.view<Model, core::TransformComponent>().each()) {
-            model.draw(shader, transform);
+        for (auto [ent, mesh] : registry.view<std::shared_ptr<Mesh>>().each()) {
+            mesh->draw(shader, {});
         }
 
         glEnable(GL_CULL_FACE);

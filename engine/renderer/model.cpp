@@ -46,7 +46,7 @@ void Model::processNode(aiNode *node, const aiScene *scene, aiMatrix4x4 &transfo
     }
 }
 
-std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene, aiMatrix4x4 &transform) {
+std::shared_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene, aiMatrix4x4 &transform) {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
@@ -111,6 +111,7 @@ std::unique_ptr<Material> Model::processMaterial(aiMaterial *material) {
                                                         .addSampler2D("material.diffuseMap")
                                                         .addSampler2D("material.specularMap")
                                                         .addSampler2D("material.normalMap")
+                                                        .addVec3("material.emmissive")
                                                             // .addVec3("material.diffuseColor")
                                                             // .addVec3("material.specularColor")
                                                             // .addFloat("material.reflectivity")
@@ -138,6 +139,8 @@ std::unique_ptr<Material> Model::processMaterial(aiMaterial *material) {
     auto specularMap = loadMaterialTexture(material, aiTextureType_NORMALS, "specular");
     mat->assign("material.specularMap", specularMap);
 
+    // mat->assign("material.emmissive", glm::vec3{1, 1, 1});
+    
     // aiColor4D color;
     // if (AI_SUCCESS == aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color)) {
     //     mat->assign("material.diffuseColor", glm::vec3{color.r, color.g, color.b});
@@ -238,11 +241,7 @@ std::shared_ptr<gfx::Texture> Model::loadMaterialTexture(aiMaterial *mat, aiText
 
 void Model::draw(gfx::ShaderProgram& shader, const core::TransformComponent& transform, bool withMaterial) {
     for (auto& mesh : m_meshes) {
-        if (withMaterial)
-            mesh->material->bind(shader);
-        shader.mat4f("model", glm::value_ptr(transform.mat4() * mesh->m_transform.mat4()));
-        shader.mat4f("invModel", glm::value_ptr(glm::inverse(transform.mat4() * mesh->m_transform.mat4())));
-        mesh->draw();
+        mesh->draw(shader, transform, withMaterial);
     }
 }
 

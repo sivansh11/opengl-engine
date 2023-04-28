@@ -48,6 +48,8 @@ public:
     void bind(gfx::ShaderProgram& shader);
     void assign(const std::string& name, std::any data);
 
+    std::any get(const std::string& name);
+
     bool operator==(const Material& other) const {
         if (uniformNames.size() != other.uniformNames.size()) {
             return false;

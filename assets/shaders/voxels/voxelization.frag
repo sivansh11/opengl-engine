@@ -40,6 +40,7 @@ uniform struct Material {
     sampler2D diffuseMap;   
     sampler2D specularMap;
     sampler2D normalMap;
+    vec3 emmissive;
 } material;
 
 uniform sampler2DShadow texShadow;
@@ -87,6 +88,8 @@ void main() {
     for (int i = 0; i < numPointLights; i++) {
         color += calculateLight(i);
     }
+
+    color += material.emmissive;
 
     #if defined GL_NV_shader_atomic_fp16_vector
     imageAtomicMax(voxels, texPos, f16vec4(color, 1));

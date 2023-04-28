@@ -127,6 +127,45 @@ void Material::assign(const std::string& name, std::any data) {
     }
 }
 
+std::any Material::get(const std::string& name) {
+    assert(nameToUniformType.contains(name));
+    auto& type = nameToUniformType[name];
+    switch (type) {
+        case MaterialUniformType::SAMPLER_2D:
+            return nameToUniformSampler2D[name];
+            // nameToUniformSampler2D[name] = std::any_cast<std::shared_ptr<gfx::Texture>>(data);
+            break;
+        case MaterialUniformType::FLOAT:
+            return nameToUniformFloat[name];
+
+            // nameToUniformFloat[name] = std::any_cast<float>(data);
+            break;
+        case MaterialUniformType::VEC2:
+            return nameToUniformVec2[name];
+
+            // nameToUniformVec2[name] = std::any_cast<glm::vec2>(data);
+            break;
+        case MaterialUniformType::VEC3:
+            return nameToUniformVec3[name];
+
+            // nameToUniformVec3[name] = std::any_cast<glm::vec3>(data);
+            break;
+        case MaterialUniformType::VEC4:
+            return nameToUniformVec4[name];
+
+            // nameToUniformVec4[name] = std::any_cast<glm::vec4>(data);
+            break;
+        case MaterialUniformType::BOOL:
+            return nameToUniformBool[name];
+
+            // nameToUniformBool[name] = std::any_cast<bool>(data);
+            break;
+        
+        default:
+            break;
+    }
+}
+
 void Material::bind(gfx::ShaderProgram& shader) {
     uint32_t i = 0;
     for (auto& name : uniformNames) {

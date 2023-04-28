@@ -36,7 +36,7 @@ public:
     Mesh(const Mesh& mesh) = delete;
     Mesh& operator=(const Mesh& mesh) = delete;
 
-    void draw();
+    void draw(gfx::ShaderProgram& shader, const core::TransformComponent& transform, bool withMaterial = true);
     
     core::TransformComponent m_transform;
     std::unique_ptr<Material> material;

@@ -19,8 +19,14 @@ Mesh::~Mesh() {
 
 }
 
-void Mesh::draw() {
+void Mesh::draw(gfx::ShaderProgram& shader, const core::TransformComponent& transform, bool withMaterial) {
 	m_vertexAttribute.bind();
+	
+	if (withMaterial)
+		material->bind(shader);
+	shader.mat4f("model", glm::value_ptr(transform.mat4() * m_transform.mat4()));
+	shader.mat4f("invModel", glm::value_ptr(glm::inverse(transform.mat4() * m_transform.mat4())));
+
 	glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);	
 }
 

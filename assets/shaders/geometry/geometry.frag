@@ -12,6 +12,7 @@ uniform struct Material {
     sampler2D diffuseMap;
     sampler2D specularMap;
     sampler2D normalMap;
+    vec3 emmissive;
 } material;
 
 out vec4 fragAlbedoSpec;

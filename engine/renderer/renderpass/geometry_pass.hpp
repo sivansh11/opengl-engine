@@ -34,8 +34,8 @@ public:
         glEnable(GL_DEPTH_TEST);
         shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
         shader.mat4f("projection", glm::value_ptr(renderContext->at("projection").as<glm::mat4>()));
-        for (auto [ent, model, transform] : registry.view<Model, core::TransformComponent>().each()) {
-            model.draw(shader, transform);
+        for (auto [ent, mesh] : registry.view<std::shared_ptr<Mesh>>().each()) {
+            mesh->draw(shader, {});
         }
     }
 
