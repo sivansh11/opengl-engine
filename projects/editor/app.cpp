@@ -122,6 +122,10 @@ void App::run() {
         }
     }
 
+    {
+        
+    }
+
     auto ent = registry.create();
     auto& pl = registry.emplace<core::PointLightComponent>(ent);
     pl.position = {6, 1, 0};
