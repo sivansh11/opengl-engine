@@ -17,6 +17,7 @@ uniform struct Material {
 
 out vec4 fragAlbedoSpec;
 out vec4 fragNormal;
+out vec4 fragEmmissive;
 
 void main() {
     if (texture(material.diffuseMap, frag.uv).a == 0) {
@@ -29,4 +30,5 @@ void main() {
     fragNormal = vec4(normal, 0);
     fragAlbedoSpec.rgb = texture(material.diffuseMap, frag.uv).rgb;
     fragAlbedoSpec.a = texture(material.specularMap, frag.uv).r;
+    fragEmmissive = vec4(material.emmissive, 1);
 }

@@ -17,6 +17,8 @@ public:
             .addAttachment(gfx::Texture::Builder{}, gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA8, gfx::FrameBuffer::Attachment::eCOLOR0)
             // normal      binding 1
             .addAttachment(gfx::Texture::Builder{}.setSwizzleA(gfx::Texture::Swizzle::eONE), gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA16F, gfx::FrameBuffer::Attachment::eCOLOR1)
+            // emissive    binding 9
+            .addAttachment(gfx::Texture::Builder{}.setSwizzleA(gfx::Texture::Swizzle::eONE), gfx::Texture::Type::e2D, gfx::Texture::InternalFormat::eRGBA16F, gfx::FrameBuffer::Attachment::eCOLOR2)
             // depth       binding 5
             .addAttachment(gfx::Texture::Builder{}
                 .setSwizzleR(gfx::Texture::Swizzle::eR)
@@ -39,12 +41,14 @@ public:
         frameBuffer.unbind();
         renderContext->at("texAlbedoSpec") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR0);
         renderContext->at("texNormal") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR1);
+        renderContext->at("texEmissive") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eCOLOR2);
         renderContext->at("texDepth") = frameBuffer.getTexture(gfx::FrameBuffer::Attachment::eDEPTH);
     }
 
     void pipelineUI() override {
         ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("texAlbedoSpec").as<std::shared_ptr<gfx::Texture>>()->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));
         ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("texEmissive").as<std::shared_ptr<gfx::Texture>>()->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));
     }
 
 private:

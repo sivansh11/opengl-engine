@@ -31,6 +31,7 @@ public:
 
     void render(entt::registry& registry) override {
         renderContext->at("texAlbedoSpec").as<std::shared_ptr<gfx::Texture>>()->bind("texAlbedoSpec", 0, shader);
+        renderContext->at("texEmissive").as<std::shared_ptr<gfx::Texture>>()->bind("texEmissive", 9, shader);
         renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 1, shader);
         renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 5, shader);
         renderContext->at("texShadow").as<std::shared_ptr<gfx::Texture>>()->bind("texShadow", 3, shader);

@@ -25,6 +25,7 @@ uniform sampler2D texAlbedoSpec;
 uniform sampler2D texNormal;
 uniform sampler2D texDepth;
 uniform sampler2D texShadow;
+uniform sampler2D texEmissive;
 uniform sampler2D texAmbientOcclusion;  // could be ssao, vxao, doesnt matter
 uniform sampler2D texIndirectLight;  
 uniform mat4 invProjection;
@@ -49,6 +50,7 @@ vec4 albedoSpec;
 vec3 color;
 float specular;
 float ao;
+vec3 emissive;
 
 void main() {
     viewPosition = getViewPositionFromDepth(frag.uv, texture(texDepth, frag.uv).r);
@@ -58,6 +60,7 @@ void main() {
     color = albedoSpec.rgb;
     specular = albedoSpec.a;
     ao = texture(texAmbientOcclusion, frag.uv).r;
+    emissive = texture(texEmissive, frag.uv).rgb;
 
     vec3 directLight = vec3(0);
 
@@ -66,7 +69,7 @@ void main() {
 
     vec3 indirectLight = texture(texIndirectLight, frag.uv).rgb;
 
-    outColor = vec4((directLight + indirectLight) * color, 1);
+    outColor = vec4((directLight + indirectLight + emissive) * color, 1);
 }
 
 vec4 getViewPositionFromDepth(vec2 uv, float depth) {

@@ -310,7 +310,6 @@ void App::run() {
             mousePos.y = info.height - mousePos.y - 1;
             if (mousePos.x < info.width && mousePos.y < info.height)
                 glGetTextureSubImage(renderContext.at("texMousePicking").as<std::shared_ptr<gfx::Texture>>()->getID(), 0, mousePos.x, mousePos.y, 0, 1, 1, 1, GL_RED_INTEGER, GL_INT, sizeof(int), &selectedEntity);
-            std::cout << selectedEntity << '\n';
         } 
 
         ImGui::End();
