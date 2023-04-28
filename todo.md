@@ -1,8 +1,8 @@
 # TODO
 
-- auto uniform binding/uploading ? 
-
-stack based timers
-
-export __NV_PRIME_RENDER_OFFLOAD=1;
-export __GLX_VENDOR_LIBRARY_NAME=nvidia;
+- TAA
+- SVGF denoiser
+- BVH building and uploading to the gpu
+- finally add bindless
+- raytracing (path tracing)
+- ResTirGI ?
