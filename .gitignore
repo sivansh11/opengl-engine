@@ -11,4 +11,4 @@ subtract.py
 new_sponza/
 Screenshot *
 *.png
-assets/
+# assets/
