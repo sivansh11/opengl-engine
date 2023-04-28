@@ -6,5 +6,8 @@ In this project I explore graphics programming by trying out differect algorithm
 I have currently have VXGI(voxel based Global Illumination also called voxel cone tracing), aTrous denoiser.
 I want to add TAA, SVGF denoiser, compute raytracing (path tracing and restir)
 
+## VXGI-Disabled
 ![VXGI-Disabled](assets/vxgi-disabled.png)
+
+## VXGI-Enabled
 ![VXGI-Enabled](assets/vxgi-enabled.png)
