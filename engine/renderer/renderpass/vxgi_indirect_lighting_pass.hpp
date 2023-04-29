@@ -31,9 +31,14 @@ public:
             // .setSwizzleG(gfx::Texture::Swizzle::eR)
             // .setSwizzleB(gfx::Texture::Swizzle::eR)
             // .setSwizzleA(gfx::Texture::Swizzle::eONE)
+            .setWrapR(gfx::Texture::Wrap::eREPEAT)
+            .setWrapS(gfx::Texture::Wrap::eREPEAT)
+            .setWrapT(gfx::Texture::Wrap::eREPEAT)
             .build(gfx::Texture::Type::e2D);
         
         texNoise->loadImage("../../../assets/texture/bluenoise.png");
+
+        texNoise->bind("texNoise", 8, shader);
     }
 
     ~VXGIIndirectLightPass() override {
@@ -51,7 +56,8 @@ public:
         shader.mat4f("invProjection", glm::value_ptr(renderContext->at("invProjection").as<glm::mat4>()));
         shader.mat4f("lightSpace", glm::value_ptr(renderContext->at("lightSpace").as<glm::mat4>()));
 
-        texNoise->bind("texNoise", 8, shader);
+        auto& info = texNoise->getInfo();
+        shader.vec2f("noiseUVScale", glm::value_ptr(glm::vec2{(float)renderContext->at("width").as<uint32_t>() / (float)info.width, (float)renderContext->at("height").as<uint32_t>() / (float)info.height}));
         renderContext->at("texAlbedoSpec").as<std::shared_ptr<gfx::Texture>>()->bind("texAlbedoSpec", 0, shader);
         renderContext->at("texNormal").as<std::shared_ptr<gfx::Texture>>()->bind("texNormal", 1, shader);
         renderContext->at("texDepth").as<std::shared_ptr<gfx::Texture>>()->bind("texDepth", 5, shader);
@@ -68,7 +74,7 @@ public:
         shader.vecf("specularTanHalfAngle", specularTanHalfAngle);
         shader.veci("voxelDimensions", renderContext->at("voxelDimensions").as<int>());
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
-        shader.vecf("randSeed", rand());
+        shader.vecf("randSeed", 0);
 
 
         renderContext->at("frameBufferQuadVertexAttribute").as<std::shared_ptr<gfx::VertexAttribute>>()->bind();

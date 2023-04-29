@@ -28,6 +28,7 @@ uniform sampler3D voxels;
 uniform vec3 cameraPosition;
 uniform float randSeed;
 uniform bool specularCone;
+uniform vec2 noiseUVScale;
 
 vec4 coneTrace(vec3 startPos, vec3 direction, float tanHalfAngle, out float occlusion);
 vec4 sampleVoxel(vec3 worldPosition, float lod);
@@ -77,7 +78,7 @@ void main() {
     vec3 indirectLight = vec3(0);
     // indirect light 
     for (int i = 0; i < samples; i++) {
-        if (specular > rand(seed)) {
+        if (specular > texture(texNoise, frag.uv * noiseUVScale).b) {
             indirectLight += coneTrace(startPos, reflect(-normalize(cameraPosition - worldPosition.xyz), normal), mix(specularTanHalfAngle, diffuseTanHalfAngle, specular), tempOcclusion).rgb / float(samples);
         } else {
 
@@ -97,10 +98,10 @@ void main() {
 }
 
 vec3 uniformSampleSphere(inout uint seed) {
-    float z = rand(seed) * 2 - 1;
-    float a = rand(seed) * 2 * PI;
-    // float z = texture(texNoise, frag.uv).r * 2 - 1;
-    // float a = texture(texNoise, frag.uv).g * 2 * PI;
+    // float z = rand(seed) * 2 - 1;
+    // float a = rand(seed) * 2 * PI;
+    float z = texture(texNoise, frag.uv * noiseUVScale).r * 2 - 1;
+    float a = texture(texNoise, frag.uv * noiseUVScale).g * 2 * PI;
     float r = sqrt(1 - z * z);
     float x = r * cos(a);
     float y = r * sin(a);
