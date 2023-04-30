@@ -93,7 +93,7 @@ public:
 private:
     float alphaThresh = .99;
     float maxDist = 1000000000;
-    int samples = 1;
+    int samples = 4;
     int maxCount = 1000;
     float diffuseTanHalfAngle = .32;
     float specularTanHalfAngle = .07;

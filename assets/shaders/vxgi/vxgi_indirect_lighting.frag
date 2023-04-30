@@ -72,24 +72,17 @@ void main() {
 
     uint pixel_index = uint(gl_FragCoord.x + gl_FragCoord.y * 10000) + floatBitsToUint(randSeed);
     uint seed = pcg_hash(pixel_index);
-    // uint seed = uint(texture(texNoise, frag.uv).r);
 
     float tempOcclusion = 0; 
     vec3 indirectLight = vec3(0);
     // indirect light 
     for (int i = 0; i < samples; i++) {
-        if (specular > texture(texNoise, frag.uv * noiseUVScale).b) {
+        if (specular > rand(seed, 0, .01) * 100) {
             indirectLight += coneTrace(startPos, reflect(-normalize(cameraPosition - worldPosition.xyz), normal), mix(specularTanHalfAngle, diffuseTanHalfAngle, specular), tempOcclusion).rgb / float(samples);
         } else {
 
             indirectLight += coneTrace(startPos, cosineSampleHemiSphere(seed, normal), diffuseTanHalfAngle, tempOcclusion).rgb / float(samples);
         }
-        // vec3 r = random_in_unit_sphere(seed);
-        // if (dot(r, normal) < 0) r = -r;
-        // r /= 10;
-        // indirectLight += coneTrace(startPos, r, tanHalfAngle, tempOcclusion).rgb / float(samples);
-        // indirectLight += coneTrace(startPos, normal + r, tanHalfAngle, tempOcclusion).rgb / float(samples);
-        // indirectLight += coneTrace(startPos, normal, tanHalfAngle, tempOcclusion).rgb / float(samples);
     }
 
     outColor = vec4(indirectLight, 1);
@@ -98,10 +91,8 @@ void main() {
 }
 
 vec3 uniformSampleSphere(inout uint seed) {
-    // float z = rand(seed) * 2 - 1;
-    // float a = rand(seed) * 2 * PI;
-    float z = texture(texNoise, frag.uv * noiseUVScale).r * 2 - 1;
-    float a = texture(texNoise, frag.uv * noiseUVScale).g * 2 * PI;
+    float z = rand(seed, 0, .01) * 100 * 2 - 1;
+    float a = rand(seed, 0, .01) * 100 * 2 * PI;
     float r = sqrt(1 - z * z);
     float x = r * cos(a);
     float y = r * sin(a);
