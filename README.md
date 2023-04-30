@@ -11,3 +11,6 @@ I want to add TAA, SVGF denoiser, compute raytracing (path tracing and restir)
 
 ## VXGI-Enabled
 ![VXGI-Enabled](assets/vxgi-enabled.png)
+
+## Suppports Emissive materials
+![VXGI-Emissive](assets/vxgi-emissive.png)
