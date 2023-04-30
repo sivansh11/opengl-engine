@@ -30,5 +30,5 @@ void main() {
     fragNormal = vec4(normal, 0);
     fragAlbedoSpec.rgb = texture(material.diffuseMap, frag.uv).rgb;
     fragAlbedoSpec.a = texture(material.specularMap, frag.uv).r;
-    fragEmmissive = vec4(material.emmissive, 1);
+    fragEmmissive = vec4(material.emmissive * fragAlbedoSpec.rgb, 1);
 }

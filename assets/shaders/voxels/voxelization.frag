@@ -89,7 +89,7 @@ void main() {
         color += calculateLight(i);
     }
 
-    color += material.emmissive;
+    color += material.emmissive * matColor.rgb;
 
     #if defined GL_NV_shader_atomic_fp16_vector
     imageAtomicMax(voxels, texPos, f16vec4(color, 1));
