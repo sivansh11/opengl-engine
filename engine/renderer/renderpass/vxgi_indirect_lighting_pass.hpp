@@ -74,8 +74,7 @@ public:
         shader.vecf("specularTanHalfAngle", specularTanHalfAngle);
         shader.veci("voxelDimensions", renderContext->at("voxelDimensions").as<int>());
         shader.vecf("voxelGridSize", renderContext->at("voxelGridSize").as<float>());
-        shader.vecf("randSeed", 0);
-
+        shader.vecf("randSeed", ((float)(rand()) / (float)(RAND_MAX)) * rand());
 
         renderContext->at("frameBufferQuadVertexAttribute").as<std::shared_ptr<gfx::VertexAttribute>>()->bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

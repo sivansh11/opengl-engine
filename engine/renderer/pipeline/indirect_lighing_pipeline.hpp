@@ -22,11 +22,7 @@ public:
     ~IndirectLightPipeline() override {}
 
     void preRender(entt::registry& registry) override {
-        if (halfRes) {
-            frameBuffer.invalidate(renderContext->at("width").as<uint32_t>() / 2, renderContext->at("height").as<uint32_t>() / 2);        
-        } else {
-            frameBuffer.invalidate(renderContext->at("width").as<uint32_t>(), renderContext->at("height").as<uint32_t>());        
-        }
+        frameBuffer.invalidate(renderContext->at("width").as<uint32_t>(), renderContext->at("height").as<uint32_t>());        
         frameBuffer.bind(); 
         frameBuffer.clear(gfx::FrameBuffer::BufferBit::eCOLOR);
     }
@@ -38,12 +34,10 @@ public:
 
     void pipelineUI() override {
         ImGui::Image(static_cast<ImTextureID>(reinterpret_cast<void *>(renderContext->at("texIndirectLight").as<std::shared_ptr<gfx::Texture>>()->getID())), {100, 100}, ImVec2(0, 1), ImVec2(1, 0));
-        ImGui::Checkbox("Half Resolution", &halfRes);
     }
 
 private:
     gfx::FrameBuffer frameBuffer;
-    bool halfRes = false;
 };
 
 } // namespace renderer

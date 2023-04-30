@@ -14,10 +14,12 @@ public:
     }
 
     void onUpdate(float ts) {
-        ImVec2 vp = ImGui::GetWindowSize();
-        update(vp.x / vp.y);
+        ImVec2 ws = ImGui::GetWindowSize();
+        update(ws.x / ws.y);
 
         if (!ImGui::IsWindowHovered()) return;
+
+        ImVec2 wp = ImGui::GetWindowPos();
 
         float velocity = m_speed * ts;
 
@@ -39,8 +41,8 @@ public:
         m_initialMouse = mouse;
 
         if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
-            difference.x = difference.x / vp.x;
-            difference.y = -(difference.y / vp.y);
+            difference.x = difference.x / ws.x;
+            difference.y = -(difference.y / ws.y);
 
             m_yaw += difference.x * m_sensitivity;
             m_pitch += difference.y * m_sensitivity;
@@ -55,7 +57,7 @@ public:
         front.x = glm::cos(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
         front.y = glm::sin(glm::radians(m_pitch));
         front.z = glm::sin(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
-        m_front = front;
+        m_front = front * speedMultiplyer;
         m_right = glm::normalize(glm::cross(m_front, glm::vec3{0, 1, 0}));
         m_up    = glm::normalize(glm::cross(m_right, m_front));
 
@@ -69,6 +71,8 @@ public:
     glm::vec3 getDir() {
         return m_pos + m_front;
     }
+
+    float speedMultiplyer = 1;
 
 private:
     glm::vec3 m_front{0};

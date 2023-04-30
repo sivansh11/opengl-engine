@@ -316,6 +316,12 @@ void App::run() {
                 glGetTextureSubImage(renderContext.at("texMousePicking").as<std::shared_ptr<gfx::Texture>>()->getID(), 0, mousePos.x, mousePos.y, 0, 1, 1, 1, GL_RED_INTEGER, GL_INT, sizeof(int), &selectedEntity);
         } 
 
+        if (ImGui::GetIO().KeysDown[ImGuiKey_F]) {
+            camera.speedMultiplyer = 3;
+        } else {
+            camera.speedMultiplyer = 1;
+        }
+
         ImGui::End();
         ImGui::PopStyleVar(2);
 
