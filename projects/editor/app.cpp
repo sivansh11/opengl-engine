@@ -348,17 +348,15 @@ void App::run() {
         ImGui::DragFloat("directional light near", &dlc.near);
         ImGui::End();
 
-        if (selectedEntity) {
-            auto mesh = registry.get<std::shared_ptr<renderer::Mesh>>(static_cast<entt::entity>(selectedEntity));
-            ImGui::Begin("Selected Mesh");
-            ImGui::DragFloat3("translation", reinterpret_cast<float *>(&(mesh->m_transform.translation)));
-            ImGui::DragFloat3("rotation", reinterpret_cast<float *>(&(mesh->m_transform.rotation)));
-            ImGui::DragFloat3("scale", reinterpret_cast<float *>(&(mesh->m_transform.scale)));
-            glm::vec3 val = std::any_cast<glm::vec3>(mesh->material->get("material.emmissive"));
-            ImGui::DragFloat3("emmissive", reinterpret_cast<float *>(&(val)));
-            mesh->material->assign("material.emmissive", val);
-            ImGui::End();
-        }
+        auto mesh = registry.get<std::shared_ptr<renderer::Mesh>>(static_cast<entt::entity>(selectedEntity));
+        ImGui::Begin("Selected Mesh");
+        ImGui::DragFloat3("translation", reinterpret_cast<float *>(&(mesh->m_transform.translation)));
+        ImGui::DragFloat3("rotation", reinterpret_cast<float *>(&(mesh->m_transform.rotation)));
+        ImGui::DragFloat3("scale", reinterpret_cast<float *>(&(mesh->m_transform.scale)));
+        glm::vec3 val = std::any_cast<glm::vec3>(mesh->material->get("material.emmissive"));
+        ImGui::DragFloat3("emmissive", reinterpret_cast<float *>(&(val)));
+        mesh->material->assign("material.emmissive", val);
+        ImGui::End();
 
         ImGui::Begin("Debug");
         ImGui::Text("%f", ImGui::GetIO().Framerate);
