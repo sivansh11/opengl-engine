@@ -114,10 +114,14 @@ void App::run() {
     pipelines.push_back(&compositePipeline);
 
     {
+        auto ent = registry.create();
+        registry.emplace<core::TransformComponent>(ent);
+        auto& childrenComponent = registry.emplace<core::ChildrenComponent>(ent);
         renderer::Model model;
         model.loadModelFromPath("../../../assets/Sponza/glTF/Sponza.gltf");
         for (auto mesh : model.m_meshes) {
             auto ent = registry.create();
+            childrenComponent.children.push_back(ent);
             registry.emplace<std::shared_ptr<renderer::Mesh>>(ent) = mesh;
         }
     }
@@ -347,16 +351,19 @@ void App::run() {
         ImGui::DragFloat("directional light far", &dlc.far);
         ImGui::DragFloat("directional light near", &dlc.near);
         ImGui::End();
+        
+        if (registry.all_of<std::shared_ptr<renderer::Mesh>>(static_cast<entt::entity>(selectedEntity))) {
+            auto mesh = registry.get<std::shared_ptr<renderer::Mesh>>(static_cast<entt::entity>(selectedEntity));
+            ImGui::Begin("Selected Mesh");
+            ImGui::DragFloat3("translation", reinterpret_cast<float *>(&(mesh->m_transform.translation)));
+            ImGui::DragFloat3("rotation", reinterpret_cast<float *>(&(mesh->m_transform.rotation)));
+            ImGui::DragFloat3("scale", reinterpret_cast<float *>(&(mesh->m_transform.scale)));
+            glm::vec3 val = std::any_cast<glm::vec3>(mesh->material->get("material.emmissive"));
+            ImGui::DragFloat3("emmissive", reinterpret_cast<float *>(&(val)));
+            mesh->material->assign("material.emmissive", val);
+            ImGui::End();
 
-        auto mesh = registry.get<std::shared_ptr<renderer::Mesh>>(static_cast<entt::entity>(selectedEntity));
-        ImGui::Begin("Selected Mesh");
-        ImGui::DragFloat3("translation", reinterpret_cast<float *>(&(mesh->m_transform.translation)));
-        ImGui::DragFloat3("rotation", reinterpret_cast<float *>(&(mesh->m_transform.rotation)));
-        ImGui::DragFloat3("scale", reinterpret_cast<float *>(&(mesh->m_transform.scale)));
-        glm::vec3 val = std::any_cast<glm::vec3>(mesh->material->get("material.emmissive"));
-        ImGui::DragFloat3("emmissive", reinterpret_cast<float *>(&(val)));
-        mesh->material->assign("material.emmissive", val);
-        ImGui::End();
+        }
 
         ImGui::Begin("Debug");
         ImGui::Text("%f", ImGui::GetIO().Framerate);
