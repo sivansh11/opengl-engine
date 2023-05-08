@@ -32,8 +32,12 @@ public:
     void render(entt::registry& registry) override {
         glEnable(GL_DEPTH_TEST);
         shader.mat4f("lightSpace", glm::value_ptr(renderContext->at("lightSpace").as<glm::mat4>()));
-        for (auto [ent, mesh] : registry.view<std::shared_ptr<Mesh>>().each()) {
-            mesh->draw(shader, {}, false);
+        for (auto [ent, cc] : registry.view<core::ChildrenComponent>().each()) {
+            auto transformComponent = registry.get<core::TransformComponent>(ent);
+            for (auto ent : cc.children) {
+                auto mesh = registry.get<std::shared_ptr<Mesh>>(ent);
+                mesh->draw(shader, transformComponent, false);
+            }
         }
     }
 
