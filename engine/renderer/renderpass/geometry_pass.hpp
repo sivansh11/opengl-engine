@@ -31,12 +31,18 @@ public:
         assert(renderContext->contains("view"));
         assert(renderContext->contains("projection"));
         
+        glDisable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
         shader.mat4f("projection", glm::value_ptr(renderContext->at("projection").as<glm::mat4>()));
-        for (auto [ent, mesh] : registry.view<std::shared_ptr<Mesh>>().each()) {
-            mesh->draw(shader, {});
+        for (auto [ent, cc] : registry.view<core::ChildrenComponent>().each()) {
+            auto transformComponent = registry.get<core::TransformComponent>(ent);
+            for (auto ent : cc.children) {
+                auto mesh = registry.get<std::shared_ptr<Mesh>>(ent);
+                mesh->draw(shader, transformComponent);
+            }
         }
+        glEnable(GL_CULL_FACE);
     }
 
     void UI() override {

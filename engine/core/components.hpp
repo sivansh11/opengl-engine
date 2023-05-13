@@ -9,7 +9,10 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+#include <entt/entt.hpp>
+
 #include <memory>
+#include <vector>
 
 namespace core {
 
@@ -94,6 +97,9 @@ struct DirectionalLightComponent {
     float near = 1;
 };
 
+struct ChildrenComponent {
+    std::vector<entt::entity> children;
+};
 
 } // namespace core
 

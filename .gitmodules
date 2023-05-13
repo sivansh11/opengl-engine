@@ -28,3 +28,6 @@
 [submodule "deps/ctti"]
 	path = deps/ctti
 	url = https://github.com/Manu343726/ctti.git
+[submodule "deps/screen_capture_lite"]
+	path = deps/screen_capture_lite
+	url = https://github.com/smasherprog/screen_capture_lite.git

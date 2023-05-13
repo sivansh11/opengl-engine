@@ -35,6 +35,8 @@
 #include "gfx/framebuffer.hpp"
 #include "gfx/timer.hpp"
 
+#include "ScreenCapture.h"
+
 #include <entt/entt.hpp>
 
 #include <iostream>
@@ -53,10 +55,63 @@ App::~App() {
     core::terminateImgui();
 }
 
+void ExtractAndConvertToRGBA(const SL::Screen_Capture::Image &img, unsigned char *dst, size_t dst_size) {
+    assert(dst_size >= static_cast<size_t>(SL::Screen_Capture::Width(img) * SL::Screen_Capture::Height(img) * sizeof(SL::Screen_Capture::ImageBGRA)));
+    auto imgsrc = StartSrc(img);
+    auto imgdist = dst;
+    // if (img.isContiguous) {
+    //     memcpy(imgdist, imgsrc, dst_size);
+    // }
+    // else {
+        for (auto h = 0; h < Height(img); h++) {
+            auto startimgsrc = imgsrc;
+            for (auto w = 0; w < Width(img); w++) {
+                *imgdist++ = imgsrc->R;
+                *imgdist++ = imgsrc->G;
+                *imgdist++ = imgsrc->B;
+                *imgdist++ = 1; // alpha should be zero
+                imgsrc++;
+            }
+            imgsrc = SL::Screen_Capture::GotoNextRow(img, startimgsrc);
+        }
+    // }
+}
+
+
 void App::run() {
 
     entt::registry registry;
     event::Dispatcher dispatcher;
+
+    auto mons = SL::Screen_Capture::GetMonitors();
+    mons.resize(1);
+    auto monitor = mons[0];
+    int imgBufferSize = monitor.Width * monitor.Height * sizeof(SL::Screen_Capture::ImageBGRA);
+    unsigned char *imgBuffer = new unsigned char[imgBufferSize];
+    memset(imgBuffer, 0, imgBufferSize);
+    std::atomic<bool> imgBufferChanged = false;
+    // auto frameGrabber = SL::Screen_Capture::CreateCaptureConfiguration([&]() { return mons; })
+    //     ->onNewFrame([&](const SL::Screen_Capture::Image& img, const SL::Screen_Capture::Monitor& monitor) {
+    //         imgBufferChanged = true;
+    //         ExtractAndConvertToRGBA(img, imgBuffer, imgBufferSize);
+    //     })
+    //     ->start_capturing();
+
+    auto windows = SL::Screen_Capture::GetWindows();
+    auto selected_window = std::vector<SL::Screen_Capture::Window>();
+    for (auto window : windows) {
+        std::string_view name = window.Name;
+        if (name.find("chrome") != std::string::npos) {
+            selected_window.push_back(window);
+        }
+    }
+    auto frameGrabber2 = SL::Screen_Capture::CreateCaptureConfiguration([&](){ return selected_window; })
+        ->onNewFrame([&](const SL::Screen_Capture::Image& img, const SL::Screen_Capture::Window& window) {
+            imgBufferChanged = true;
+            ExtractAndConvertToRGBA(img, imgBuffer, imgBufferSize);
+        })
+        ->start_capturing();
+    
 
     EditorCamera camera;
     uint32_t width = 100, height = 100;
@@ -114,16 +169,35 @@ void App::run() {
     pipelines.push_back(&compositePipeline);
 
     {
+        auto ent = registry.create();
+        registry.emplace<core::TransformComponent>(ent);
+        auto& childrenComponent = registry.emplace<core::ChildrenComponent>(ent);
         renderer::Model model;
         model.loadModelFromPath("../../../assets/Sponza/glTF/Sponza.gltf");
         for (auto mesh : model.m_meshes) {
             auto ent = registry.create();
+            childrenComponent.children.push_back(ent);
             registry.emplace<std::shared_ptr<renderer::Mesh>>(ent) = mesh;
         }
     }
 
+
+    // temporary
+    std::shared_ptr<gfx::Texture> texture;
     {
-        
+        auto ent = registry.create();
+        auto& t = registry.emplace<core::TransformComponent>(ent);
+        // t.rotation = {0, glm::half_pi<float>(), 0};
+        auto& childrenComponent = registry.emplace<core::ChildrenComponent>(ent);
+        renderer::Model model;
+        model.loadModelFromPath("../../../assets/quad/quad.obj");
+        for (auto mesh : model.m_meshes) {
+            auto ent = registry.create();
+            mesh->material->assign("material.emmissive", glm::vec3{1, 1, 1});
+            childrenComponent.children.push_back(ent);
+            registry.emplace<std::shared_ptr<renderer::Mesh>>(ent) = mesh;
+            texture = std::any_cast<std::shared_ptr<gfx::Texture>>(mesh->material->get("material.diffuseMap"));
+        }
     }
 
     auto ent = registry.create();
@@ -180,6 +254,35 @@ void App::run() {
             continue;
         } 
         lastTime = currentTime;  
+
+        if (imgBufferChanged) {
+            imgBufferChanged = false;
+            // glTextureSubImage2D(texture->getID(), 0, 0, 0, monitor.Width, monitor.Height, GL_RGBA, GL_UNSIGNED_BYTE, imgBuffer);
+            gfx::Texture::UploadInfo uploadInfo{};
+            uploadInfo.data = imgBuffer;
+            uploadInfo.dataType = gfx::Texture::DataType::eUNSIGNED_BYTE;
+            uploadInfo.format = gfx::Texture::Format::eRGBA;
+            uploadInfo.level = 0;
+            uploadInfo.xoffset = 0;
+            uploadInfo.yoffset = 0;
+            uploadInfo.zoffset = 0;
+
+            static bool once = [&]() {
+                gfx::Texture::CreateInfo createInfo{};
+                createInfo.width = selected_window[0].Size.x;
+                createInfo.height = selected_window[0].Size.y;
+                createInfo.genMipMap = true;
+                createInfo.internalFormat = gfx::Texture::InternalFormat::eRGBA8;
+            
+                texture->resize(createInfo);
+                texture->changeWrapR(gfx::Texture::Wrap::eREPEAT);
+                texture->changeWrapS(gfx::Texture::Wrap::eREPEAT);
+                texture->changeWrapT(gfx::Texture::Wrap::eREPEAT);
+                return true;
+            }();
+
+            texture->upload(uploadInfo);
+        }
 
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
             dispatcher.post<core::ReloadShaderEvent>();
@@ -347,8 +450,8 @@ void App::run() {
         ImGui::DragFloat("directional light far", &dlc.far);
         ImGui::DragFloat("directional light near", &dlc.near);
         ImGui::End();
-
-        if (selectedEntity) {
+        
+        if (registry.all_of<std::shared_ptr<renderer::Mesh>>(static_cast<entt::entity>(selectedEntity))) {
             auto mesh = registry.get<std::shared_ptr<renderer::Mesh>>(static_cast<entt::entity>(selectedEntity));
             ImGui::Begin("Selected Mesh");
             ImGui::DragFloat3("translation", reinterpret_cast<float *>(&(mesh->m_transform.translation)));
@@ -358,6 +461,7 @@ void App::run() {
             ImGui::DragFloat3("emmissive", reinterpret_cast<float *>(&(val)));
             mesh->material->assign("material.emmissive", val);
             ImGui::End();
+
         }
 
         ImGui::Begin("Debug");

@@ -12,6 +12,7 @@ add_executable(editor ${SRC_FILES})
 include_directories(editor
     ../../engine
     ../../deps/glfw/include
+    ../../deps/screen_capture_lite/include
 )
 
 target_link_libraries(editor
