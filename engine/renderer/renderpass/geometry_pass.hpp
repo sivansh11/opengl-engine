@@ -31,6 +31,7 @@ public:
         assert(renderContext->contains("view"));
         assert(renderContext->contains("projection"));
         
+        glDisable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         shader.mat4f("view", glm::value_ptr(renderContext->at("view").as<glm::mat4>()));
         shader.mat4f("projection", glm::value_ptr(renderContext->at("projection").as<glm::mat4>()));
@@ -41,6 +42,7 @@ public:
                 mesh->draw(shader, transformComponent);
             }
         }
+        glEnable(GL_CULL_FACE);
     }
 
     void UI() override {

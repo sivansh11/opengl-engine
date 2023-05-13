@@ -19,3 +19,5 @@ add_subdirectory(efsw)
 add_subdirectory(ImGuizmo)
 add_subdirectory(entt)
 add_subdirectory(ctti)
+
+add_subdirectory(screen_capture_lite)
