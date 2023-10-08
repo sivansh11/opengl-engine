@@ -31,7 +31,7 @@ target_link_libraries(engine
     ImGuizmo
     EnTT
     ctti
-    screen_capture_lite_static
+    # screen_capture_lite_static
     ${X11_LIBRARIES}
     ${X11_Xfixes_LIB}
     ${X11_XTest_LIB}
